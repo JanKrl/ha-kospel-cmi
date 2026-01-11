@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+# Coding Standards (Strict Enforcement)
+
+### 1. Type Hinting & Validation
+- **Strict Typing:** All function arguments and return types must be typed. Use `typing.Optional`, `typing.List`, etc.
+- **Pydantic:** Use Pydantic models for data validation and parsing (Layer 2).
+- **No `Any`:** Avoid `Any` unless absolutely necessary. Explain why if used.
+
+### 2. Documentation
+- **Docstrings:** Every public class and method must have a Google-style docstring.
+- **Comments:** Comment *why*, not *what*.
+
+### 3. Error Handling
+- Create custom exceptions (e.g., `KospelConnectionError`, `KospelAuthError`).
+- Never pass `Exception` silently. Always log or re-raise.
+
+### 4. Asynchronous Programming
+- Use `asyncio` and `aiohttp` for network operations.
+- Ensure proper session management (create session inside a context manager or close it explicitly).
+
+### 5. Backward compatibility
+- Application is in active development, backward compatibility is not required unless requested explicitly
+
+### 6. Other guidelines
+- Use PEP 8 style guide
+- Use Pydantic models for data validation
+- Use async/await for asynchronous operations
+- Use asyncio for asynchronous programming
+- Use aiohttp for HTTP requests
+- Use logging for logging
+- Use pytest for testing
+- Follow SOLID principles
+- Follow DRY principles
+- Write unit tests for all public methods
+- Document all public methods and classes
+- Use type hints for all functions and classes

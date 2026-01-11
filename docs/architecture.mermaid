@@ -1,0 +1,174 @@
+graph TB
+    subgraph "Layer 4: Integration Layer - custom_components/kospel/"
+        HA[Home Assistant Entities]
+        ConfigFlow[config_flow.py<br/>ConfigFlow]
+        Coordinator[coordinator.py<br/>DataUpdateCoordinator]
+        SensorEntity[sensor.py<br/>SensorEntity<br/>Read-only sensors]
+        ClimateEntity[climate.py<br/>ClimateEntity<br/>Climate control]
+        SwitchEntity[switch.py<br/>SwitchEntity<br/>Toggles]
+    end
+
+    subgraph "Layer 3: Service Layer - controller/"
+        HeaterController[HeaterController<br/>controller/api.py<br/>High-level API]
+        Registry[SETTINGS_REGISTRY<br/>controller/registry.py<br/>Central registry]
+        SettingDef[SettingDefinition<br/>dataclass]
+    end
+
+    subgraph "Layer 2: Data Layer - registers/"
+        Decoders[decoders.py<br/>Hex → Python]
+        Encoders[encoders.py<br/>Python → Hex]
+        Utils[utils.py<br/>Low-level encoding/decoding]
+        Enums[enums.py<br/>Type definitions]
+        
+        DecodeTemp[decode_scaled_temp]
+        DecodePressure[decode_scaled_pressure]
+        DecodeMode[decode_heater_mode]
+        DecodeBit[decode_bit_boolean]
+        DecodeMap[decode_map]
+        
+        EncodeTemp[encode_scaled_temp]
+        EncodePressure[encode_scaled_pressure]
+        EncodeMode[encode_heater_mode]
+        EncodeBit[encode_bit_boolean]
+        EncodeMap[encode_map]
+        
+        RegToInt[reg_to_int]
+        IntToReg[int_to_reg]
+        GetBit[get_bit]
+        SetBit[set_bit]
+    end
+
+    subgraph "Layer 1: Transport Layer - kospel/"
+        API[api.py<br/>HTTP Client]
+        Simulator[simulator.py<br/>Simulator Implementation]
+        
+        ReadReg[read_register]
+        ReadRegs[read_registers]
+        WriteReg[write_register]
+        WriteFlag[write_flag_bit]
+        
+        SimulatorReadReg[simulator_read_register]
+        SimulatorReadRegs[simulator_read_registers]
+        SimulatorWriteReg[simulator_write_register]
+        SimulatorWriteFlag[simulator_write_flag_bit]
+        
+        SimulatorState[SimulatorRegisterState<br/>State Management]
+        SimulatorYAML[YAML State File<br/>data/heater_mock_state.yaml]
+    end
+
+    subgraph "External Systems"
+        HeaterAPI[Kospel Heater<br/>HTTP API<br/>GET/POST /api/dev/]
+    end
+
+    subgraph "Application"
+        Main[main.py<br/>Entry Point]
+        Logging[logging_config.py<br/>Logging System]
+    end
+
+    %% Layer 4 to Layer 3 (implemented and verified)
+    HA -->|uses| HeaterController
+    ConfigFlow -->|configures| HeaterController
+    Coordinator -->|polls| HeaterController
+    SensorEntity -->|reads| HeaterController
+    ClimateEntity -->|controls| HeaterController
+    SwitchEntity -->|toggles| HeaterController
+
+    %% Layer 3 internal
+    HeaterController -->|uses| Registry
+    Registry -->|contains| SettingDef
+    SettingDef -->|references| Decoders
+    SettingDef -->|references| Encoders
+
+    %% Layer 3 to Layer 2
+    HeaterController -->|calls decode/encode| Decoders
+    HeaterController -->|calls decode/encode| Encoders
+    Decoders -->|uses| Utils
+    Encoders -->|uses| Utils
+    Decoders -->|uses| Enums
+    Encoders -->|uses| Enums
+
+    %% Layer 2 internal - Decoders
+    Decoders --> DecodeTemp
+    Decoders --> DecodePressure
+    Decoders --> DecodeMode
+    Decoders --> DecodeBit
+    Decoders --> DecodeMap
+    
+    %% Layer 2 internal - Encoders
+    Encoders --> EncodeTemp
+    Encoders --> EncodePressure
+    Encoders --> EncodeMode
+    Encoders --> EncodeBit
+    Encoders --> EncodeMap
+    
+    %% Layer 2 internal - Utilities
+    DecodeTemp --> RegToInt
+    DecodePressure --> RegToInt
+    DecodeMode --> GetBit
+    DecodeBit --> GetBit
+    EncodeTemp --> IntToReg
+    EncodePressure --> IntToReg
+    EncodeMode --> SetBit
+    EncodeBit --> SetBit
+    Utils --> RegToInt
+    Utils --> IntToReg
+    Utils --> GetBit
+    Utils --> SetBit
+
+    %% Layer 3 to Layer 1
+    HeaterController -->|calls| API
+
+    %% Layer 1 internal - API
+    API -->|routes via @with_simulator| Simulator
+    API --> ReadReg
+    API --> ReadRegs
+    API --> WriteReg
+    API --> WriteFlag
+    
+    %% Layer 1 internal - Simulator
+    Simulator --> SimulatorReadReg
+    Simulator --> SimulatorReadRegs
+    Simulator --> SimulatorWriteReg
+    Simulator --> SimulatorWriteFlag
+    Simulator -->|uses| SimulatorState
+    SimulatorState -->|persists to| SimulatorYAML
+    SimulatorReadReg --> SimulatorState
+    SimulatorReadRegs --> SimulatorState
+    SimulatorWriteReg --> SimulatorState
+    SimulatorWriteFlag --> SimulatorState
+
+    %% Layer 1 to External
+    ReadReg -->|HTTP GET| HeaterAPI
+    ReadRegs -->|HTTP GET| HeaterAPI
+    WriteReg -->|HTTP POST| HeaterAPI
+    WriteFlag -->|HTTP GET + POST| HeaterAPI
+
+    %% Application
+    Main -->|creates| HeaterController
+    Main -->|initializes| Logging
+    HeaterController -.->|logs| Logging
+    API -.->|logs| Logging
+
+    %% Data flow (dotted lines)
+    HeaterAPI -.->|"Hex strings<br/>(e.g., 'd700')"| ReadReg
+    ReadReg -.->|"Dict[str, str]<br/>(e.g., {'0b55': 'd700'})"| HeaterController
+    HeaterController -.->|"Python values<br/>(e.g., HeaterMode.WINTER, 22.5)"| Main
+    Main -.->|"Python values"| HeaterController
+    HeaterController -.->|"Hex strings"| WriteReg
+    WriteReg -.->|HTTP POST| HeaterAPI
+
+    %% Styling
+    classDef layer1 fill:#e1f5ff,stroke:#01579b,stroke-width:2px,color:#000
+    classDef layer2 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef layer3 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef layer4 fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef external fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#000
+    classDef app fill:#f5f5f5,stroke:#424242,stroke-width:2px,color:#000
+
+    class API,Simulator,ReadReg,ReadRegs,WriteReg,WriteFlag,SimulatorReadReg,SimulatorReadRegs,SimulatorWriteReg,SimulatorWriteFlag,SimulatorState,SimulatorYAML layer1
+    class Decoders,Encoders,Utils,Enums,DecodeTemp,DecodePressure,DecodeMode,DecodeBit,DecodeMap,EncodeTemp,EncodePressure,EncodeMode,EncodeBit,EncodeMap,RegToInt,IntToReg,GetBit,SetBit layer2
+    class HeaterController,Registry,SettingDef layer3
+    class HA,ConfigFlow,Coordinator,SensorEntity,ClimateEntity,SwitchEntity layer4
+    class HeaterAPI external
+    class Main,Logging app
+

@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Kospel Electric Heaters Setup",
+        "description": "Configure your Kospel heater connection. In simulation mode, IP and device ID are optional.",
+        "data": {
+          "heater_ip": "Heater IP Address",
+          "device_id": "Device ID"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to heater",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "Integration is already configured"
+    }
+  }
+}
+

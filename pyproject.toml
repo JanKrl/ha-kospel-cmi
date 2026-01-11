@@ -1,0 +1,53 @@
+[project]
+name = "hass-kospel"
+version = "0.1.0"
+description = "Home Assistant integration to manage Kospel Electric Heaters"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "aiohttp>=3.13.3",
+    "aiofiles>=24.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyaml>=25.7.0",
+    "python-dotenv>=1.2.1",
+    "ruff>=0.14.10",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "aioresponses>=0.7.6",
+    "homeassistant>=2026.1.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "scripts/*",
+    "*/__pycache__/*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 80

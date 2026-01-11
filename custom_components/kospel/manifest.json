@@ -1,0 +1,14 @@
+{
+  "domain": "kospel",
+  "name": "Kospel Electric Heaters",
+  "version": "0.1.0",
+  "config_flow": true,
+  "documentation": "https://github.com/yourusername/hass-jupyter",
+  "issue_tracker": "https://github.com/yourusername/hass-jupyter/issues",
+  "dependencies": ["http"],
+  "requirements": ["aiohttp>=3.13.3"],
+  "codeowners": ["@yourusername"],
+  "integration_type": "hub",
+  "iot_class": "local_polling"
+}
+
