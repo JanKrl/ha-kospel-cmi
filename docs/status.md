@@ -2,9 +2,90 @@
 
 This document tracks current development status, progress, and any issues encountered.
 
-Last Updated: 2024 (Layer 4: Home Assistant Integration - Verified and Working, Test Import Issue Identified)
+Last Updated: January 2026 (Manual Test Campaign Planning Completed)
 
-## Current Task: Home Assistant Integration (Layer 4)
+## Current Task: Manual Test Campaign Planning
+
+### Task: Plan manual test campaign for Home Assistant integration validation
+
+**Status**: ✅ **COMPLETED**
+
+**Rationale**: 
+- Project is in early development phase with simulation mode implementation complete
+- Manual testing required to validate integration functionality in Home Assistant
+- Test results will help identify bugs and inform development roadmap for upcoming sprints
+
+### Completed Items
+
+1. ✅ **Test Campaign Overview** (`docs/test_campaign/README.md`)
+   - Defined campaign goals and objectives
+   - Identified success criteria
+   - Outlined test scope and environment requirements
+   - Created test documentation structure
+
+2. ✅ **Test Scenarios** (`docs/test_campaign/test_scenarios/`)
+   - **TC001 - Integration Setup**: 7 test cases for installation and configuration
+   - **TC002 - Climate Entity**: 12 test cases for main heater control
+   - **TC003 - Sensor Entities**: 13 test cases for temperature, pressure, and status sensors
+   - **TC004 - Switch Entities**: 12 test cases for manual mode and water heater switches
+   - **TC005 - Simulator**: 14 test cases for simulator functionality
+   - **Total**: 58 test scenarios covering all integration features
+
+3. ✅ **Test Procedures** (`docs/test_campaign/test_procedures/`)
+   - Environment setup guide
+   - Execution checklist with test matrix
+   - Cleanup procedures
+
+4. ✅ **Templates** (`docs/test_campaign/templates/`)
+   - Bug report template with severity/priority classifications
+   - Test result template for detailed documentation
+   - Test session log for tracking test runs
+
+5. ✅ **Results Storage** (`docs/test_campaign/results/`)
+   - Directory structure for archiving test results
+   - Naming conventions for sessions and bug reports
+
+### Test Campaign Structure
+
+```
+docs/test_campaign/
+├── README.md                    # Overview, goals, and scope
+├── test_scenarios/
+│   ├── TC001_integration_setup.md
+│   ├── TC002_climate_entity.md
+│   ├── TC003_sensor_entities.md
+│   ├── TC004_switch_entities.md
+│   └── TC005_simulator.md
+├── test_procedures/
+│   ├── environment_setup.md
+│   ├── execution_checklist.md
+│   └── cleanup_procedures.md
+├── templates/
+│   ├── bug_report_template.md
+│   ├── test_result_template.md
+│   └── test_session_log.md
+└── results/
+    └── .gitkeep
+```
+
+### Sprint Planning Integration
+
+Test results will be categorized for sprint planning:
+- **P1 - Must Fix This Sprint**: Critical bugs blocking core functionality
+- **P2 - Should Fix This Sprint**: High severity bugs affecting user experience
+- **P3 - Backlog**: Low severity issues and enhancement requests
+
+### Next Steps
+
+1. ⏳ Execute manual test campaign following documented procedures
+2. ⏳ Document test results and create bug reports for failures
+3. ⏳ Analyze results and prioritize bugs for sprint planning
+4. ⏳ Fix identified bugs
+5. ⏳ Proceed to real hardware testing (future phase)
+
+---
+
+## Previous Task: Home Assistant Integration (Layer 4)
 
 ### Task: Implement Home Assistant integration with simulation mode
 
@@ -196,3 +277,4 @@ custom_components/kospel/
 - ✅ Technical documentation: Updated
 - ✅ Architecture diagram: Updated (Layer 4 marked as implemented)
 - ✅ Status documentation: Updated
+- ✅ **Manual Test Campaign**: Complete test planning documentation (see `docs/test_campaign/`)
