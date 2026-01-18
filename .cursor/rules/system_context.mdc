@@ -10,6 +10,5 @@ Required file reads on startup:
 
 Before making any changes:
 1. Parse and understand system architecture from docs/architecture.mermaid
-2. Check current task context from tasks/tasks.md
-3. Update progress in docs/roadmap.md
-4. Follow technical specification from docs/technical.md
+2. Update progress in docs/status.md
+3. Follow technical specification from docs/technical.md
