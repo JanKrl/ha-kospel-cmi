@@ -1,184 +1,163 @@
 # Manual Test Campaign - Kospel Home Assistant Integration
 
-## Campaign Overview
+## Lean Testing Approach
 
-**Version:** 1.0  
-**Date:** January 2026  
-**Project Phase:** Early Development (Layer 4 - Integration Layer)  
-**Test Mode:** Simulation Only (No Physical Hardware)
+This test campaign uses a **state-file-driven** approach. Each test:
+1. Starts with a known **initial state YAML** file
+2. Performs an **action** (either in HA UI or by editing the state file)
+3. Verifies the **expected state** by comparing the YAML file or HA UI
 
-## Campaign Goals
+**Two-way testing**:
+- **HA → State file**: Set value in Home Assistant UI, verify in `simulation_state.yaml`
+- **State file → HA**: Edit `simulation_state.yaml`, verify value appears in Home Assistant UI
 
-### Primary Objectives
+## Quick Start
 
-1. **Validate Integration Functionality**
-   - Verify the integration loads correctly in Home Assistant
-   - Confirm all entities are created and visible in the UI
-   - Test basic read/write operations through Home Assistant controls
+### 1. Environment Setup
 
-2. **Identify Early Bugs**
-   - Discover functional defects before hardware testing
-   - Identify usability issues in the Home Assistant UI
-   - Find edge cases in state management and data flow
+```bash
+# Set environment variable
+export SIMULATION_MODE=1
 
-3. **Inform Development Roadmap**
-   - Document areas requiring improvement
-   - Prioritize bug fixes and enhancements for upcoming sprints
-   - Identify missing features or incomplete implementations
-
-### Success Criteria
-
-- [ ] All entities appear correctly in Home Assistant UI
-- [ ] All sensor values display correctly from simulator state
-- [ ] All control operations (switches, climate controls) work as expected
-- [ ] State changes persist across coordinator updates
-- [ ] Error handling works appropriately for edge cases
-- [ ] Integration survives Home Assistant restart
-
-## Test Scope
-
-### In Scope
-
-| Component | Description | Test Type |
-|-----------|-------------|-----------|
-| Climate Entity | Main heater control (HVAC mode, preset, temperature) | Functional |
-| Temperature Sensors | 7 temperature readings | Functional |
-| Pressure Sensor | System pressure reading | Functional |
-| Status Sensors | Pump status, valve position | Functional |
-| Switch Entities | Manual mode, water heater toggles | Functional |
-| Integration Setup | Config flow, entity creation | Installation |
-| Simulator | State persistence, read/write | System |
-
-### Out of Scope
-
-- Physical heater hardware testing (future phase)
-- Performance/load testing
-- Security testing
-- Multi-instance testing
-- Automated regression testing (unit tests currently broken)
-
-## Test Environment
-
-### Required Setup
-
-1. **Home Assistant Instance**
-   - Version: 2024.1 or later
-   - Installation type: Any (OS, Container, Core, Supervised)
-   
-2. **Environment Variables**
-   ```bash
-   SIMULATION_MODE=1
-   ```
-
-3. **Integration Installation**
-   - Follow steps in `INSTALLATION.md`
-   - Verify directory structure is complete
-
-### Simulator State File
-
-Location: `<config>/custom_components/kospel/data/simulation_state.yaml`
-
-This file can be manually edited to set up test scenarios.
-
-## Test Documentation Structure
-
-```
-docs/test_campaign/
-├── README.md                    # This file - overview and goals
-├── test_scenarios/
-│   ├── TC001_integration_setup.md
-│   ├── TC002_climate_entity.md
-│   ├── TC003_sensor_entities.md
-│   ├── TC004_switch_entities.md
-│   └── TC005_simulator.md
-├── test_procedures/
-│   ├── environment_setup.md
-│   ├── execution_checklist.md
-│   └── cleanup_procedures.md
-├── templates/
-│   ├── bug_report_template.md
-│   ├── test_result_template.md
-│   └── test_session_log.md
-└── results/
-    └── .gitkeep                 # Results stored here per session
+# State file location
+<HA_CONFIG>/custom_components/kospel/data/simulation_state.yaml
 ```
 
-## Test Categories
+### 2. Running a Test
 
-### 1. Installation & Setup Tests (TC001)
-- Integration discovery in Home Assistant
-- Config flow completion
-- Entity creation verification
-- Restart resilience
+1. Copy the **Initial State** YAML to `simulation_state.yaml`
+2. Restart Home Assistant or wait for refresh (~30s)
+3. Perform the **Action** (HA UI change or state file edit)
+4. Compare `simulation_state.yaml` with **Expected State**
+5. Mark test as **PASS** if states match, **FAIL** otherwise
 
-### 2. Climate Entity Tests (TC002)
-- HVAC mode changes (OFF, HEAT)
-- Preset mode changes (winter, summer, off)
-- Temperature adjustments
-- State synchronization
+## State File Location
 
-### 3. Sensor Entity Tests (TC003)
-- Temperature sensor readings
-- Pressure sensor reading
-- Pump status display
-- Valve position display
-- Unit of measurement verification
+```
+<HA_CONFIG>/custom_components/kospel/data/simulation_state.yaml
+```
 
-### 4. Switch Entity Tests (TC004)
-- Manual mode toggle
-- Water heater toggle
-- State persistence after toggle
-- UI feedback
+## Base Initial States
 
-### 5. Simulator Tests (TC005)
-- State file creation
-- State persistence across restarts
-- Register read/write operations
-- Manual state file editing
+Use these as starting points for tests.
 
-## Bug Severity Levels
+### state_baseline.yaml - Default Test State
+```yaml
+"0b51": "0000"
+"0b55": "0020"
+"0b66": "9001"
+"0b67": "a401"
+"0b68": "dc00"
+"0b69": "d200"
+"0b6a": "e600"
+"0b6b": "f000"
+"0b8a": "f401"
+"0b8d": "e100"
+```
 
-| Level | Description | Example |
-|-------|-------------|---------|
-| **Critical** | Integration fails to load or crashes | Import errors, missing dependencies |
-| **High** | Major feature completely broken | Cannot change heater mode |
-| **Medium** | Feature partially working or incorrect values | Wrong temperature displayed |
-| **Low** | Minor issues, cosmetic problems | Entity naming issues |
+**Decoded values:**
+| Register | Setting | Value |
+|----------|---------|-------|
+| 0b51 | Status | All idle, DHW valve |
+| 0b55 | Mode | Winter (bit 5=1) |
+| 0b66 | CWU Temp Economy | 40.0°C |
+| 0b67 | CWU Temp Comfort | 42.0°C |
+| 0b68 | Room Temp Economy | 22.0°C |
+| 0b69 | Room Temp Comfort- | 21.0°C |
+| 0b6a | Room Temp Comfort | 23.0°C |
+| 0b6b | Room Temp Comfort+ | 24.0°C |
+| 0b8a | Pressure | 5.00 bar |
+| 0b8d | Manual Temperature | 22.5°C |
 
-## Sprint Planning Integration
+## Register Reference
 
-Test results will be categorized for sprint planning:
+### Register 0b55 - Control Flags
+| Bit | Function | Value=1 | Value=0 |
+|-----|----------|---------|---------|
+| 3 | Summer Mode | Active | Inactive |
+| 4 | Water Heater | Enabled | Disabled |
+| 5 | Winter Mode | Active | Inactive |
+| 9 | Manual Mode | Enabled | Disabled |
 
-### P1 - Must Fix This Sprint
-- Critical bugs blocking core functionality
-- Issues preventing simulation testing
+**Common 0b55 values:**
+| Mode | Hex (LE) | Bits set |
+|------|----------|----------|
+| Off | `"0000"` | none |
+| Winter | `"0020"` | 5 |
+| Summer | `"0008"` | 3 |
+| Winter + Water | `"0030"` | 4, 5 |
+| Winter + Manual | `"0220"` | 5, 9 |
+| Winter + Manual + Water | `"0230"` | 4, 5, 9 |
 
-### P2 - Should Fix This Sprint
-- High severity bugs affecting user experience
-- Missing error handling for common scenarios
+### Register 0b51 - Status Flags
+| Bit | Function | Value=1 | Value=0 |
+|-----|----------|---------|---------|
+| 0 | Pump CO | Running | Idle |
+| 1 | Pump Circulation | Running | Idle |
+| 2 | Valve Position | CO | DHW |
 
-### P3 - Backlog
-- Low severity issues
-- Enhancement requests
-- Nice-to-have improvements
+**Common 0b51 values:**
+| Status | Hex (LE) |
+|--------|----------|
+| All idle, DHW | `"0000"` |
+| Pump CO running | `"0100"` |
+| Pump Circ running | `"0200"` |
+| Both pumps running | `"0300"` |
+| All idle, CO valve | `"0400"` |
 
-## Test Execution Timeline
+### Temperature Encoding (×10 scale)
+| °C | Decimal | Hex (LE) |
+|----|---------|----------|
+| 20.0 | 200 | `"c800"` |
+| 21.0 | 210 | `"d200"` |
+| 22.0 | 220 | `"dc00"` |
+| 22.5 | 225 | `"e100"` |
+| 23.0 | 230 | `"e600"` |
+| 24.0 | 240 | `"f000"` |
+| 25.0 | 250 | `"fa00"` |
+| 40.0 | 400 | `"9001"` |
+| 42.0 | 420 | `"a401"` |
 
-| Phase | Duration | Activities |
-|-------|----------|------------|
-| Setup | 1-2 hours | Environment setup, integration installation |
-| Execution | 4-6 hours | Execute all test scenarios |
-| Reporting | 1-2 hours | Document results, create bug reports |
-| Analysis | 1 hour | Prioritize issues for sprint planning |
+### Pressure Encoding (×100 scale)
+| bar | Decimal | Hex (LE) |
+|-----|---------|----------|
+| 5.00 | 500 | `"f401"` |
+| 5.04 | 504 | `"f801"` |
+| 2.50 | 250 | `"fa00"` |
 
-## Reference Documents
+## Test Scenarios
 
-- [Architecture Diagram](../architecture.mermaid)
-- [Technical Specifications](../technical.md)
-- [Project Status](../status.md)
-- [Installation Guide](../../INSTALLATION.md)
-- [README](../../README.md)
+| ID | Scenario | Document |
+|----|----------|----------|
+| TC001 | Integration Setup | [TC001_integration_setup.md](test_scenarios/TC001_integration_setup.md) |
+| TC002 | Climate Entity | [TC002_climate_entity.md](test_scenarios/TC002_climate_entity.md) |
+| TC003 | Sensor Entities | [TC003_sensor_entities.md](test_scenarios/TC003_sensor_entities.md) |
+| TC004 | Switch Entities | [TC004_switch_entities.md](test_scenarios/TC004_switch_entities.md) |
+| TC005 | Simulator | [TC005_simulator.md](test_scenarios/TC005_simulator.md) |
 
-## Contact
+## Test Result Tracking
 
-For questions about this test campaign, refer to the project repository documentation or contact the development team.
+Simple pass/fail tracking - no extensive documentation needed:
+
+```
+Date: YYYY-MM-DD
+Tester: Name
+
+TC001: [P] [P] [P] [P] [P]
+TC002: [P] [P] [F] [P] [P] [P] [P]
+TC003: [P] [P] [P] [P] [P] [P] [P] [P]
+TC004: [P] [P] [P] [P] [P] [P]
+TC005: [P] [P] [P] [P] [P]
+
+Failed tests: TC002.3 - Mode not changing
+Notes: Investigate heater_mode encoding
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Value not updating in HA | Wait 30s for coordinator refresh |
+| State file edit not reflected | Ensure file saved, wait for refresh |
+| Entity shows "unavailable" | Check state file exists and is valid YAML |
+| Wrong value displayed | Check encoding (little-endian, scaling) |

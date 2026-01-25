@@ -1,0 +1,3 @@
+# Minimal state - only essential registers
+# Used for testing missing register handling
+"0b55": "0020"
