@@ -110,7 +110,7 @@ class SimulatorRegisterState:
 
         yaml.add_representer(
             str, self._str_presenter
-        )  # This is necessary to ensure that all string keys are quoted.
+        )  # This ensures that all string keys and register values are quoted.
 
         # Handle absolute vs relative paths
         state_file_path = Path(state_file)
@@ -182,7 +182,10 @@ class SimulatorRegisterState:
 
     def _str_presenter(self, dumper, data) -> yaml.ScalarNode:
         """
-        Custom representer to ensure all string keys are quoted.
+        Custom representer to ensure all string keys and register values are quoted.
+
+        Register values are 4-character hex strings (e.g., "2000", "0800").
+        All other strings are also quoted for consistency.
 
         Args:
             dumper: YAML dumper

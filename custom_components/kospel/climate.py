@@ -134,7 +134,21 @@ class KospelClimateEntity(
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target HVAC mode."""
         controller: HeaterController = self.coordinator.data
-        heater_mode = _map_hvac_mode_to_heater_mode(hvac_mode)
+
+        if hvac_mode == HVACMode.OFF:
+            heater_mode = HeaterMode.OFF
+        elif hvac_mode == HVACMode.HEAT:
+            # If current preset is "off", default to "winter"
+            current_preset = self.preset_mode
+            if current_preset == "off":
+                heater_mode = HeaterMode.WINTER
+            else:
+                # Preserve current preset (winter or summer)
+                heater_mode = _map_preset_to_heater_mode(current_preset)
+        else:
+            # Default fallback
+            heater_mode = _map_hvac_mode_to_heater_mode(hvac_mode)
+
         controller.heater_mode = heater_mode
         await controller.save()
         await self.coordinator.async_request_refresh()

@@ -268,6 +268,19 @@ class HeaterController:
                     )
                     # Update cache with new value
                     self._register_cache[register] = current_hex
+                    # Re-decode all settings for this register to update _settings dict
+                    for setting_name, setting_def in self._registry.items():
+                        if setting_def.register == register:
+                            try:
+                                decoded_value = setting_def.decode(current_hex)
+                                self._settings[setting_name] = decoded_value
+                                logger.debug(
+                                    f"Updated {setting_name} = {decoded_value} after write"
+                                )
+                            except Exception as e:
+                                logger.warning(
+                                    f"Failed to re-decode {setting_name} after write: {e}"
+                                )
                 else:
                     logger.error(f"Failed to write register {register}")
                     success = False
