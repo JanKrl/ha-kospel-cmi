@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, get_device_info
 from .coordinator import KospelDataUpdateCoordinator
 
 # Import library modules using relative imports (modules are copied to integration directory)
@@ -35,17 +35,20 @@ async def async_setup_entry(
 class KospelSwitchEntity(CoordinatorEntity[KospelDataUpdateCoordinator], SwitchEntity):
     """Base class for Kospel switch entities."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: KospelDataUpdateCoordinator,
         entry_id: str,
         unique_id_suffix: str,
-        name: str,
+        translation_key: str,
     ) -> None:
         """Initialize the switch."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry_id}_{unique_id_suffix}"
-        self._attr_name = name
+        self._attr_translation_key = translation_key
+        self._attr_device_info = get_device_info(entry_id)
 
     @property
     def available(self) -> bool:
@@ -62,7 +65,7 @@ class KospelManualModeSwitch(KospelSwitchEntity):
         entry_id: str,
     ) -> None:
         """Initialize the manual mode switch."""
-        super().__init__(coordinator, entry_id, "manual_mode", "Manual Mode")
+        super().__init__(coordinator, entry_id, "manual_mode", "manual_mode")
 
     @property
     def is_on(self) -> bool:
@@ -102,7 +105,7 @@ class KospelWaterHeaterSwitch(KospelSwitchEntity):
         entry_id: str,
     ) -> None:
         """Initialize the water heater switch."""
-        super().__init__(coordinator, entry_id, "water_heater", "Water Heater")
+        super().__init__(coordinator, entry_id, "water_heater", "water_heater")
 
     @property
     def is_on(self) -> bool:

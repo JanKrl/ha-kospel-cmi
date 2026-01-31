@@ -1,4 +1,9 @@
 {
+  "device": {
+    "heater": {
+      "name": "Kospel Heater"
+    }
+  },
   "config": {
     "step": {
       "user": {
@@ -17,6 +22,57 @@
     },
     "abort": {
       "already_configured": "Integration is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "room_temperature_economy": { "name": "Room Temperature Economy" },
+      "room_temperature_comfort": { "name": "Room Temperature Comfort" },
+      "room_temperature_comfort_plus": { "name": "Room Temperature Comfort Plus" },
+      "room_temperature_comfort_minus": { "name": "Room Temperature Comfort Minus" },
+      "cwu_temperature_economy": { "name": "CWU Temperature Economy" },
+      "cwu_temperature_comfort": { "name": "CWU Temperature Comfort" },
+      "manual_temperature": { "name": "Manual Temperature" },
+      "pressure": { "name": "Pressure" },
+      "pump_co": {
+        "name": "Pump CO",
+        "state": {
+          "Running": "Running",
+          "Idle": "Idle"
+        }
+      },
+      "pump_circulation": {
+        "name": "Pump Circulation",
+        "state": {
+          "Running": "Running",
+          "Idle": "Idle"
+        }
+      },
+      "valve_position": {
+        "name": "Valve Position",
+        "state": {
+          "DHW": "DHW",
+          "CO": "CO"
+        }
+      }
+    },
+    "switch": {
+      "manual_mode": { "name": "Manual Mode" },
+      "water_heater": { "name": "Water Heater" }
+    },
+    "climate": {
+      "heater": {
+        "name": "Heater",
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "Summer": "Summer",
+              "Winter": "Winter",
+              "Off": "Off"
+            }
+          }
+        }
+      }
     }
   }
 }

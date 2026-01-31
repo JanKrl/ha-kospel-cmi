@@ -2,9 +2,87 @@
 
 This document tracks current development status, progress, and any issues encountered.
 
-Last Updated: January 2026 (Manual Test Campaign Planning Completed)
+Last Updated: January 2026 (Device Registration Implemented)
 
-## Current Task: Manual Test Campaign Planning
+## Current Task: Device Registration
+
+### Task: Register the electric heater as a device
+
+**Status**: **COMPLETED**
+
+**Rationale**:
+- One device per config entry groups all entities (climate, sensors, switches) in Settings → Devices
+- Readable entity IDs (e.g. `switch.kospel_heater_manual_mode`) for new installs
+- Compliance with quality-scale rule "The integration creates devices"
+- Climate entity is main device entity (name = None, friendly_name = device name)
+
+### Completed Items
+
+1. **Device info helper (const.py)**
+   - Added `get_device_info(entry_id)` returning `DeviceInfo` with identifiers `(DOMAIN, entry_id)`, name, manufacturer, model, translation_key "heater"
+
+2. **Device name translation (strings.json)**
+   - Added `device.heater.name`: "Kospel Heater"
+
+3. **Sensor platform (sensor.py)**
+   - Base class sets `_attr_device_info = get_device_info(entry_id)` in `__init__`
+
+4. **Switch platform (switch.py)**
+   - Base class sets `_attr_device_info = get_device_info(entry_id)` in `__init__`
+
+5. **Climate platform (climate.py)**
+   - Sets `_attr_device_info = get_device_info(coordinator.entry.entry_id)`
+   - Set `_attr_name = None` (main device entity); kept `_attr_translation_key = "heater"` for preset_mode state translations
+
+6. **Tests (test_entity_naming.py)**
+   - TestDeviceRegistration: assert device_info present and identifiers `(DOMAIN, test_entry_123)` on sensor, switch, climate; assert all entities share same device identifiers
+   - TestClimateEntityNaming: assert climate `_attr_name is None`
+
+### Next Steps
+
+1. Optional: add `translations/pl.json` (or other locale) for non-English names and states
+2. Existing installs keep current entity_ids until integration is removed and re-added (entity registry is stable)
+
+---
+
+## Previous Task: Entity Naming and Translations
+
+### Task: Implement correct entity naming with translations (HA guidelines)
+
+**Status**: **COMPLETED**
+
+**Rationale**:
+- Home Assistant requires `has_entity_name = True` and translated entity names for new integrations
+- Entity names must come from translation files (`strings.json` / `translations/<lang>.json`) via `translation_key`
+- Enables localization and quality-scale compliance
+
+### Completed Items
+
+1. **strings.json**
+   - Added `entity` section with sensor, switch, and climate names
+   - Sensor: room_temperature_*, cwu_temperature_*, manual_temperature, pressure, pump_co, pump_circulation, valve_position (with optional state translations for valve and pump)
+   - Switch: manual_mode, water_heater
+   - Climate: heater with preset_mode state (Summer, Winter, Off)
+
+2. **Sensor platform (sensor.py)**
+   - `_attr_has_entity_name = True` on base class
+   - Replaced `name` with `translation_key`; names from translations
+   - All sensor types use translation_key matching strings.json
+
+3. **Switch platform (switch.py)**
+   - `_attr_has_entity_name = True` on base class
+   - `_attr_translation_key` for manual_mode and water_heater
+
+4. **Climate platform (climate.py)**
+   - `_attr_has_entity_name = True`, `_attr_translation_key = "heater"`
+   - Removed hardcoded `_attr_name`; preset_mode state translations in strings.json
+
+5. **Tests**
+   - Added `tests/integration/test_entity_naming.py` asserting `has_entity_name` and `translation_key` on sensor, switch, and climate entities; device_info and shared device identifiers
+
+---
+
+## Previous Task: Manual Test Campaign Planning
 
 ### Task: Plan manual test campaign for Home Assistant integration validation
 

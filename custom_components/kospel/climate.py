@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, get_device_info
 from .coordinator import KospelDataUpdateCoordinator
 
 from .registers.enums import HeaterMode, PumpStatus
@@ -37,8 +37,11 @@ async def async_setup_entry(
 class KospelClimateEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], ClimateEntity
 ):
-    """Representation of a Kospel heater climate entity."""
+    """Representation of a Kospel heater climate entity (main device entity)."""
 
+    _attr_has_entity_name = True
+    _attr_name = None
+    _attr_translation_key = "heater"
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]
     _attr_supported_features = (
@@ -53,7 +56,7 @@ class KospelClimateEntity(
         """Initialize the climate entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.entry.entry_id}_climate"
-        self._attr_name = "Kospel Heater"
+        self._attr_device_info = get_device_info(coordinator.entry.entry_id)
 
         self._preset_mode = self._attr_preset_modes[0]
 
