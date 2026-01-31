@@ -165,4 +165,9 @@ SETTINGS_REGISTRY = {
         decode_function=decode_scaled_pressure,
         # Read-only: no encode_function
     ),
+    "room_temperature": SettingDefinition(
+        register="0b6d",
+        decode_function=decode_scaled_temp,
+        # Read-only: no encode_function
+    ),
 }
