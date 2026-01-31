@@ -1,10 +1,12 @@
 """Climate entity for Kospel integration."""
 
+import logging
 from typing import Any
 
 from homeassistant.components.climate import (
     ClimateEntity,
     ClimateEntityFeature,
+    HVACAction,
     HVACMode,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -16,46 +18,10 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 from .coordinator import KospelDataUpdateCoordinator
 
-from .registers.enums import HeaterMode
+from .registers.enums import HeaterMode, PumpStatus
 from .controller.api import HeaterController
 
-
-def _map_heater_mode_to_hvac_mode(heater_mode: HeaterMode) -> HVACMode:
-    """Map HeaterMode enum to HVACMode."""
-    mapping = {
-        HeaterMode.OFF: HVACMode.OFF,
-        HeaterMode.WINTER: HVACMode.HEAT,
-        HeaterMode.SUMMER: HVACMode.HEAT,  # Summer mode still provides heat (water only)
-    }
-    return mapping.get(heater_mode, HVACMode.OFF)
-
-
-def _map_hvac_mode_to_heater_mode(hvac_mode: HVACMode) -> HeaterMode:
-    """Map HVACMode to HeaterMode enum."""
-    if hvac_mode == HVACMode.OFF:
-        return HeaterMode.OFF
-    # Default to WINTER for HEAT mode (preset can override)
-    return HeaterMode.WINTER
-
-
-def _map_heater_mode_to_preset(heater_mode: HeaterMode) -> str:
-    """Map HeaterMode enum to preset mode string."""
-    mapping = {
-        HeaterMode.OFF: "off",
-        HeaterMode.WINTER: "winter",
-        HeaterMode.SUMMER: "summer",
-    }
-    return mapping.get(heater_mode, "off")
-
-
-def _map_preset_to_heater_mode(preset: str) -> HeaterMode:
-    """Map preset mode string to HeaterMode enum."""
-    mapping = {
-        "off": HeaterMode.OFF,
-        "winter": HeaterMode.WINTER,
-        "summer": HeaterMode.SUMMER,
-    }
-    return mapping.get(preset, HeaterMode.OFF)
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -76,9 +42,12 @@ class KospelClimateEntity(
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]
     _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
     )
-    _attr_preset_modes = ["winter", "summer", "off"]
+    _attr_preset_modes = [mode.value for mode in HeaterMode]
 
     def __init__(self, coordinator: KospelDataUpdateCoordinator) -> None:
         """Initialize the climate entity."""
@@ -86,12 +55,20 @@ class KospelClimateEntity(
         self._attr_unique_id = f"{coordinator.entry.entry_id}_climate"
         self._attr_name = "Kospel Heater"
 
+        self._preset_mode = self._attr_preset_modes[0]
+
+    @property
+    def _heater_mode(self) -> HeaterMode:
+        """Current heater mode from the controller."""
+        controller: HeaterController = self.coordinator.data
+        return getattr(controller, "heater_mode", HeaterMode.OFF)
+
     @property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
         controller: HeaterController = self.coordinator.data
-        # Use room temperature comfort as current temperature
-        return getattr(controller, "room_temperature_comfort", None)
+        # Use room temperature sensor (register 0b6d) as current temperature
+        return getattr(controller, "room_temperature", None)
 
     @property
     def target_temperature(self) -> float | None:
@@ -101,26 +78,39 @@ class KospelClimateEntity(
 
     @property
     def hvac_mode(self) -> HVACMode:
-        """Return the current HVAC mode."""
+        """Current HVAC mode is based on the heater mode (represented in preset)."""
+        return HVACMode.HEAT if self._heater_mode != HeaterMode.OFF else HVACMode.OFF
+
+    @property
+    def hvac_action(self) -> HVACAction:
+        """HVAC action is based on whether or not CO pump is running"""
         controller: HeaterController = self.coordinator.data
-        heater_mode = getattr(controller, "heater_mode", None)
-        if heater_mode is None:
-            return HVACMode.OFF
-        return _map_heater_mode_to_hvac_mode(heater_mode)
+        return (
+            HVACAction.HEATING
+            if getattr(controller, "is_pump_co_running", PumpStatus.IDLE)
+            == PumpStatus.RUNNING
+            else HVACAction.OFF
+        )
 
     @property
     def preset_mode(self) -> str | None:
-        """Return the current preset mode."""
-        controller: HeaterController = self.coordinator.data
-        heater_mode = getattr(controller, "heater_mode", None)
-        if heater_mode is None:
-            return "off"
-        return _map_heater_mode_to_preset(heater_mode)
+        """Current preset mode is the heater mode."""
+        return self._heater_mode.value
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
         return self.coordinator.last_update_success
+
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set new target HVAC mode."""
+        _LOGGER.debug("Setting HVAC mode to %s", hvac_mode)
+        controller: HeaterController = self.coordinator.data
+
+        controller.heater_mode = (
+            HeaterMode.OFF if hvac_mode == HVACMode.OFF else HeaterMode.WINTER
+        )
+        await controller.save()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -131,33 +121,12 @@ class KospelClimateEntity(
             await controller.save()
             await self.coordinator.async_request_refresh()
 
-    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """Set new target HVAC mode."""
-        controller: HeaterController = self.coordinator.data
-
-        if hvac_mode == HVACMode.OFF:
-            heater_mode = HeaterMode.OFF
-        elif hvac_mode == HVACMode.HEAT:
-            # If current preset is "off", default to "winter"
-            current_preset = self.preset_mode
-            if current_preset == "off":
-                heater_mode = HeaterMode.WINTER
-            else:
-                # Preserve current preset (winter or summer)
-                heater_mode = _map_preset_to_heater_mode(current_preset)
-        else:
-            # Default fallback
-            heater_mode = _map_hvac_mode_to_heater_mode(hvac_mode)
-
-        controller.heater_mode = heater_mode
-        await controller.save()
-        await self.coordinator.async_request_refresh()
-
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
+        _LOGGER.debug("Setting preset mode to %s", preset_mode)
         controller: HeaterController = self.coordinator.data
-        heater_mode = _map_preset_to_heater_mode(preset_mode)
-        controller.heater_mode = heater_mode
+        controller.heater_mode = HeaterMode(preset_mode)
+
         await controller.save()
         await self.coordinator.async_request_refresh()
 
