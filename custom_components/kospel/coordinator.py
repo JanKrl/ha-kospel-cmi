@@ -32,7 +32,7 @@ class KospelDataUpdateCoordinator(DataUpdateCoordinator[HeaterController]):
             _LOGGER,
             name=DOMAIN,
             update_interval=SCAN_INTERVAL,
-            always_update=False,
+            always_update=True,
         )
         self.entry = entry
         self.session = session
@@ -40,6 +40,11 @@ class KospelDataUpdateCoordinator(DataUpdateCoordinator[HeaterController]):
         self._simulation_mode = entry.data.get(
             CONF_SIMULATION_MODE, is_simulation_mode()
         )
+
+    # async def _async_setup(self) -> None:
+    #     """Setup the coordinator."""
+    #     await self.heater_controller.refresh()
+    #     return self.heater_controller
 
     async def _async_update_data(self) -> HeaterController:
         """Fetch data from the heater controller.
