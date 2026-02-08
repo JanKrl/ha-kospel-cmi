@@ -14,7 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info
 from .coordinator import KospelDataUpdateCoordinator
 
-from .controller.api import HeaterController
+from kospel_cmi.controller.api import HeaterController
 
 
 async def async_setup_entry(

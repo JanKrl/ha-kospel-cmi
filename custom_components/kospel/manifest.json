@@ -3,12 +3,14 @@
   "name": "Kospel Electric Heaters",
   "version": "0.1.0",
   "config_flow": true,
-  "documentation": "https://github.com/yourusername/hass-jupyter",
-  "issue_tracker": "https://github.com/yourusername/hass-jupyter/issues",
+  "documentation": "https://github.com/JanKrl/ha-kospel-cmi",
+  "issue_tracker": "https://github.com/JanKrl/ha-kospel-cmi/issues",
   "dependencies": ["http"],
-  "requirements": ["aiohttp>=3.13.3"],
-  "codeowners": ["@yourusername"],
+  "requirements": [
+    "aiohttp>=3.13.3",
+    "kospel-cmi-lib==0.1.0a3"
+  ],
+  "codeowners": ["@JanKrl"],
   "integration_type": "hub",
   "iot_class": "local_polling"
 }
-

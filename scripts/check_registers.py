@@ -11,10 +11,11 @@ Usage:
 import asyncio
 import aiohttp
 from typing import Dict, List, Tuple, Optional, Any
-import api
-from registers.registry import SETTINGS_REGISTRY
-from registers.enums import HeaterMode, ValvePosition
-from registers.utils import reg_to_int, reg_address_to_int
+
+from kospel_cmi.kospel.api import read_registers
+from kospel_cmi.controller.registry import SETTINGS_REGISTRY
+from kospel_cmi.registers.enums import HeaterMode, ValvePosition
+from kospel_cmi.registers.utils import reg_to_int, reg_address_to_int
 from logging_config import setup_logging, get_logger
 
 logger = get_logger("check_registers")
@@ -164,7 +165,7 @@ async def main():
 
     async with aiohttp.ClientSession() as session:
         logger.debug(f"Reading {REGISTER_COUNT} registers starting from 0b00")
-        all_registers = await api.read_registers(
+        all_registers = await read_registers(
             session, API_BASE_URL, "0b00", REGISTER_COUNT
         )
 

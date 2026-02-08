@@ -1,6 +1,7 @@
 """The Kospel Heater integration."""
 
 import logging
+from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -11,12 +12,16 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import (
     DOMAIN,
+    CONF_BACKEND_TYPE,
     CONF_HEATER_IP,
     CONF_DEVICE_ID,
-    CONF_SIMULATION_MODE,
+    BACKEND_TYPE_HTTP,
+    BACKEND_TYPE_YAML,
+    get_yaml_state_file_path,
 )
 from .coordinator import KospelDataUpdateCoordinator
-from .controller.api import HeaterController
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,48 +37,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Kospel from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Get simulation mode from config entry (defaults to False if not set)
-    simulation_mode = entry.data.get(CONF_SIMULATION_MODE, False)
+    backend_type = entry.data.get(CONF_BACKEND_TYPE, BACKEND_TYPE_HTTP)
+    session: aiohttp.ClientSession | None = None
+    backend: HttpRegisterBackend | YamlRegisterBackend
 
-    # Use placeholder IP/device ID if in simulation mode
-    if simulation_mode:
-        heater_ip = entry.data.get(CONF_HEATER_IP, "127.0.0.1")
-        device_id = entry.data.get(CONF_DEVICE_ID, "65")
-        _LOGGER.info("Kospel integration starting in simulation mode")
+    if backend_type == BACKEND_TYPE_YAML:
+        integration_dir = Path(__file__).resolve().parent
+        state_file_path = get_yaml_state_file_path(integration_dir)
+        state_file_path.parent.mkdir(parents=True, exist_ok=True)
+        backend = YamlRegisterBackend(state_file=str(state_file_path))
+        _LOGGER.info(
+            "Kospel integration using YAML backend: %s",
+            state_file_path,
+        )
     else:
         heater_ip = entry.data[CONF_HEATER_IP]
         device_id = entry.data[CONF_DEVICE_ID]
-
-    api_base_url = f"http://{heater_ip}/api/dev/{device_id}"
-
-    # Create aiohttp session
-    session = aiohttp.ClientSession()
+        api_base_url = f"http://{heater_ip}/api/dev/{device_id}"
+        session = aiohttp.ClientSession()
+        backend = HttpRegisterBackend(session, api_base_url)
 
     try:
-        # Create HeaterController instance with simulation_mode parameter
-        heater_controller = HeaterController(
-            session, api_base_url, simulation_mode=simulation_mode
-        )
-
-        # Create coordinator
-        coordinator = KospelDataUpdateCoordinator(
-            hass, entry, session, heater_controller
-        )
-
-        # Store coordinator in hass.data
+        heater_controller = HeaterController(backend=backend)
+        coordinator = KospelDataUpdateCoordinator(hass, entry, heater_controller)
         hass.data[DOMAIN][entry.entry_id] = coordinator
-
-        # Fetch initial data so we have data when entities subscribe
         await coordinator.async_config_entry_first_refresh()
-
     except Exception as err:
-        await session.close()
+        if session is not None:
+            await session.close()
         _LOGGER.error("Error setting up Kospel integration: %s", err)
         raise ConfigEntryNotReady from err
 
-    # Forward the config entry to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
     return True
 
 
@@ -83,7 +78,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if unload_ok:
         coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-        await coordinator.session.close()
+        await coordinator.heater_controller.aclose()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok

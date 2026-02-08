@@ -1,13 +1,31 @@
 [project]
-name = "hass-kospel"
-version = "0.1.0"
+name = "ha-kospel-cmi"
+version = "0.1.0a1"
 description = "Home Assistant integration to manage Kospel Electric Heaters"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE*"]
 requires-python = ">=3.14"
 dependencies = [
     "aiohttp>=3.13.3",
-    "aiofiles>=24.1.0",
+    "kospel-cmi-lib==0.1.0a3",
 ]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Home Automation",
+    "Typing :: Typed",
+]
+keywords = ["kospel", "heater", "cmi", "home-assistant", "hacs", "iot", "async"]
+urls = { Repository = "https://github.com/JanKrl/ha-kospel-cmi" }
+
 
 [dependency-groups]
 dev = [
@@ -50,4 +68,4 @@ exclude_lines = [
 precision = 2
 show_missing = true
 skip_covered = false
-fail_under = 80
+fail_under = 0

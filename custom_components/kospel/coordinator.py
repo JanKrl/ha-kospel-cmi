@@ -2,16 +2,13 @@
 
 import logging
 
-import aiohttp
-
-from .controller.api import HeaterController
-from .kospel.simulator import is_simulation_mode
+from kospel_cmi.controller.api import HeaterController
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, SCAN_INTERVAL, CONF_SIMULATION_MODE
+from .const import DOMAIN, SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,10 +20,15 @@ class KospelDataUpdateCoordinator(DataUpdateCoordinator[HeaterController]):
         self,
         hass: HomeAssistant,
         entry: ConfigEntry,
-        session: aiohttp.ClientSession,
         heater_controller: HeaterController,
     ) -> None:
-        """Initialize the coordinator."""
+        """Initialize the coordinator.
+
+        Args:
+            hass: Home Assistant instance.
+            entry: Config entry for this integration.
+            heater_controller: HeaterController (backed by HTTP or YAML backend).
+        """
         super().__init__(
             hass,
             _LOGGER,
@@ -35,22 +37,13 @@ class KospelDataUpdateCoordinator(DataUpdateCoordinator[HeaterController]):
             always_update=True,
         )
         self.entry = entry
-        self.session = session
         self.heater_controller = heater_controller
-        self._simulation_mode = entry.data.get(
-            CONF_SIMULATION_MODE, is_simulation_mode()
-        )
-
-    # async def _async_setup(self) -> None:
-    #     """Setup the coordinator."""
-    #     await self.heater_controller.refresh()
-    #     return self.heater_controller
 
     async def _async_update_data(self) -> HeaterController:
         """Fetch data from the heater controller.
 
         Returns:
-            HeaterController instance (entities access settings via coordinator.data.property_name)
+            HeaterController instance (entities access settings via coordinator.data).
         """
         try:
             await self.heater_controller.refresh()

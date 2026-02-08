@@ -2,9 +2,85 @@
 
 This document tracks current development status, progress, and any issues encountered.
 
-Last Updated: January 2026 (Device Registration Implemented)
+Last Updated: February 2026 (HACS/GitHub preparation, kospel-cmi-lib 0.1.0a3)
 
-## Current Task: Device Registration
+## Last Task: HACS and GitHub repository preparation
+
+### Task: Prepare project for GitHub publish and HACS installation
+
+**Status**: **COMPLETED**
+
+**Rationale**: Repository will be published at `https://github.com/JanKrl/ha-kospel-cmi` and installable via HACS. pyproject.toml already had Repository URL and metadata; manifest and docs were updated for HACS and correct repo links.
+
+### Completed Items
+
+1. Added **hacs.json** in repo root: name, `content_in_root: false`, `homeassistant: "2024.1.0"`, `persistent_directory: "data"` (keeps YAML state on upgrade).
+2. Updated **manifest.json**: documentation and issue_tracker URLs to `https://github.com/JanKrl/ha-kospel-cmi`, codeowners to `@JanKrl`; formatted for readability.
+3. Updated **README.md**: License section (Apache-2.0, link to LICENSE); added "Installation (HACS)" with steps to add custom repo and install.
+4. Remaining steps are on GitHub (description, topics, releases) and optional [home-assistant/brands](https://github.com/home-assistant/brands) submission for default store.
+
+**Note**: In pyproject.toml, `requires-python = ">=3.14"` may be intentional; Home Assistant currently runs on 3.11/3.12. Consider `>=3.11` if the package is used in HA-only contexts.
+
+---
+
+## Previous Task: kospel-cmi-lib 0.1.0a3 and resource lifecycle
+
+### Task: Use kospel-cmi-lib 0.1.0a3; adopt HeaterController.aclose() for unload
+
+**Status**: **COMPLETED**
+
+**Rationale**: [kospel-cmi-lib 0.1.0a3](https://pypi.org/project/kospel-cmi-lib/) adds a public resource lifecycle API (PR #3): `HeaterController.aclose()` and async context manager. The integration was updated to call `await coordinator.heater_controller.aclose()` on unload instead of the previous workaround (accessing `_backend._session`). Dependency pinned to `kospel-cmi-lib==0.1.0a3`.
+
+### Completed Items
+
+1. Bumped `kospel-cmi-lib==0.1.0a3` in pyproject.toml and manifest.json
+2. Replaced unload workaround with `await coordinator.heater_controller.aclose()`
+3. Updated docs (technical.md, status.md) to reference 0.1.0a3
+
+---
+
+## Previous Task: kospel-cmi-lib 0.1.0a2 and configurable backend
+
+### Task: Use kospel-cmi-lib 0.1.0a2 with backend-based API and config flow backend choice
+
+**Status**: **COMPLETED**
+
+**Rationale**: [kospel-cmi-lib 0.1.0a2](https://pypi.org/project/kospel-cmi-lib/0.1.0a2/) uses a backend-based API: `HeaterController(backend=backend)` with either `HttpRegisterBackend(session, api_base_url)` or `YamlRegisterBackend(state_file=...)`. Home Assistant requires an explicit version for pre-release packages, so the integration pins the library. During configuration, users choose between HTTP (real device, URL from IP + device ID) or YAML (file-based, for development; state at `custom_components/kospel/data/state.yaml`).
+
+### Completed Items
+
+1. Pinned `kospel-cmi-lib==0.1.0a2` in pyproject.toml and manifest.json
+2. Added `CONF_BACKEND_TYPE`, `BACKEND_TYPE_HTTP`, `BACKEND_TYPE_YAML`, and `get_yaml_state_file_path()` in const.py
+3. Config flow: two-step flow (backend type → HTTP connection details or YAML info); strings.json updated
+4. Setup: __init__.py builds HttpRegisterBackend or YamlRegisterBackend from entry, creates HeaterController(backend=...); session only for HTTP; coordinator accepts optional session
+5. Created `custom_components/kospel/data/.gitkeep` for YAML state file directory
+6. Config entry migration: `async_migrate_entry` from version 1 to 2 (simulation_mode → backend_type)
+7. Tests: conftest and integration tests use HeaterController(backend=...) with HttpRegisterBackend or YamlRegisterBackend; test_mock_mode.py rewritten for YAML backend
+8. Updated main.py to use HttpRegisterBackend and HeaterController(backend=...)
+9. Documentation: status, technical, README, INSTALLATION updated for 0.1.0a2 and backend choice
+
+---
+
+## Previous Task: Migrate to kospel-cmi-lib
+
+### Task: Replace bundled Kospel communication code with external library
+
+**Status**: **COMPLETED**
+
+**Rationale**: Heater communication code (Transport, Data, Service layers) has been moved to a separate package [kospel-cmi-lib](https://pypi.org/project/kospel-cmi-lib/). This repository now focuses on the Home Assistant integration layer only.
+
+### Completed Items
+
+1. Removed bundled `kospel/`, `controller/`, `registers/` directories
+2. Added kospel-cmi-lib to pyproject.toml and manifest.json (now pinned to 0.1.0a2)
+3. Updated all integration imports to use `kospel_cmi.*`
+4. Updated main.py and scripts/check_registers.py
+5. Removed tests for library code; updated integration tests
+6. Updated documentation (README, architecture, technical, INSTALLATION, status)
+
+---
+
+## Previous Task: Device Registration
 
 ### Task: Register the electric heater as a device
 
@@ -319,9 +395,7 @@ custom_components/kospel/
 
 ### Architecture Layers
 
-- ✅ **Layer 1 (Transport)**: Complete - includes simulator implementation
-- ✅ **Layer 2 (Data/Parser)**: Complete
-- ✅ **Layer 3 (Service/Controller)**: Complete
+- ✅ **Layers 1–3 (Transport, Data, Service)**: Provided by **kospel-cmi-lib** (external package)
 - ✅ **Layer 4 (Integration/Home Assistant)**: Complete - simulation mode implementation
 
 ### Home Assistant Integration

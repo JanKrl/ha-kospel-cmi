@@ -31,25 +31,13 @@ Replace `<config>` with your actual Home Assistant configuration directory path.
 
 ### Step 3: Copy Integration Files
 
-Copy all integration files from this repository to the integration directory:
+Copy the integration directory from this repository to your Home Assistant configuration:
 
 ```bash
-# Copy entire integration directory (includes library modules)
 cp -r custom_components/kospel <config>/custom_components/
 ```
 
-Alternatively, you can copy files individually:
-
-```bash
-# Copy integration core files
-cp custom_components/kospel/*.py <config>/custom_components/kospel/
-cp custom_components/kospel/*.json <config>/custom_components/kospel/
-
-# Copy library modules (kospel/, controller/, registers/)
-cp -r custom_components/kospel/kospel <config>/custom_components/kospel/
-cp -r custom_components/kospel/controller <config>/custom_components/kospel/
-cp -r custom_components/kospel/registers <config>/custom_components/kospel/
-```
+**Note**: Home Assistant automatically installs the **kospel-cmi-lib** dependency via `manifest.json` requirements when loading the integration. No manual installation of library modules is needed.
 
 ### Step 4: Verify Directory Structure
 
@@ -66,67 +54,21 @@ Ensure your directory structure matches the following:
 ├── sensor.py
 ├── switch.py
 ├── strings.json
-├── logging_config.py # Simplified logging for HA context
-├── kospel/           # Transport layer
-│   ├── __init__.py
-│   ├── api.py
-│   └── simulator.py
-├── controller/       # Service layer
-│   ├── __init__.py
-│   ├── api.py
-│   └── registry.py
-└── registers/        # Data layer
-    ├── __init__.py
-    ├── decoders.py
-    ├── encoders.py
-    ├── enums.py
-    └── utils.py
+├── data/              # Created at runtime when using YAML backend
+│   └── state.yaml     # State file for file-based (development) backend
+└── ...
 ```
 
-## Environment Variable Setup (Simulation Mode)
+Heater communication (Transport, Data, Service layers) is provided by **kospel-cmi-lib**, which Home Assistant installs automatically.
 
-**Important**: The first iteration of this integration uses **simulation mode only**. No actual heater hardware will be accessed. The integration has been verified to work correctly in Home Assistant.
+## Configuration: HTTP or YAML backend
 
-### Setting Simulation Mode
+When you add the Kospel integration (Settings → Devices & Services → Add Integration → Kospel Electric Heaters), you choose how to connect:
 
-The integration uses the `SIMULATION_MODE` environment variable to enable simulation mode. The exact method depends on your Home Assistant installation type:
+1. **Heater (HTTP)** – Connect to a real heater. Enter the heater IP address and device ID. The URL will be `http://[IP]/api/dev/[ID]`.
+2. **File-based (development)** – Use a YAML file for state (no hardware). State is stored in the integration directory at `custom_components/kospel/data/state.yaml`. This file is created automatically when the integration runs. You can edit it to simulate different heater states.
 
-#### Home Assistant OS / Supervised
-
-Add to your `configuration.yaml`:
-
-```yaml
-system_health:
-```
-
-Then set the environment variable in the Home Assistant container/host system environment.
-
-Alternatively, set it in the Home Assistant environment before starting:
-- **Docker**: Use `-e SIMULATION_MODE=1` flag
-- **Systemd**: Add to service file: `Environment=SIMULATION_MODE=1`
-- **Shell**: `export SIMULATION_MODE=1` before starting Home Assistant
-
-#### Home Assistant Core
-
-Set as environment variable before starting Home Assistant:
-
-```bash
-export SIMULATION_MODE=1
-```
-
-Then start Home Assistant normally.
-
-### Simulation State File
-
-The simulator uses a YAML file to persist state. The default location is:
-
-```
-<config>/custom_components/kospel/data/simulation_state.yaml
-```
-
-This file is created automatically when the integration runs for the first time. The simulator will maintain heater state in this file, allowing you to test the integration without physical hardware.
-
-You can manually edit this file to simulate different heater states for testing purposes.
+Existing config entries that used the old "simulation mode" are automatically migrated to the YAML backend.
 
 ## File Locations and Logs
 
@@ -137,14 +79,14 @@ The integration files are located at:
 <config>/custom_components/kospel/
 ```
 
-### Simulator State File
+### YAML backend state file (development mode)
 
-The simulator state file is located at:
+When using the **File-based (development)** backend, the state file is located at:
 ```
-<config>/custom_components/kospel/data/simulation_state.yaml
+<config>/custom_components/kospel/data/state.yaml
 ```
 
-This file is created automatically when the integration runs. You can view and edit it to test different scenarios.
+This file is created automatically when the integration runs. You can view and edit it to test different scenarios without a physical heater.
 
 ### Home Assistant Logs
 
@@ -170,9 +112,7 @@ logger:
   default: info
   logs:
     custom_components.kospel: debug
-    kospel: debug
-    controller: debug
-    registers: debug
+    kospel_cmi: debug
 ```
 
 Then restart Home Assistant to apply the logging configuration.
@@ -231,8 +171,8 @@ When configuring the integration:
 ### Integration Loads but Shows Errors
 
 - Check Home Assistant logs for detailed error messages
-- Verify all library modules (kospel/, controller/, registers/) are copied correctly
-- Ensure Python version is 3.14 or later
+- Ensure Home Assistant can install kospel-cmi-lib (check network connectivity)
+- Ensure Python version 3.10 or later (kospel-cmi-lib requirement)
 - Check that `aiohttp>=3.13.3` is available (usually included with Home Assistant)
 
 ### Simulation Mode Not Working

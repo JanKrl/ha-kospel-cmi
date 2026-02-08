@@ -6,8 +6,9 @@ from aioresponses import aioresponses
 
 import aiohttp
 
-from controller.api import HeaterController
-from registers.enums import HeaterMode, ManualMode
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.kospel.backend import HttpRegisterBackend
+from kospel_cmi.registers.enums import HeaterMode, ManualMode
 
 
 class TestEndToEndReadWrite:
@@ -31,7 +32,8 @@ class TestEndToEndReadWrite:
             m.get(read_single_url, payload={"regs": {"0b55": registers["0b55"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
 
                 # Refresh from API
                 await controller.refresh()
@@ -66,7 +68,8 @@ class TestEndToEndReadWrite:
             m.get(read_single_url, payload={"regs": {"0b55": registers["0b55"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Modify multiple settings
@@ -98,7 +101,8 @@ class TestBatchOperations:
             m.get(read_url, payload={"regs": registers})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
 
                 # Single refresh call
                 await controller.refresh()
@@ -127,7 +131,8 @@ class TestBatchOperations:
             m.get(read_single_url, payload={"regs": {"0b55": registers["0b55"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Modify multiple settings in same register
@@ -160,7 +165,8 @@ class TestBatchOperations:
             m.get(read_url_8d, payload={"regs": {"0b8d": registers["0b8d"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Modify settings in different registers
@@ -183,7 +189,8 @@ class TestErrorRecovery:
             m.get(read_url, exception=aiohttp.ClientError("Connection error"))
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
 
                 # Refresh should handle error gracefully
                 await controller.refresh()
@@ -214,7 +221,8 @@ class TestErrorRecovery:
             m.get(read_single_url, payload={"regs": {"0b55": registers["0b55"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Modify setting
@@ -238,7 +246,8 @@ class TestErrorRecovery:
             m.get(read_url, payload={"regs": invalid_registers})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
 
                 # Should handle decode errors gracefully
                 await controller.refresh()
@@ -271,7 +280,8 @@ class TestErrorRecovery:
             m.get(read_url_8d, payload={"regs": {"0b8d": registers["0b8d"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Modify settings in different registers
@@ -304,7 +314,8 @@ class TestRegisterCaching:
             # Should NOT need to read register (using cache)
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Verify cache is populated
@@ -350,7 +361,8 @@ class TestRegisterCaching:
             m.get(read_url, payload={"regs": new_registers})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
 
                 # First refresh
                 await controller.refresh()
@@ -383,7 +395,8 @@ class TestRegisterCaching:
             m.get(read_single_url, payload={"regs": {"0b55": registers["0b55"]}})
 
             async with aiohttp.ClientSession() as session:
-                controller = HeaterController(session, api_base_url)
+                backend = HttpRegisterBackend(session, api_base_url)
+                controller = HeaterController(backend=backend)
                 await controller.refresh()
 
                 # Clear cache to force read

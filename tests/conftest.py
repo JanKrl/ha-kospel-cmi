@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock
 
 import aiohttp
 
-from custom_components.kospel.controller.api import HeaterController
-from custom_components.kospel.controller.registry import SETTINGS_REGISTRY
-from custom_components.kospel.kospel.simulator import SimulatorRegisterState
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.controller.registry import SETTINGS_REGISTRY
+from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 
 @pytest.fixture
@@ -121,28 +121,20 @@ def sample_registers_off_mode() -> Dict[str, str]:
 
 
 @pytest.fixture
-def mock_register_state(
-    mock_state_file: Path, monkeypatch: pytest.MonkeyPatch
-) -> SimulatorRegisterState:
-    """SimulatorRegisterState instance fixture with temporary file."""
-    # Set environment variable to use the temporary file
-    monkeypatch.setenv("SIMULATION_STATE_FILE", mock_state_file.name)
-    # Create a temporary data directory
-    data_dir = mock_state_file.parent / "data"
-    data_dir.mkdir(exist_ok=True)
-    state_file_path = str(data_dir / mock_state_file.name)
-
-    # Patch the SimulatorRegisterState to use our temp file
-    state = SimulatorRegisterState(state_file=state_file_path)
-    return state
+def yaml_backend_state_file(tmp_path: Path) -> Path:
+    """Path to a temporary YAML state file for YamlRegisterBackend tests."""
+    state_file = tmp_path / "state.yaml"
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    return state_file
 
 
 @pytest.fixture
 async def heater_controller(
     mock_session: AsyncMock, api_base_url: str
 ) -> HeaterController:
-    """HeaterController instance fixture."""
-    return HeaterController(mock_session, api_base_url, registry=SETTINGS_REGISTRY)
+    """HeaterController instance fixture (HTTP backend)."""
+    backend = HttpRegisterBackend(mock_session, api_base_url)
+    return HeaterController(backend=backend, registry=SETTINGS_REGISTRY)
 
 
 @pytest.fixture
@@ -152,35 +144,16 @@ async def heater_controller_with_registers(
     sample_registers: Dict[str, str],
 ) -> HeaterController:
     """HeaterController instance with pre-loaded register data."""
-    controller = HeaterController(
-        mock_session, api_base_url, registry=SETTINGS_REGISTRY
-    )
+    backend = HttpRegisterBackend(mock_session, api_base_url)
+    controller = HeaterController(backend=backend, registry=SETTINGS_REGISTRY)
     controller.from_registers(sample_registers)
     return controller
 
 
-@pytest.fixture(autouse=True)
-def reset_simulation_mode(monkeypatch: pytest.MonkeyPatch):
-    """Reset simulation mode to disabled before each test."""
-    monkeypatch.delenv("SIMULATION_MODE", raising=False)
-
-
 @pytest.fixture
-def enable_simulation_mode(monkeypatch: pytest.MonkeyPatch):
-    """Enable simulation mode for a test."""
-    monkeypatch.setenv("SIMULATION_MODE", "1")
-    return True
-
-
-@pytest.fixture
-def disable_simulation_mode(monkeypatch: pytest.MonkeyPatch):
-    """Disable simulation mode for a test."""
-    monkeypatch.delenv("SIMULATION_MODE", raising=False)
-    return False
-
-
-@pytest.fixture
-def enable_mock_mode(monkeypatch: pytest.MonkeyPatch):
-    """Alias for enable_simulation_mode for backward compatibility in tests."""
-    monkeypatch.setenv("SIMULATION_MODE", "1")
-    return True
+async def heater_controller_yaml(
+    yaml_backend_state_file: Path,
+) -> HeaterController:
+    """HeaterController instance with YAML backend (for development/mock tests)."""
+    backend = YamlRegisterBackend(state_file=str(yaml_backend_state_file))
+    return HeaterController(backend=backend, registry=SETTINGS_REGISTRY)

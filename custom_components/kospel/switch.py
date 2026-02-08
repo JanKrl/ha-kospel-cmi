@@ -11,9 +11,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info
 from .coordinator import KospelDataUpdateCoordinator
 
-# Import library modules using relative imports (modules are copied to integration directory)
-from .registers.enums import ManualMode, WaterHeaterEnabled  # type: ignore[import]
-from .controller.api import HeaterController  # type: ignore[import]
+from kospel_cmi.registers.enums import ManualMode, WaterHeaterEnabled
+from kospel_cmi.controller.api import HeaterController
 
 
 async def async_setup_entry(

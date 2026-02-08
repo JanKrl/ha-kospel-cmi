@@ -7,10 +7,21 @@
   "config": {
     "step": {
       "user": {
-        "title": "Kospel Electric Heaters Setup",
-        "description": "Configure your Kospel heater connection. In simulation mode, IP and device ID are optional.",
+        "title": "Choose connection type",
+        "description": "Select how to connect: HTTP (real device) or YAML file (development). For YAML, state is stored in {yaml_path}.",
         "data": {
-          "heater_ip": "Heater IP Address",
+          "backend_type": "Connection type"
+        },
+        "options": {
+          "option_http": "Heater (HTTP)",
+          "option_yaml": "File-based (development)"
+        }
+      },
+      "http": {
+        "title": "Heater connection",
+        "description": "Enter the heater IP address and device ID. URL will be http://[IP]/api/dev/[ID].",
+        "data": {
+          "heater_ip": "Heater IP address",
           "device_id": "Device ID"
         }
       }
@@ -18,6 +29,7 @@
     "error": {
       "cannot_connect": "Failed to connect to heater",
       "invalid_auth": "Invalid authentication",
+      "invalid_device_id": "Device ID must be between 1 and 255",
       "unknown": "Unexpected error occurred"
     },
     "abort": {

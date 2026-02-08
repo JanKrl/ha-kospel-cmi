@@ -18,8 +18,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info
 from .coordinator import KospelDataUpdateCoordinator
 
-from .registers.enums import HeaterMode, PumpStatus
-from .controller.api import HeaterController
+from kospel_cmi.registers.enums import HeaterMode, PumpStatus
+from kospel_cmi.controller.api import HeaterController
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -272,55 +272,31 @@ Decoder(Protocol[T]): ...
 
 ## Home Assistant Integration Requirements
 
-### Import Rules: Relative Imports Only
+### Import Rules: kospel-cmi-lib
 
-**Critical Requirement**: All imports within a Home Assistant custom integration **must** use relative imports (with `.` notation). Absolute imports will cause `ModuleNotFoundError` because Home Assistant loads custom integrations in an isolated namespace.
-
-**Why Relative Imports?**
-
-Home Assistant custom integrations are loaded in a special namespace (`custom_components.<domain>`). When you use absolute imports like `from kospel.api import ...`, Python looks for a top-level `kospel` module, which doesn't exist in Home Assistant's environment. Relative imports work because they reference modules relative to the current package structure.
-
-**Correct Import Patterns**:
+The integration uses **kospel-cmi-lib** for heater communication. Imports use absolute paths to the installed package:
 
 ```python
-# ✅ CORRECT: Relative imports within integration
-from .kospel.api import read_registers
-from ..registers.utils import reg_to_int
-from .controller.registry import SETTINGS_REGISTRY
-from ..logging_config import get_logger
+# ✅ CORRECT: Absolute imports from kospel-cmi-lib (installed via manifest requirements)
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.controller.registry import SETTINGS_REGISTRY
+from kospel_cmi.kospel.api import read_registers
+from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
+from kospel_cmi.registers.enums import HeaterMode, ManualMode
 
-# ❌ INCORRECT: Absolute imports (will fail in Home Assistant)
-from kospel.api import read_registers
-from registers.utils import reg_to_int
-from controller.registry import SETTINGS_REGISTRY
-from logging_config import get_logger
+# Within integration (same package): use relative imports
+from .const import DOMAIN
+from .coordinator import KospelDataUpdateCoordinator
 ```
 
-**Import Path Rules**:
+**Why Absolute Imports for kospel_cmi?**
 
-1. **Same Package**: Use single dot (`.`) for modules in the same directory
-   ```python
-   from .simulator import is_simulation_mode  # kospel/simulator.py from kospel/api.py
-   ```
+kospel-cmi-lib is installed by Home Assistant when loading the integration (via `manifest.json` requirements). It is a top-level Python package, so absolute imports work correctly. Integration modules within `custom_components/kospel/` use relative imports (`.`) for each other.
 
-2. **Parent Package**: Use double dot (`..`) to go up one level
-   ```python
-   from ..registers.utils import reg_to_int  # registers/utils.py from kospel/api.py
-   ```
-
-3. **Sibling Package**: Use `..` to go up, then specify the sibling path
-   ```python
-   from ..kospel.api import read_registers  # kospel/api.py from controller/api.py
-   ```
-
-**Files That Must Use Relative Imports**:
-
-All files within `custom_components/kospel/` and its subdirectories:
-- `custom_components/kospel/kospel/api.py`
-- `custom_components/kospel/kospel/simulator.py`
-- `custom_components/kospel/controller/api.py`
-- `custom_components/kospel/registers/*.py`
-- All other integration files
+**Files That Import from kospel_cmi**:
+- `custom_components/kospel/__init__.py`
+- `custom_components/kospel/coordinator.py`
+- `custom_components/kospel/climate.py`, `sensor.py`, `switch.py`
 
 **Common Mistakes**:
 
@@ -341,40 +317,25 @@ grep -r "^import \(kospel\|controller\|registers\|logging_config\)" custom_compo
 
 ### Integration Structure
 
-The integration must follow Home Assistant's directory structure:
+The integration follows Home Assistant's directory structure. Heater communication is provided by kospel-cmi-lib (installed via manifest requirements):
 
 ```
 custom_components/kospel/
 ├── __init__.py          # Integration entry point
-├── manifest.json        # Integration metadata
+├── manifest.json        # Integration metadata (requirements: aiohttp, kospel-cmi-lib)
 ├── config_flow.py       # Configuration UI
 ├── coordinator.py       # Data update coordinator
 ├── climate.py           # Climate entities
 ├── sensor.py            # Sensor entities
 ├── switch.py            # Switch entities
 ├── const.py             # Constants
-├── strings.json         # UI strings
-├── logging_config.py    # Logging configuration
-├── kospel/              # Transport layer (subpackage)
-│   ├── __init__.py
-│   ├── api.py
-│   └── simulator.py
-├── controller/          # Service layer (subpackage)
-│   ├── __init__.py
-│   ├── api.py
-│   └── registry.py
-└── registers/           # Data layer (subpackage)
-    ├── __init__.py
-    ├── decoders.py
-    ├── encoders.py
-    ├── enums.py
-    └── utils.py
+└── strings.json         # UI strings
 ```
 
 **Key Points**:
-- All subdirectories must have `__init__.py` files
-- All imports between these modules must be relative
-- The `manifest.json` must be valid JSON with required fields
+- Heater communication (Transport, Data, Service layers) is in **kospel-cmi-lib**
+- Integration imports from `kospel_cmi.*` (absolute imports to installed package)
+- The `manifest.json` must include `kospel-cmi-lib==0.1.0a3` in requirements (explicit version required for pre-release)
 
 ### Testing Integration Imports
 
@@ -453,8 +414,9 @@ Before deploying, test that imports work correctly:
 
 ### Runtime Dependencies
 
-- **Python**: ≥3.14 (modern type hints and features)
+- **Python**: ≥3.14 (project); kospel-cmi-lib requires ≥3.10
 - **aiohttp**: ≥3.13.3 (async HTTP client)
+- **kospel-cmi-lib**: ≥0.1.0 (heater communication - Transport, Data, Service layers)
 
 ### Development Dependencies
 

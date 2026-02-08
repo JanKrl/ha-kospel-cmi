@@ -1,12 +1,12 @@
-# Kospel Heater Control Library
+# Kospel Heater Home Assistant Integration
 
-Python library for interacting with Kospel heaters via their HTTP API. Provides high-level abstractions for reading and writing heater settings without direct bit manipulation.
+Home Assistant integration for Kospel electric heaters. Uses the [kospel-cmi-lib](https://pypi.org/project/kospel-cmi-lib/) library for heater communication via their HTTP API.
 
 ## Current Status
 
 ✅ **Home Assistant Integration Verified**: The integration has been successfully tested and verified to work in Home Assistant. The integration appears correctly in the Home Assistant UI and loads without errors.
 
-The integration currently operates in **simulation mode** for safe testing without physical hardware. All layers (Transport, Data, Service, and Integration) are complete and functional.
+During configuration you can choose **HTTP** (real heater device) or **YAML** (file-based, for development). For YAML, state is stored in `custom_components/kospel/data/state.yaml`. The integration uses [kospel-cmi-lib 0.1.0a2](https://pypi.org/project/kospel-cmi-lib/0.1.0a2/) with its backend-based API.
 
 ## Overview
 
@@ -19,20 +19,18 @@ The library abstracts away low-level bit operations and provides semantic APIs f
 
 ## Architecture
 
-The project follows a 4-layer architecture:
+The integration uses the external **kospel-cmi-lib** library for heater communication (Transport, Data, and Service layers) and provides the Home Assistant integration layer:
 
-1. **Transport Layer (Client)**: `kospel/api.py` - Handles raw async I/O with the Kospel API, manages connection, retries, and error handling. Supports simulator mode for development.
-2. **Data Layer (Parser)**: `registers/` - Interprets raw data into Python dataclasses/Pydantic models. Contains decoders, encoders, and utilities.
-3. **Service Layer (Controller)**: `controller/api.py` - Abstracts complex logic, provides high-level methods like `set_heating_curve(curve_id)`.
-4. **Integration Layer (Home Assistant)**: Home Assistant integration - Wraps the Service Layer into Home Assistant entities. ✅ **Verified working in Home Assistant**. See [INSTALLATION.md](INSTALLATION.md) for installation instructions.
+1. **Layers 1–3 (kospel-cmi-lib)**: Transport (HTTP API, simulator), Data (decoders, encoders, registers), Service (HeaterController, SETTINGS_REGISTRY)
+2. **Integration Layer (this repo)**: Home Assistant entities (climate, sensor, switch), config flow, coordinator. ✅ **Verified working in Home Assistant**. See [INSTALLATION.md](INSTALLATION.md) for installation instructions.
 
-**Note**: The first iteration uses **simulation mode only** - no actual heater hardware is accessed. The integration has been verified to work correctly in Home Assistant.
+**Note**: You can run without hardware by choosing the **YAML (file-based)** backend during setup; state is stored in the integration's `data/state.yaml`.
 
 ### Project Structure
 
 ```
-hass-jupyter/
-├── main.py                # Main application entry point (uses custom_components/kospel modules)
+home-assistant-kospel/
+├── main.py                # Standalone demo (uses kospel-cmi-lib)
 ├── logging_config.py      # Logging configuration module
 ├── custom_components/     # Home Assistant integration
 │   └── kospel/            # Kospel integration package
@@ -44,32 +42,18 @@ hass-jupyter/
 │       ├── sensor.py      # Sensor entities
 │       ├── switch.py      # Switch entities
 │       ├── const.py       # Constants
-│       ├── strings.json   # UI strings
-│       ├── logging_config.py  # Simplified logging for HA context
-│       ├── kospel/        # Transport layer
-│       │   ├── __init__.py
-│       │   ├── api.py     # HTTP API calls with simulator support
-│       │   └── simulator.py  # Simulator implementations
-│       ├── controller/    # Service layer
-│       │   ├── __init__.py
-│       │   ├── api.py     # HeaterController class
-│       │   └── registry.py  # SETTINGS_REGISTRY and SettingDefinition
-│       └── registers/     # Data layer
-│           ├── __init__.py
-│           ├── decoders.py  # Decode functions (hex → Python values)
-│           ├── encoders.py  # Encode functions (Python values → hex)
-│           ├── utils.py     # Low-level utilities (register encoding/decoding)
-│           └── enums.py     # Enums (HeaterMode, ManualMode, WaterHeaterEnabled, ValvePosition, PumpStatus)
-├── data/                  # Mock state data
-│   └── heater_mock_state.yaml
+│       └── strings.json   # UI strings
 ├── scripts/               # Utility scripts
-│   └── check_registers.py
+│   └── check_registers.py # Register discovery (uses kospel-cmi-lib)
 ├── docs/                  # Documentation
 │   ├── architecture.mermaid
+│   ├── technical.md
 │   └── status.md
 ├── README.md              # This file
 └── INSTALLATION.md        # Home Assistant installation instructions
 ```
+
+Heater communication (Transport, Data, Service layers) is provided by **kospel-cmi-lib** (installed via `manifest.json` requirements).
 
 ### System Architecture
 
@@ -118,87 +102,13 @@ hass-jupyter/
 
 ### Key Components
 
-#### 1. `registers/utils.py` - Low-Level Utilities
+The Transport, Data, and Service layers are provided by **kospel-cmi-lib**. Import from `kospel_cmi`:
 
-Low-level functions for encoding/decoding heater register formats:
-
-- **`reg_to_int(hex_val: str) -> int`**: Converts little-endian hex string to signed 16-bit integer
-  - Example: `"d700"` → 215 (bytes swapped: `"00d7"` → 0x00d7 → 215)
-- **`int_to_reg(value: int) -> str`**: Converts signed 16-bit integer to little-endian hex string
-  - Example: 215 → `"d700"` (reverse of above)
-- **`get_bit(value: int, bit_index: int) -> bool`**: Checks if bit is set (low-level utility)
-- **`set_bit(value: int, bit_index: int, state: bool) -> int`**: Sets/clears bit (low-level utility)
-- **`reg_address_to_int(address: str) -> int`**: Converts register address string to integer for sorting
-
-#### 2. `custom_components/kospel/registers/decoders.py` - Decode Functions
-
-Functions that convert hex register values to Python types:
-
-- **`decode_scaled_temp(hex_val: str, bit_index: Optional[int]) -> float`**: Decodes temperature (scaled by 10)
-  - Example: `"00e1"` (225) → 22.5°C
-- **`decode_scaled_pressure(hex_val: str) -> float`**: Decodes pressure (scaled by 100)
-  - Example: `"01f4"` (500) → 5.00 bar
-- **`decode_heater_mode(hex_val: str, bit_index: Optional[int]) -> HeaterMode`**: Decodes heater mode from bits 3 and 5
-- **`decode_map(true_value, false_value)`**: Factory function that creates a decoder mapping a boolean bit to enum values
-- **`decode_bit_boolean(hex_val: str, bit_index: Optional[int]) -> bool`**: Decodes a single bit as boolean
-
-#### 3. `custom_components/kospel/registers/encoders.py` - Encode Functions
-
-Functions that convert Python values to hex register strings:
-
-- **`encode_scaled_temp(value: float, register: str, bit_index: Optional[int], current_hex: Optional[str]) -> str`**: Encodes temperature (scaled by 10)
-- **`encode_scaled_pressure(value: float, register: str, bit_index: Optional[int], current_hex: Optional[str]) -> str`**: Encodes pressure (scaled by 100)
-- **`encode_heater_mode(value: HeaterMode, bit_index: Optional[int], current_hex: Optional[str]) -> str`**: Encodes heater mode to bits 3 and 5
-- **`encode_map(true_value, false_value)`**: Factory function that creates an encoder mapping enum values to boolean bits
-
-#### 4. `custom_components/kospel/controller/api.py` - High-Level API
-
-Main module providing a high-level API for reading and writing heater settings:
-
-**Class: `HeaterController`**
-- Constructor: `HeaterController(session, api_base_url, registry=SETTINGS_REGISTRY)`
-- Loads settings into a cached object
-- Modify multiple settings, then write all at once with `save()`
-- Two initialization methods:
-  - `refresh()`: Loads from heater via API calls (complete implementation)
-  - `from_registers(registers)`: Loads from already-fetched register data (more efficient)
-
-**Dynamic Properties:**
-- All settings from `SETTINGS_REGISTRY` are accessible as dynamic properties
-- Writable settings: `heater_mode`, `is_manual_mode_enabled`, `is_water_heater_enabled`, `manual_temperature`, etc.
-- Read-only settings: `valve_position`, `is_pump_co_running`, `is_pump_circulation_running`, `pressure`, etc.
-
-**Methods:**
-- `refresh()`: Load all settings from the heater (makes a single API call)
-- `from_registers(registers)`: Load from already-fetched register data
-- `save()`: Write all pending changes to the heater
-- `get_setting(name)`: Explicit getter for a setting
-- `set_setting(name, value)`: Explicit setter for a setting
-- `get_all_settings()`: Get all current settings
-- `print_settings()`: Display current settings
-
-#### 5. `custom_components/kospel/controller/registry.py` - Settings Registry
-
-The `SETTINGS_REGISTRY` is a central registry that maps semantic setting names to their register locations and parsing logic. It serves as the single source of truth for how settings are stored in heater registers.
-
-**SettingDefinition:**
-- `register`: Register address (e.g., `"0b55"`)
-- `decode_function`: Function to decode value from hex string
-- `encode_function`: Optional function to encode value to hex string (None for read-only)
-- `bit_index`: Optional bit index for flag-based settings
-- `is_read_only`: Derived property (True if encode_function is None)
-
-#### 6. `custom_components/kospel/kospel/api.py` - Transport Layer
-
-Low-level API functions for communicating with the heater:
-
-- **`read_register(session, api_base_url, register) -> Optional[str]`**: Read a single register
-- **`read_registers(session, api_base_url, start_register, count) -> Dict[str, str]`**: Read multiple registers in batch
-- **`write_register(session, api_base_url, register, hex_value) -> bool`**: Write a single register
-- **`write_flag_bit(session, api_base_url, register, bit_index, state) -> bool`**: Write a single flag bit (read-modify-write)
-- **`is_simulation_mode() -> bool`**: Check if simulation mode is enabled
-
-All functions support simulator mode via the `@with_simulator` decorator, which routes calls to `kospel/simulator.py` when `SIMULATION_MODE` environment variable is set.
+- **`kospel_cmi.controller.api.HeaterController`** - High-level API: `HeaterController(backend=...)`, `refresh()`, `save()`, `from_registers()`, dynamic properties for all settings
+- **`kospel_cmi.kospel.backend`** - `HttpRegisterBackend(session, api_base_url)`, `YamlRegisterBackend(state_file=...)` for transport
+- **`kospel_cmi.controller.registry.SETTINGS_REGISTRY`** - Maps setting names to register locations and decode/encode logic
+- **`kospel_cmi.kospel.api`** - `read_register`, `read_registers`, `write_register`, `write_flag_bit`
+- **`kospel_cmi.registers.enums`** - `HeaterMode`, `ManualMode`, `WaterHeaterEnabled`, `PumpStatus`, `ValvePosition`
 
 ## Heater API Protocol
 
@@ -267,21 +177,14 @@ Some registers use individual bits as flags:
 
 ### Basic Usage
 
-**Note**: The library modules (`kospel/`, `controller/`, `registers/`) are now located in `custom_components/kospel/`. When using them in `main.py` or other scripts, you need to add the path to `sys.path`:
-
 ```python
 import asyncio
 import aiohttp
 import os
-import sys
-from pathlib import Path
 from dotenv import load_dotenv
 
-# Add custom_components/kospel to path to import library modules
-sys.path.insert(0, str(Path(__file__).parent / "custom_components" / "kospel"))
-
-from controller.api import HeaterController
-from registers.enums import HeaterMode
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.registers.enums import HeaterMode
 from logging_config import setup_logging
 
 async def main():
@@ -309,8 +212,8 @@ asyncio.run(main())
 ```python
 import asyncio
 import aiohttp
-from controller.api import HeaterController
-from registers.enums import HeaterMode
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.registers.enums import HeaterMode, ManualMode
 
 async def main():
     async with aiohttp.ClientSession() as session:
@@ -334,8 +237,8 @@ asyncio.run(main())
 ```python
 import asyncio
 import aiohttp
-from controller.api import HeaterController
-from kospel.api import read_registers
+from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.kospel.api import read_registers
 
 async def main():
     async with aiohttp.ClientSession() as session:
@@ -368,7 +271,7 @@ python main.py
 ```
 
 Simulator mode:
-- Routes all API calls to `custom_components/kospel/kospel/simulator.py` implementations
+- Routes all API calls to kospel-cmi-lib simulator implementations
 - Maintains register state in memory
 - Persists state to a YAML file (default: `data/heater_mock_state.yaml`)
 - Allows testing without network connectivity
@@ -462,7 +365,7 @@ logger.critical("Critical error")
 
 ## SETTINGS_REGISTRY
 
-The `SETTINGS_REGISTRY` is a central registry in `controller/registry.py` that maps semantic setting names to their register locations and parsing logic. It serves as the single source of truth for how settings are stored in heater registers.
+The `SETTINGS_REGISTRY` is provided by **kospel-cmi-lib** (`kospel_cmi.controller.registry`). It maps semantic setting names to their register locations and parsing logic. It serves as the single source of truth for how settings are stored in heater registers.
 
 ### Purpose
 
@@ -574,7 +477,7 @@ See `controller/registry.py` for the complete list.
    )
    ```
 
-2. **Create decode function** in `registers/decoders.py` (if needed):
+2. **Create decode function** in kospel-cmi-lib's `registers/decoders.py` (if needed):
    ```python
    def decode_new_setting_from_reg(reg_hex: str, bit_index: Optional[int] = None) -> Optional[Type]:
        """Decode the setting value from a register hex string."""
@@ -590,7 +493,7 @@ See `controller/registry.py` for the complete list.
        # Use int_to_reg for full register values
    ```
 
-4. **Add enum** in `registers/enums.py` (if needed):
+4. **Add enum** in kospel-cmi-lib's `registers/enums.py` (if needed):
    ```python
    class NewSetting(Enum):
        VALUE1 = "Value 1"
@@ -641,7 +544,7 @@ See `controller/registry.py` for the complete list.
 
 ## Testing
 
-This project includes comprehensive test coverage following TDD principles. The test suite covers all three architecture layers with unit tests, integration tests, and coverage reporting.
+This project includes integration tests that verify the Home Assistant integration works with kospel-cmi-lib. Unit tests for the library layers are in the kospel-cmi-lib repository.
 
 ### Running Tests
 
@@ -655,16 +558,16 @@ Or to sync only the dev group:
 uv sync --extra dev
 ```
 
-**Note:** After syncing, you can run tests with `uv run pytest` or activate the virtual environment with `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows) and use `pytest` directly.
+**Note:** After syncing, run tests with `uv run python -m pytest tests/`.
 
 **Run all tests:**
 ```bash
-uv run pytest
+uv run python -m pytest tests/
 ```
 
 **Run tests with verbose output:**
 ```bash
-uv run pytest -v
+uv run python -m pytest tests/ -v
 ```
 
 **Run specific test modules:**
@@ -683,7 +586,7 @@ uv run pytest -k "test_heater_controller"  # Run HeaterController tests
 
 **Run tests with coverage:**
 ```bash
-uv run pytest --cov=kospel --cov=registers --cov=controller --cov-report=html --cov-report=term
+uv run python -m pytest tests/ --cov=custom_components.kospel --cov-report=html --cov-report=term
 ```
 
 **View HTML coverage report:**
@@ -697,24 +600,17 @@ xdg-open htmlcov/index.html  # Linux
 
 ```
 tests/
-├── conftest.py                    # Shared fixtures and test configuration
-├── registers/                     # Data layer tests
-│   ├── test_utils.py             # Register encoding/decoding tests
-│   ├── test_decoders.py          # Decoder function tests
-│   └── test_encoders.py          # Encoder function tests
-├── kospel/                       # Transport layer tests
-│   ├── test_api.py               # HTTP API client tests
-│   └── test_simulator.py         # Simulator implementation tests
-├── controller/                    # Service layer tests
-│   └── test_api.py               # HeaterController tests
+├── conftest.py                    # Shared fixtures (uses kospel_cmi)
 └── integration/                   # Integration tests
-    ├── test_api_communication.py # End-to-end API tests
+    ├── test_api_communication.py # End-to-end API tests (HeaterController)
     └── test_mock_mode.py         # Simulator mode integration tests
 ```
 
+Tests for Transport, Data, and Service layers are in the **kospel-cmi-lib** repository.
+
 ### Test Coverage
 
-The project aims for ≥80% code coverage across all layers. Coverage reports are generated using `pytest-cov` and include:
+Coverage reports are generated using `pytest-cov` and include:
 
 - **Unit Tests**: Test individual functions and methods in isolation
 - **Integration Tests**: Test cross-layer functionality and end-to-end workflows
@@ -753,9 +649,8 @@ Tests can be integrated into CI/CD pipelines:
   
 - name: Run tests
   run: |
-    uv sync --group dev
-    uv run pytest --cov=kospel --cov=registers --cov=controller --cov-report=xml
-    uv run pytest --cov-report=term --cov-report=html
+    uv sync --all-groups
+    uv run python -m pytest tests/ --cov=custom_components.kospel --cov-report=xml --cov-report=term
 ```
 
 ## Troubleshooting
@@ -789,6 +684,20 @@ This library was reverse-engineered from JavaScript code used in the heater's we
 - Temperature and pressure values are scaled for precision
 - Read-Modify-Write pattern is required for setting flag bits
 
+## Installation (HACS)
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=JanKrl&repository=ha-kospel-cmi&category=integration)
+
+If your Home Assistant instance is [linked to My Home Assistant](https://my.home-assistant.io/), click the badge above to open this repository in HACS and install from there. Otherwise add the repo manually:
+
+1. In HACS go to **Integrations** → **⋮** → **Custom repositories**.
+2. Add repository URL: `https://github.com/JanKrl/ha-kospel-cmi`
+3. Select category **Integration** and click **Add**.
+4. Search for **Kospel Electric Heaters**, install, then restart Home Assistant.
+5. Add the integration via **Settings** → **Devices & services** → **Add integration** → **Kospel Electric Heaters**.
+
+See [INSTALLATION.md](INSTALLATION.md) for manual installation and configuration details.
+
 ## License
 
-[Add your license here]
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE) for the full text.

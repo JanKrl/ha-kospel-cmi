@@ -1,0 +1,81 @@
+2026-01-06 11:32:55 - hak.main - WARNING - MOCK MODE: ON
+2026-01-06 11:32:55 - hak.api - DEBUG - Routing read_register to mock implementation
+2026-01-06 11:32:55 - hak.registers.mock - DEBUG - [MOCK] READ register 0b04: 0101 (257)
+2026-01-06 11:32:55 - hak.api - DEBUG - Routing read_registers to mock implementation
+2026-01-06 11:32:55 - hak.registers.mock - DEBUG - [MOCK] READ registers 0b00 to 0b01 (2 registers)
+2026-01-06 11:32:55 - hak.api - DEBUG - Routing write_register to mock implementation
+2026-01-06 11:32:55 - hak.registers.mock - DEBUG - [MOCK] WRITE register 0b04: 0101 → 0101 (257 → 257)
+2026-01-06 17:07:28 - hak.main - WARNING - MOCK MODE: ON
+2026-01-06 17:07:28 - hak.api - DEBUG - Routing read_register to mock implementation
+2026-01-06 17:07:28 - hak.registers.mock - DEBUG - [MOCK] READ register 0b04: 0101 (257)
+2026-01-06 17:07:28 - hak.api - DEBUG - Routing read_registers to mock implementation
+2026-01-06 17:07:28 - hak.registers.mock - DEBUG - [MOCK] READ registers 0b00 to 0b01 (2 registers)
+2026-01-06 17:07:28 - hak.api - DEBUG - Routing write_register to mock implementation
+2026-01-06 17:07:28 - hak.registers.mock - DEBUG - [MOCK] WRITE register 0b04: 0101 → 0101 (257 → 257)
+2026-01-06 17:08:53 - hak.main - WARNING - MOCK MODE: ON
+2026-01-06 17:08:53 - hak.heater - INFO - Refreshing heater settings from API
+2026-01-06 17:08:53 - hak.api - DEBUG - Routing read_registers to mock implementation
+2026-01-06 17:08:56 - hak.registers.mock - DEBUG - [MOCK] READ registers 0b00 to 0bff (256 registers)
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoding settings from 256 registers
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded heater_mode from register 0b55: HeaterMode.OFF
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded is_manual_mode_enabled from register 0b55: ManualMode.DISABLED
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded is_water_heater_enabled from register 0b55: WaterHeaterEnabled.DISABLED
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded is_pump_co_running from register 0b51: False
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded is_pump_circulation_running from register 0b51: False
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded valve_position from register 0b51: ValvePosition.DHW
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded manual_temperature from register 0b8d: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded room_temperature_economy from register 0b68: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded room_temperature_comfort from register 0b6a: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded room_temperature_comfort_plus from register 0b6b: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded room_temperature_comfort_minus from register 0b69: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded cwu_temperature_economy from register 0b66: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded cwu_temperature_comfort from register 0b67: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded pressure from register 0b8a: 0.0
+2026-01-06 17:08:56 - hak.heater - DEBUG - Decoded 14 settings
+2026-01-06 17:08:56 - hak.heater - INFO - Heater settings refreshed successfully
+2026-01-06 17:29:45 - hak.main - WARNING - MOCK MODE: ON
+2026-01-06 17:29:45 - hak.controller.api - INFO - Refreshing heater settings from API
+2026-01-06 17:29:45 - hak.kospel.api - DEBUG - Routing read_registers to mock implementation
+2026-01-06 17:29:52 - hak.registers.mock - DEBUG - [MOCK] READ registers 0b00 to 0bff (256 registers)
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoding settings from 256 registers
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded heater_mode from register 0b55: HeaterMode.OFF
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded is_manual_mode_enabled from register 0b55: ManualMode.DISABLED
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded is_water_heater_enabled from register 0b55: WaterHeaterEnabled.DISABLED
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded is_pump_co_running from register 0b51: PumpStatus.IDLE
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded is_pump_circulation_running from register 0b51: PumpStatus.IDLE
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded valve_position from register 0b51: ValvePosition.DHW
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded manual_temperature from register 0b8d: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded room_temperature_economy from register 0b68: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded room_temperature_comfort from register 0b6a: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded room_temperature_comfort_plus from register 0b6b: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded room_temperature_comfort_minus from register 0b69: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded cwu_temperature_economy from register 0b66: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded cwu_temperature_comfort from register 0b67: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded pressure from register 0b8a: 0.0
+2026-01-06 17:29:52 - hak.controller.api - DEBUG - Decoded 14 settings
+2026-01-06 17:29:52 - hak.controller.api - INFO - Heater settings refreshed successfully
+2026-01-06 17:33:09 - hass-kospel.main - WARNING - MOCK MODE: ON
+2026-01-06 17:33:09 - hass-kospel.controller.api - INFO - Refreshing heater settings from API
+2026-01-06 17:33:09 - hass-kospel.kospel.api - DEBUG - Routing read_registers to mock implementation
+2026-01-06 17:33:15 - hass-kospel.kospel.mock - DEBUG - [MOCK] READ registers 0b00 to 0bff (256 registers)
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoding settings from 256 registers
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded heater_mode from register 0b55: HeaterMode.OFF
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded is_manual_mode_enabled from register 0b55: ManualMode.DISABLED
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded is_water_heater_enabled from register 0b55: WaterHeaterEnabled.DISABLED
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded is_pump_co_running from register 0b51: PumpStatus.IDLE
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded is_pump_circulation_running from register 0b51: PumpStatus.IDLE
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded valve_position from register 0b51: ValvePosition.DHW
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded manual_temperature from register 0b8d: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded room_temperature_economy from register 0b68: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded room_temperature_comfort from register 0b6a: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded room_temperature_comfort_plus from register 0b6b: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded room_temperature_comfort_minus from register 0b69: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded cwu_temperature_economy from register 0b66: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded cwu_temperature_comfort from register 0b67: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded pressure from register 0b8a: 0.0
+2026-01-06 17:33:15 - hass-kospel.controller.api - DEBUG - Decoded 14 settings
+2026-01-06 17:33:15 - hass-kospel.controller.api - INFO - Heater settings refreshed successfully
+2026-01-11 12:41:02 - test.module - DEBUG - DEBUG message
+2026-01-11 12:41:02 - test.module - INFO - INFO message
+2026-01-11 12:41:02 - test.module - WARNING - WARNING message
+2026-01-11 12:41:02 - test.module - ERROR - ERROR message
