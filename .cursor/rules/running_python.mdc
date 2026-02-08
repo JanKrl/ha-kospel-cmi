@@ -1,4 +1,0 @@
----
-alwaysApply: true
----
-The project uses `uv` for dependency and environment management. Instead of `python3 ...` or `python ...` use `uv run ...`
