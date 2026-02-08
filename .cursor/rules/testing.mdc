@@ -1,9 +1,0 @@
----
-alwaysApply: true
----
-# Testing Strategy (TDD)
-
-**You must enforce a testing culture.**
-- **Requirement:** Do not output implementation code without accompanying tests (using `pytest`).
-- **Mocking:** Low level functions calling external API must be mockable, so that the program can work in dummy mode with no actual connectivity.
-- **Coverage:** Ensure both happy paths and edge cases (timeouts, malformed data) are tested.
