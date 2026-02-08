@@ -5,7 +5,7 @@ description = "Home Assistant integration to manage Kospel Electric Heaters"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE*"]
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.13.3",
     "kospel-cmi-lib==0.1.0a3",
