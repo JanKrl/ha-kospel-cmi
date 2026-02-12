@@ -114,6 +114,7 @@ class KospelClimateEntity(
             HeaterMode.OFF if hvac_mode == HVACMode.OFF else HeaterMode.WINTER
         )
         await controller.save()
+        await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
