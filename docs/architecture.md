@@ -1,3 +1,8 @@
+# Architecture
+
+System architecture for the Kospel Heater Home Assistant integration.
+
+```mermaid
 graph TB
     subgraph Integration["custom_components/kospel (this repo)"]
         HA[Home Assistant Entities]
@@ -42,3 +47,4 @@ graph TB
 
     Main --> HeaterController
     Main --> Logging
+```
