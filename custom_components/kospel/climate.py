@@ -114,6 +114,8 @@ class KospelClimateEntity(
             HeaterMode.OFF if hvac_mode == HVACMode.OFF else HeaterMode.WINTER
         )
         await controller.save()
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -122,6 +124,7 @@ class KospelClimateEntity(
         if temperature is not None:
             controller.manual_temperature = temperature
             await controller.save()
+            self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -131,6 +134,7 @@ class KospelClimateEntity(
         controller.heater_mode = HeaterMode(preset_mode)
 
         await controller.save()
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:

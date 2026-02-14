@@ -81,6 +81,7 @@ class KospelManualModeSwitch(KospelSwitchEntity):
         controller: HeaterController = self.coordinator.data
         controller.is_manual_mode_enabled = ManualMode.ENABLED
         await controller.save()
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -88,6 +89,7 @@ class KospelManualModeSwitch(KospelSwitchEntity):
         controller: HeaterController = self.coordinator.data
         controller.is_manual_mode_enabled = ManualMode.DISABLED
         await controller.save()
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:
@@ -121,6 +123,7 @@ class KospelWaterHeaterSwitch(KospelSwitchEntity):
         controller: HeaterController = self.coordinator.data
         controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
         await controller.save()
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -128,6 +131,7 @@ class KospelWaterHeaterSwitch(KospelSwitchEntity):
         controller: HeaterController = self.coordinator.data
         controller.is_water_heater_enabled = WaterHeaterEnabled.DISABLED
         await controller.save()
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:
