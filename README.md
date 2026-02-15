@@ -29,6 +29,18 @@ When configuring, choose:
 
 See [INSTALLATION.md](INSTALLATION.md) for manual installation and troubleshooting.
 
+## Roadmap
+
+### `v1.0.0` Engine & Explorer
+
+1. Local control - basic device functions can be operated using the library
+2. Robust interface - an interface for 3rd party tools (i.e., Home Assistant integration)
+3. Reverse-engineering toolset - ease integration with other device types
+
+### `v2.0.0` Plug & Play for Kospel ecosystem
+
+...
+
 ## Requirements
 
 - Home Assistant 2024.1 or later
