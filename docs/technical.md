@@ -21,8 +21,13 @@ The integration uses **kospel-cmi-lib** for heater communication. Imports use ab
 ```python
 # Correct: Absolute imports from kospel-cmi-lib (installed via manifest requirements)
 from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.controller.registry import load_registry
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 from kospel_cmi.registers.enums import HeaterMode, ManualMode
+
+# Registry: load by name, pass to HeaterController
+registry = load_registry("kospel_cmi_standard")
+controller = HeaterController(backend=..., registry=registry)
 
 # Within integration: use relative imports
 from .const import DOMAIN

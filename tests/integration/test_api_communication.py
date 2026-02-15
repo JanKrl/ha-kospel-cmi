@@ -15,7 +15,9 @@ class TestEndToEndReadWrite:
     """Tests for full read/write cycle."""
 
     @pytest.mark.asyncio
-    async def test_end_to_end_read_write(self, api_base_url, sample_registers):
+    async def test_end_to_end_read_write(
+        self, api_base_url, sample_registers, registry
+    ):
         """Test full read/write cycle with mocked HTTP."""
         registers = sample_registers.copy()
 
@@ -33,7 +35,7 @@ class TestEndToEndReadWrite:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
 
                 # Refresh from API
                 await controller.refresh()
@@ -51,7 +53,9 @@ class TestEndToEndReadWrite:
                 assert controller.heater_mode == HeaterMode.WINTER
 
     @pytest.mark.asyncio
-    async def test_multiple_settings_change(self, api_base_url, sample_registers):
+    async def test_multiple_settings_change(
+        self, api_base_url, sample_registers, registry
+    ):
         """Test modifying multiple settings."""
         registers = sample_registers.copy()
 
@@ -69,7 +73,7 @@ class TestEndToEndReadWrite:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Modify multiple settings
@@ -86,7 +90,7 @@ class TestBatchOperations:
 
     @pytest.mark.asyncio
     async def test_single_refresh_reads_all_registers(
-        self, api_base_url, sample_registers
+        self, api_base_url, sample_registers, registry
     ):
         """Test that single refresh reads all registers."""
         registers = sample_registers.copy()
@@ -102,7 +106,7 @@ class TestBatchOperations:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
 
                 # Single refresh call
                 await controller.refresh()
@@ -113,7 +117,7 @@ class TestBatchOperations:
 
     @pytest.mark.asyncio
     async def test_multiple_settings_batched_into_single_write(
-        self, api_base_url, sample_registers
+        self, api_base_url, sample_registers, registry
     ):
         """Test that multiple setting changes are batched into single write."""
         registers = sample_registers.copy()
@@ -132,7 +136,7 @@ class TestBatchOperations:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Modify multiple settings in same register
@@ -144,7 +148,9 @@ class TestBatchOperations:
                 assert result is True
 
     @pytest.mark.asyncio
-    async def test_register_grouping_works(self, api_base_url, sample_registers):
+    async def test_register_grouping_works(
+        self, api_base_url, sample_registers, registry
+    ):
         """Test that register grouping works correctly."""
         registers = sample_registers.copy()
 
@@ -166,7 +172,7 @@ class TestBatchOperations:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Modify settings in different registers
@@ -182,7 +188,7 @@ class TestErrorRecovery:
     """Tests for error handling and recovery."""
 
     @pytest.mark.asyncio
-    async def test_network_error_during_read(self, api_base_url):
+    async def test_network_error_during_read(self, api_base_url, registry):
         """Test handling of network error during read."""
         with aioresponses() as m:
             read_url = f"{api_base_url}/0b00/256"
@@ -190,7 +196,7 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
 
                 # Refresh should handle error gracefully
                 await controller.refresh()
@@ -203,7 +209,7 @@ class TestErrorRecovery:
 
     @pytest.mark.asyncio
     async def test_network_error_during_write_preserves_pending(
-        self, api_base_url, sample_registers
+        self, api_base_url, sample_registers, registry
     ):
         """Test that network error during write preserves pending writes."""
         registers = sample_registers.copy()
@@ -222,7 +228,7 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Modify setting
@@ -237,7 +243,9 @@ class TestErrorRecovery:
                 assert len(controller._pending_writes) > 0
 
     @pytest.mark.asyncio
-    async def test_invalid_register_data_handles_gracefully(self, api_base_url):
+    async def test_invalid_register_data_handles_gracefully(
+        self, api_base_url, registry
+    ):
         """Test handling of invalid register data."""
         invalid_registers = {"0b55": "invalid"}
 
@@ -247,7 +255,7 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
 
                 # Should handle decode errors gracefully
                 await controller.refresh()
@@ -259,7 +267,9 @@ class TestErrorRecovery:
                 )
 
     @pytest.mark.asyncio
-    async def test_partial_write_failures(self, api_base_url, sample_registers):
+    async def test_partial_write_failures(
+        self, api_base_url, sample_registers, registry
+    ):
         """Test handling of partial write failures."""
         registers = sample_registers.copy()
 
@@ -281,7 +291,7 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Modify settings in different registers
@@ -298,7 +308,7 @@ class TestRegisterCaching:
 
     @pytest.mark.asyncio
     async def test_cache_used_for_subsequent_writes(
-        self, api_base_url, sample_registers
+        self, api_base_url, sample_registers, registry
     ):
         """Test that cache is used for subsequent writes to same register."""
         registers = sample_registers.copy()
@@ -315,7 +325,7 @@ class TestRegisterCaching:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Verify cache is populated
@@ -346,7 +356,9 @@ class TestRegisterCaching:
                 assert final_get_count == initial_get_count, "Save should not have made additional GET requests"
 
     @pytest.mark.asyncio
-    async def test_cache_invalidated_on_refresh(self, api_base_url, sample_registers):
+    async def test_cache_invalidated_on_refresh(
+        self, api_base_url, sample_registers, registry
+    ):
         """Test that cache is invalidated on refresh."""
         registers = sample_registers.copy()
         new_registers = registers.copy()
@@ -362,7 +374,7 @@ class TestRegisterCaching:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
 
                 # First refresh
                 await controller.refresh()
@@ -377,7 +389,7 @@ class TestRegisterCaching:
 
     @pytest.mark.asyncio
     async def test_cache_updated_after_successful_write(
-        self, api_base_url, sample_registers
+        self, api_base_url, sample_registers, registry
     ):
         """Test that cache is updated after successful write."""
         registers = sample_registers.copy()
@@ -396,7 +408,7 @@ class TestRegisterCaching:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = HeaterController(backend=backend)
+                controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
                 # Clear cache to force read

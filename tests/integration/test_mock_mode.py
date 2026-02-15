@@ -8,22 +8,22 @@ from kospel_cmi.kospel.backend import YamlRegisterBackend
 from kospel_cmi.registers.enums import HeaterMode, ManualMode
 
 
-def _controller_for_state_file(state_file: str) -> HeaterController:
+def _controller_for_state_file(state_file: str, registry: dict) -> HeaterController:
     """Create HeaterController with YamlRegisterBackend for the given state file."""
     backend = YamlRegisterBackend(state_file=state_file)
-    return HeaterController(backend=backend)
+    return HeaterController(backend=backend, registry=registry)
 
 
 class TestYamlBackendFullCycle:
     """Tests for complete cycle with YAML backend."""
 
     @pytest.mark.asyncio
-    async def test_yaml_backend_full_cycle(self, tmp_path):
+    async def test_yaml_backend_full_cycle(self, tmp_path, registry):
         """Test complete cycle with YAML backend."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
 
         await controller.refresh()
 
@@ -42,12 +42,12 @@ class TestYamlBackendFullCycle:
             assert len(loaded_state) > 0
 
     @pytest.mark.asyncio
-    async def test_state_persisted_on_write(self, tmp_path):
+    async def test_state_persisted_on_write(self, tmp_path, registry):
         """Test that write operations update YAML file."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
 
         await controller.refresh()
         controller.heater_mode = HeaterMode.WINTER
@@ -62,7 +62,7 @@ class TestYamlBackendFullCycle:
             )
 
     @pytest.mark.asyncio
-    async def test_state_loaded_on_next_run(self, tmp_path):
+    async def test_state_loaded_on_next_run(self, tmp_path, registry):
         """Test that state is loaded on next run."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +70,7 @@ class TestYamlBackendFullCycle:
         with open(state_file, "w") as f:
             yaml.dump(initial_state, f)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
         await controller.refresh()
 
         assert len(controller._settings) > 0
@@ -80,17 +80,17 @@ class TestYamlBackendFullCycle:
         )
 
     @pytest.mark.asyncio
-    async def test_state_survives_controller_recreation(self, tmp_path):
+    async def test_state_survives_controller_recreation(self, tmp_path, registry):
         """Test that state survives controller recreation."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
 
-        controller1 = _controller_for_state_file(str(state_file))
+        controller1 = _controller_for_state_file(str(state_file), registry)
         await controller1.refresh()
         controller1.heater_mode = HeaterMode.WINTER
         await controller1.save()
 
-        controller2 = _controller_for_state_file(str(state_file))
+        controller2 = _controller_for_state_file(str(state_file), registry)
         await controller2.refresh()
 
         assert (
@@ -103,12 +103,12 @@ class TestYamlBackendStatePersistence:
     """Tests for state file persistence with YAML backend."""
 
     @pytest.mark.asyncio
-    async def test_write_operations_update_yaml(self, tmp_path):
+    async def test_write_operations_update_yaml(self, tmp_path, registry):
         """Test that write operations update YAML file."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
         await controller.refresh()
         controller.manual_temperature = 25.0
         await controller.save()
@@ -119,7 +119,7 @@ class TestYamlBackendStatePersistence:
             assert loaded_state is not None
 
     @pytest.mark.asyncio
-    async def test_read_operations_load_from_yaml(self, tmp_path):
+    async def test_read_operations_load_from_yaml(self, tmp_path, registry):
         """Test that read operations load from YAML file."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -127,7 +127,7 @@ class TestYamlBackendStatePersistence:
         with open(state_file, "w") as f:
             yaml.dump(pre_state, f)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
         await controller.refresh()
 
         temp = controller.manual_temperature
@@ -139,7 +139,7 @@ class TestYamlBackendVsRealAPI:
 
     @pytest.mark.asyncio
     async def test_same_operations_produce_same_results(
-        self, tmp_path, sample_registers
+        self, tmp_path, sample_registers, registry
     ):
         """Test that same operations produce expected results with YAML backend."""
         state_file = tmp_path / "state.yaml"
@@ -147,7 +147,7 @@ class TestYamlBackendVsRealAPI:
         with open(state_file, "w") as f:
             yaml.dump(sample_registers, f)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
         await controller.refresh()
         controller.heater_mode = HeaterMode.WINTER
         await controller.save()
@@ -155,7 +155,7 @@ class TestYamlBackendVsRealAPI:
         assert controller.heater_mode == HeaterMode.WINTER
 
     @pytest.mark.asyncio
-    async def test_register_values_match_expected_format(self, tmp_path):
+    async def test_register_values_match_expected_format(self, tmp_path, registry):
         """Test that register values match expected format."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +163,7 @@ class TestYamlBackendVsRealAPI:
         with open(state_file, "w") as f:
             yaml.dump(test_state, f)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
         await controller.refresh()
 
         assert len(controller._register_cache) > 0
@@ -173,15 +173,13 @@ class TestYamlBackendVsRealAPI:
             assert all(c in "0123456789abcdef" for c in reg_value.lower())
 
     @pytest.mark.asyncio
-    async def test_yaml_backend_consistent_with_registry(self, tmp_path):
+    async def test_yaml_backend_consistent_with_registry(self, tmp_path, registry):
         """Test that YAML backend behaves consistently with registry definitions."""
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
 
-        controller = _controller_for_state_file(str(state_file))
+        controller = _controller_for_state_file(str(state_file), registry)
         await controller.refresh()
 
-        from kospel_cmi.controller.registry import SETTINGS_REGISTRY
-
-        for setting_name in SETTINGS_REGISTRY.keys():
+        for setting_name in registry.keys():
             getattr(controller, setting_name, None)

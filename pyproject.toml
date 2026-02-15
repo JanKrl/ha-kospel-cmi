@@ -8,7 +8,7 @@ license-files = ["LICENSE*"]
 requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.13.3",
-    "kospel-cmi-lib==0.1.0a3",
+    "kospel-cmi-lib==0.1.0a4",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -37,7 +37,6 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-mock>=3.14.0",
     "aioresponses>=0.7.6",
-    "homeassistant>=2026.1.0",
 ]
 
 [tool.pytest.ini_options]
