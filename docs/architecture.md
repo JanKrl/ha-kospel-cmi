@@ -16,18 +16,13 @@ graph TB
     subgraph Library["kospel-cmi-lib (external)"]
         HeaterController[HeaterController]
         Backend[Http or YAML backend]
-        Registry[SETTINGS_REGISTRY]
+        Registry[load_registry configs/yaml]
         API[api.py - read/write registers]
         Registers[registers - decoders encoders enums utils]
     end
 
     subgraph External["External Systems"]
         HeaterAPI[Kospel Heater HTTP API]
-    end
-
-    subgraph App["Application"]
-        Main[main.py]
-        Logging[logging_config.py]
     end
 
     HA --> Coordinator
@@ -44,7 +39,4 @@ graph TB
     API --> Registers
 
     API --> HeaterAPI
-
-    Main --> HeaterController
-    Main --> Logging
 ```

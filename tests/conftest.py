@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock
 
 import aiohttp
 
-from kospel_cmi.controller.api import HeaterController
-from kospel_cmi.controller.registry import SETTINGS_REGISTRY
+from kospel_cmi.controller.api import HeaterController, SettingDefinition
+from kospel_cmi.controller.registry import load_registry
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 
@@ -16,6 +16,12 @@ from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 def api_base_url() -> str:
     """Standard API base URL fixture."""
     return "http://192.168.1.100/api/dev/65"
+
+
+@pytest.fixture
+def registry() -> dict[str, SettingDefinition]:
+    """Settings registry from kospel_cmi_standard config."""
+    return load_registry("kospel_cmi_standard")
 
 
 @pytest.fixture
@@ -130,11 +136,11 @@ def yaml_backend_state_file(tmp_path: Path) -> Path:
 
 @pytest.fixture
 async def heater_controller(
-    mock_session: AsyncMock, api_base_url: str
+    mock_session: AsyncMock, api_base_url: str, registry: dict[str, SettingDefinition]
 ) -> HeaterController:
     """HeaterController instance fixture (HTTP backend)."""
     backend = HttpRegisterBackend(mock_session, api_base_url)
-    return HeaterController(backend=backend, registry=SETTINGS_REGISTRY)
+    return HeaterController(backend=backend, registry=registry)
 
 
 @pytest.fixture
@@ -142,10 +148,11 @@ async def heater_controller_with_registers(
     mock_session: AsyncMock,
     api_base_url: str,
     sample_registers: Dict[str, str],
+    registry: dict[str, SettingDefinition],
 ) -> HeaterController:
     """HeaterController instance with pre-loaded register data."""
     backend = HttpRegisterBackend(mock_session, api_base_url)
-    controller = HeaterController(backend=backend, registry=SETTINGS_REGISTRY)
+    controller = HeaterController(backend=backend, registry=registry)
     controller.from_registers(sample_registers)
     return controller
 
@@ -153,7 +160,8 @@ async def heater_controller_with_registers(
 @pytest.fixture
 async def heater_controller_yaml(
     yaml_backend_state_file: Path,
+    registry: dict[str, SettingDefinition],
 ) -> HeaterController:
     """HeaterController instance with YAML backend (for development/mock tests)."""
     backend = YamlRegisterBackend(state_file=str(yaml_backend_state_file))
-    return HeaterController(backend=backend, registry=SETTINGS_REGISTRY)
+    return HeaterController(backend=backend, registry=registry)
