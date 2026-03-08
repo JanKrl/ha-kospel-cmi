@@ -1,0 +1,58 @@
+{
+  "device": {
+    "heater": {
+      "name": "Grzejnik Kospel"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "room_temperature_economy": { "name": "Temp. pokoju ekonomiczna" },
+      "room_temperature_comfort": { "name": "Temp. pokoju komfort" },
+      "room_temperature_comfort_plus": { "name": "Temp. pokoju komfort plus" },
+      "room_temperature_comfort_minus": { "name": "Temp. pokoju komfort minus" },
+      "cwu_temperature_economy": { "name": "Temp. CWU ekonomiczna" },
+      "cwu_temperature_comfort": { "name": "Temp. CWU komfort" },
+      "manual_temperature": { "name": "Temp. docelowa" },
+      "pressure": { "name": "Ciśnienie" },
+      "pump_co": {
+        "name": "Pompa CO",
+        "state": {
+          "Running": "Praca",
+          "Idle": "Bezczynność"
+        }
+      },
+      "pump_circulation": {
+        "name": "Pompa obiegowa",
+        "state": {
+          "Running": "Praca",
+          "Idle": "Bezczynność"
+        }
+      },
+      "valve_position": {
+        "name": "Pozycja zaworu",
+        "state": {
+          "DHW": "CWU",
+          "CO": "CO"
+        }
+      }
+    },
+    "switch": {
+      "manual_mode": { "name": "Tryb ręczny" },
+      "water_heater": { "name": "Podgrzewacz wody" }
+    },
+    "climate": {
+      "heater": {
+        "name": "Grzejnik",
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "Summer": "Lato",
+              "Winter": "Zima",
+              "Off": "Wyłączony"
+            }
+          }
+        }
+      }
+    }
+  }
+}
