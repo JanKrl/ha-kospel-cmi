@@ -391,12 +391,13 @@ dev = [
     { name = "pytest-mock" },
     { name = "python-dotenv" },
     { name = "ruff" },
+    { name = "voluptuous" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
-    { name = "kospel-cmi-lib", specifier = "==0.1.0a4" },
+    { name = "kospel-cmi-lib", specifier = "==0.1.0a6" },
 ]
 
 [package.metadata.requires-dev]
@@ -409,6 +410,7 @@ dev = [
     { name = "pytest-mock", specifier = ">=3.14.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "ruff", specifier = ">=0.14.10" },
+    { name = "voluptuous", specifier = ">=0.13.0" },
 ]
 
 [[package]]
@@ -431,7 +433,7 @@ wheels = [
 
 [[package]]
 name = "kospel-cmi-lib"
-version = "0.1.0a4"
+version = "0.1.0a6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -439,9 +441,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/cc/137f168102e8e4e369c1e1be4b46bf15251fca5f740af78c271509c5c267/kospel_cmi_lib-0.1.0a4.tar.gz", hash = "sha256:20d1693344c1539a1e403edfa3c6cabfe400878a9ceb03146f21e328cab0ae8e", size = 22832, upload-time = "2026-02-15T13:22:49.663Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/3d/107e149eaebb7893612f0075311fad04f9db0b590613d36d60212b98746c/kospel_cmi_lib-0.1.0a6.tar.gz", hash = "sha256:652e626368f974ca962ab14c3a58f18a9aa80c5de67d1b75aa1742a78bc552de", size = 33618, upload-time = "2026-03-07T16:23:01.543Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/c3/edf29d1ae569a4d2b90306caf7d8dd8efc0f52189cf9653408bc47bb7811/kospel_cmi_lib-0.1.0a4-py3-none-any.whl", hash = "sha256:9f5911fdd6deb01c245fc0fc1bd441d446ce94ea6cb1ca24e7e3cb2b07bf3d1d", size = 30738, upload-time = "2026-02-15T13:22:48.384Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/05/903e5f308030dff22956baa0b2f4b90e9cae3c18c455a1a56b5ad534f539/kospel_cmi_lib-0.1.0a6-py3-none-any.whl", hash = "sha256:8cd7e6a7c9697b6ee3a0e0e1ed9b7e5f7f72b1e6621214709c3bbe13975314a9", size = 46042, upload-time = "2026-03-07T16:23:00.093Z" },
 ]
 
 [[package]]
@@ -1029,6 +1031,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/55/e3/70399cb7dd41c10ac53367ae42139cf4b1ca5f36bb3dc6c9d33acdb43655/typing_inspection-0.4.2.tar.gz", hash = "sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464", size = 75949, upload-time = "2025-10-01T02:14:41.687Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl", hash = "sha256:4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7", size = 14611, upload-time = "2025-10-01T02:14:40.154Z" },
+]
+
+[[package]]
+name = "voluptuous"
+version = "0.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/f4/0738e6849858deae22218be3bbb8207ba83a96e9d0ec7e8e8cd67b30e5ca/voluptuous-0.16.0.tar.gz", hash = "sha256:006535e22fed944aec17bef6e8725472476194743c87bd233e912eb463f8ff05", size = 54238, upload-time = "2025-12-18T23:18:46.08Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/00/0e0da784245c93cf346150ab67634177bf277f93b7a162bb56c928c39c04/voluptuous-0.16.0-py3-none-any.whl", hash = "sha256:ee342095263e1b5afbd4d418cb5adc92810eebfd07696bb033a261210df33db4", size = 31931, upload-time = "2025-12-18T23:18:44.694Z" },
 ]
 
 [[package]]
