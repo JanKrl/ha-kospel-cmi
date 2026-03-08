@@ -10,9 +10,8 @@
       "room_temperature_comfort": { "name": "Temp. pokoju komfort" },
       "room_temperature_comfort_plus": { "name": "Temp. pokoju komfort plus" },
       "room_temperature_comfort_minus": { "name": "Temp. pokoju komfort minus" },
-      "cwu_temperature_economy": { "name": "Temp. CWU ekonomiczna" },
-      "cwu_temperature_comfort": { "name": "Temp. CWU komfort" },
-      "manual_temperature": { "name": "Temp. docelowa" },
+      "room_setpoint": { "name": "Nastawa pokojowa" },
+      "supply_setpoint": { "name": "Nastawa CWU" },
       "pressure": { "name": "Ciśnienie" },
       "pump_co": {
         "name": "Pompa CO",
@@ -36,9 +35,6 @@
         }
       }
     },
-    "switch": {
-      "manual_mode": { "name": "Tryb ręczny" }
-    },
     "water_heater": {
       "dhw": { "name": "Ciepła woda użytkowa" }
     },
@@ -48,11 +44,12 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "Summer": "Lato",
-              "Winter": "Zima",
-              "Off": "Wyłączony",
-              "Party": "Impreza",
-              "Vacation": "Wakacje"
+              "off": "Wyłączony",
+              "summer": "Lato",
+              "winter": "Zima",
+              "party": "Impreza",
+              "vacation": "Wakacje",
+              "manual": "Ręczny"
             }
           }
         }

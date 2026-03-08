@@ -70,6 +70,10 @@ def sample_registers() -> Dict[str, str]:
         "0b67": "c201",
         # Register 0b4a - Water current temperature (420 = 42.0°C)
         "0b4a": "a401",
+        # Register 0b2f - Supply setpoint CWU (450 = 45.0°C)
+        "0b2f": "c201",
+        # Register 0b31 - Room setpoint CO (220 = 22.0°C)
+        "0b31": "dc00",
         # Register 0b4e - Pressure (500 = 5.00 bar, scaled_x100)
         "0b4e": "f401",
         # Additional registers with edge cases

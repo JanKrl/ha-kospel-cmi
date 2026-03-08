@@ -78,9 +78,8 @@
       "room_temperature_comfort": { "name": "Room Temp. Comfort" },
       "room_temperature_comfort_plus": { "name": "Room Temp. Comfort Plus" },
       "room_temperature_comfort_minus": { "name": "Room Temp. Comfort Minus" },
-      "cwu_temperature_economy": { "name": "DHW Temp. Economy" },
-      "cwu_temperature_comfort": { "name": "DHW Temp. Comfort" },
-      "manual_temperature": { "name": "Target Temperature" },
+      "room_setpoint": { "name": "Room Setpoint" },
+      "supply_setpoint": { "name": "DHW Setpoint" },
       "pressure": { "name": "Pressure" },
       "pump_co": {
         "name": "Pump CO",
@@ -104,9 +103,6 @@
         }
       }
     },
-    "switch": {
-      "manual_mode": { "name": "Manual Mode" }
-    },
     "water_heater": {
       "dhw": { "name": "Domestic Hot Water" }
     },
@@ -116,11 +112,12 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "Summer": "Summer",
-              "Winter": "Winter",
-              "Off": "Off",
-              "Party": "Party",
-              "Vacation": "Vacation"
+              "off": "Off",
+              "summer": "Summer",
+              "winter": "Winter",
+              "party": "Party",
+              "vacation": "Vacation",
+              "manual": "Manual"
             }
           }
         }

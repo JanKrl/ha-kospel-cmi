@@ -78,11 +78,9 @@ class KospelWaterHeaterEntity(
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the target temperature for the current operation mode."""
+        """Return the effective CWU target temperature (supply_setpoint)."""
         controller = self._get_controller()
-        if self._current_operation == STATE_ECO:
-            return getattr(controller, "cwu_temperature_economy", None)
-        return getattr(controller, "cwu_temperature_comfort", None)
+        return getattr(controller, "supply_setpoint", None)
 
     @property
     def current_operation(self) -> str:

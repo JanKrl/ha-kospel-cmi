@@ -18,12 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
-from kospel_cmi.registers.enums import (
-    HeaterMode,
-    PartyMode,
-    PumpStatus,
-    VacationMode,
-)
+from kospel_cmi.registers.enums import HeaterMode, PumpStatus
 from kospel_cmi.controller.api import HeaterController
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,15 +44,7 @@ class KospelClimateEntity(
     _attr_translation_key = "heater"
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]
-    _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE
-        | ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TURN_ON
-        | ClimateEntityFeature.TURN_OFF
-    )
-    _attr_preset_modes = (
-        [mode.value for mode in HeaterMode] + ["Party", "Vacation"]
-    )
+    _attr_preset_modes = [mode.value for mode in HeaterMode]
 
     def __init__(self, coordinator: KospelDataUpdateCoordinator) -> None:
         """Initialize the climate entity."""
@@ -82,10 +69,27 @@ class KospelClimateEntity(
         return getattr(controller, "room_temperature", None)
 
     @property
+    def _is_manual_mode(self) -> bool:
+        """Return True if manual mode is enabled."""
+        return self._heater_mode == HeaterMode.MANUAL
+
+    @property
+    def supported_features(self) -> int:
+        """Return supported features; target temperature only when manual mode is on."""
+        base = (
+            ClimateEntityFeature.PRESET_MODE
+            | ClimateEntityFeature.TURN_ON
+            | ClimateEntityFeature.TURN_OFF
+        )
+        if self._is_manual_mode:
+            base |= ClimateEntityFeature.TARGET_TEMPERATURE
+        return base
+
+    @property
     def target_temperature(self) -> float | None:
-        """Return the target temperature."""
+        """Return the effective target temperature (room_setpoint for CO)."""
         controller: HeaterController = self.coordinator.data
-        return getattr(controller, "manual_temperature", None)
+        return getattr(controller, "room_setpoint", None)
 
     @property
     def hvac_mode(self) -> HVACMode:
@@ -105,12 +109,7 @@ class KospelClimateEntity(
 
     @property
     def preset_mode(self) -> str | None:
-        """Current preset mode: Vacation > Party > heater_mode."""
-        controller: HeaterController = self.coordinator.data
-        if getattr(controller, "is_vacation_mode_enabled", None) == VacationMode.ENABLED:
-            return "Vacation"
-        if getattr(controller, "is_party_mode_enabled", None) == PartyMode.ENABLED:
-            return "Party"
+        """Current preset mode (heater_mode value)."""
         return self._heater_mode.value
 
     @property
@@ -131,7 +130,10 @@ class KospelClimateEntity(
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set new target temperature."""
+        """Set new target temperature (only when manual mode is on)."""
+        if not self._is_manual_mode:
+            _LOGGER.debug("Ignoring set_temperature: manual mode is off")
+            return
         controller: HeaterController = self.coordinator.data
         temperature = kwargs.get("temperature")
         if temperature is not None:
@@ -144,18 +146,7 @@ class KospelClimateEntity(
         """Set new preset mode."""
         _LOGGER.debug("Setting preset mode to %s", preset_mode)
         controller: HeaterController = self.coordinator.data
-
-        if preset_mode == "Vacation":
-            controller.is_vacation_mode_enabled = VacationMode.ENABLED
-            controller.is_party_mode_enabled = PartyMode.DISABLED
-        elif preset_mode == "Party":
-            controller.is_party_mode_enabled = PartyMode.ENABLED
-            controller.is_vacation_mode_enabled = VacationMode.DISABLED
-        else:
-            controller.heater_mode = HeaterMode(preset_mode)
-            controller.is_party_mode_enabled = PartyMode.DISABLED
-            controller.is_vacation_mode_enabled = VacationMode.DISABLED
-
+        controller.heater_mode = HeaterMode(preset_mode.lower())
         await controller.save()
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
