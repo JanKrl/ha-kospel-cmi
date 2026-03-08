@@ -1,6 +1,6 @@
 # Kospel Heater Home Assistant Integration
 
-Home Assistant integration for Kospel electric heaters. Control your heater via climate entity, sensors, and switches.
+Home Assistant integration for Kospel electric heaters. Control your heater via climate entity, sensors, and water heater.
 
 > **⚠️ Development version**  
 > This integration is **not ready for production use**. It is under active development and may contain bugs, incomplete features, or breaking changes. Install only if you want to test and provide feedback.
@@ -9,7 +9,7 @@ Home Assistant integration for Kospel electric heaters. Control your heater via 
 
 - **Climate entity** – Set heating mode (Summer/Winter/Off), target temperature
 - **Sensors** – Room temperature, water temperature, pressure, pump status, valve position
-- **Switches** – Manual mode, water heater on/off
+- **Water heater** – Domestic hot water (DHW) with on/off and temperature
 
 ## Installation (HACS)
 

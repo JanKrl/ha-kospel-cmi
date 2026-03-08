@@ -10,7 +10,7 @@ graph TB
         Coordinator[coordinator.py]
         SensorEntity[sensor.py]
         ClimateEntity[climate.py]
-        SwitchEntity[switch.py]
+        WaterHeaterEntity[water_heater.py]
     end
 
     subgraph Library["kospel-cmi-lib (external)"]
@@ -29,7 +29,7 @@ graph TB
     Coordinator --> HeaterController
     ClimateEntity --> HeaterController
     SensorEntity --> HeaterController
-    SwitchEntity --> HeaterController
+    WaterHeaterEntity --> HeaterController
     ConfigFlow --> HeaterController
 
     HeaterController --> Backend

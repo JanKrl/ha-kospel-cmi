@@ -5,7 +5,7 @@ import yaml
 
 from kospel_cmi.controller.api import HeaterController
 from kospel_cmi.kospel.backend import YamlRegisterBackend
-from kospel_cmi.registers.enums import HeaterMode, ManualMode
+from kospel_cmi.registers.enums import HeaterMode
 
 
 def _controller_for_state_file(state_file: str, registry: dict) -> HeaterController:
@@ -29,8 +29,7 @@ class TestYamlBackendFullCycle:
 
         assert len(controller._settings) > 0
 
-        controller.heater_mode = HeaterMode.WINTER
-        controller.is_manual_mode_enabled = ManualMode.ENABLED
+        controller.heater_mode = HeaterMode.MANUAL
 
         result = await controller.save()
         assert result is True

@@ -33,9 +33,8 @@ async def async_setup_entry(
         ("room_temperature_comfort", "room_temperature_comfort"),
         ("room_temperature_comfort_plus", "room_temperature_comfort_plus"),
         ("room_temperature_comfort_minus", "room_temperature_comfort_minus"),
-        ("cwu_temperature_economy", "cwu_temperature_economy"),
-        ("cwu_temperature_comfort", "cwu_temperature_comfort"),
-        ("manual_temperature", "manual_temperature"),
+        ("room_setpoint", "room_setpoint"),
+        ("supply_setpoint", "supply_setpoint"),
     ]
 
     for unique_id_suffix, setting_name in temperature_sensors:

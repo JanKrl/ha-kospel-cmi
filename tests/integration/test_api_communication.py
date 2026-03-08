@@ -8,7 +8,7 @@ import aiohttp
 
 from kospel_cmi.controller.api import HeaterController
 from kospel_cmi.kospel.backend import HttpRegisterBackend
-from kospel_cmi.registers.enums import HeaterMode, ManualMode
+from kospel_cmi.registers.enums import HeaterMode
 
 
 class TestEndToEndReadWrite:
@@ -77,8 +77,7 @@ class TestEndToEndReadWrite:
                 await controller.refresh()
 
                 # Modify multiple settings
-                controller.heater_mode = HeaterMode.WINTER
-                controller.is_manual_mode_enabled = ManualMode.ENABLED
+                controller.heater_mode = HeaterMode.MANUAL
 
                 # Save
                 result = await controller.save()
@@ -139,11 +138,10 @@ class TestBatchOperations:
                 controller = HeaterController(backend=backend, registry=registry)
                 await controller.refresh()
 
-                # Modify multiple settings in same register
-                controller.heater_mode = HeaterMode.WINTER
-                controller.is_manual_mode_enabled = ManualMode.ENABLED
+                # Modify setting in register 0b55
+                controller.heater_mode = HeaterMode.MANUAL
 
-                # Save should batch these into single write
+                # Save should write to register
                 result = await controller.save()
                 assert result is True
 
