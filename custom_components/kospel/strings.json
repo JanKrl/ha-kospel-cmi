@@ -74,13 +74,13 @@
   },
   "entity": {
     "sensor": {
-      "room_temperature_economy": { "name": "Room Temperature Economy" },
-      "room_temperature_comfort": { "name": "Room Temperature Comfort" },
-      "room_temperature_comfort_plus": { "name": "Room Temperature Comfort Plus" },
-      "room_temperature_comfort_minus": { "name": "Room Temperature Comfort Minus" },
-      "cwu_temperature_economy": { "name": "CWU Temperature Economy" },
-      "cwu_temperature_comfort": { "name": "CWU Temperature Comfort" },
-      "manual_temperature": { "name": "Manual Temperature" },
+      "room_temperature_economy": { "name": "Room Temp. Economy" },
+      "room_temperature_comfort": { "name": "Room Temp. Comfort" },
+      "room_temperature_comfort_plus": { "name": "Room Temp. Comfort Plus" },
+      "room_temperature_comfort_minus": { "name": "Room Temp. Comfort Minus" },
+      "cwu_temperature_economy": { "name": "DHW Temp. Economy" },
+      "cwu_temperature_comfort": { "name": "DHW Temp. Comfort" },
+      "manual_temperature": { "name": "Target Temperature" },
       "pressure": { "name": "Pressure" },
       "pump_co": {
         "name": "Pump CO",
