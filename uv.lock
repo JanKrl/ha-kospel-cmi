@@ -397,7 +397,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
-    { name = "kospel-cmi-lib", specifier = "==0.1.0a6" },
+    { name = "kospel-cmi-lib", specifier = "==0.1.0a7" },
 ]
 
 [package.metadata.requires-dev]
@@ -433,7 +433,7 @@ wheels = [
 
 [[package]]
 name = "kospel-cmi-lib"
-version = "0.1.0a6"
+version = "0.1.0a7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -441,9 +441,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/3d/107e149eaebb7893612f0075311fad04f9db0b590613d36d60212b98746c/kospel_cmi_lib-0.1.0a6.tar.gz", hash = "sha256:652e626368f974ca962ab14c3a58f18a9aa80c5de67d1b75aa1742a78bc552de", size = 33618, upload-time = "2026-03-07T16:23:01.543Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/f8/3b85c190804dd47bc711a55f7d232f662200e80051184739d31550924c70/kospel_cmi_lib-0.1.0a7.tar.gz", hash = "sha256:6d808234ba07c312244a5f24020890528a4f121b65b506122a68c5652c6a3b5a", size = 34449, upload-time = "2026-03-08T10:10:30.092Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/05/903e5f308030dff22956baa0b2f4b90e9cae3c18c455a1a56b5ad534f539/kospel_cmi_lib-0.1.0a6-py3-none-any.whl", hash = "sha256:8cd7e6a7c9697b6ee3a0e0e1ed9b7e5f7f72b1e6621214709c3bbe13975314a9", size = 46042, upload-time = "2026-03-07T16:23:00.093Z" },
+    { url = "https://files.pythonhosted.org/packages/5a/95/a3e16f33c4df866844ff5c6c5da41e780e1a7f495c6c75c8b2df1b953797/kospel_cmi_lib-0.1.0a7-py3-none-any.whl", hash = "sha256:735b7fbc3467835d195fd390b432d9a27e34191ed9dc128f4db17948d42dccd3", size = 47019, upload-time = "2026-03-08T10:10:28.499Z" },
 ]
 
 [[package]]

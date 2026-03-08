@@ -37,8 +37,10 @@
       }
     },
     "switch": {
-      "manual_mode": { "name": "Tryb ręczny" },
-      "water_heater": { "name": "Podgrzewacz wody" }
+      "manual_mode": { "name": "Tryb ręczny" }
+    },
+    "water_heater": {
+      "dhw": { "name": "Ciepła woda użytkowa" }
     },
     "climate": {
       "heater": {
@@ -48,7 +50,9 @@
             "state": {
               "Summer": "Lato",
               "Winter": "Zima",
-              "Off": "Wyłączony"
+              "Off": "Wyłączony",
+              "Party": "Impreza",
+              "Vacation": "Wakacje"
             }
           }
         }
