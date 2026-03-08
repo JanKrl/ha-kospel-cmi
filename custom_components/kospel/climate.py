@@ -87,7 +87,7 @@ class KospelClimateEntity(
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the effective target temperature (room_setpoint for CO)."""
+        """Return the target temperature (always from room_setpoint)."""
         controller: HeaterController = self.coordinator.data
         return getattr(controller, "room_setpoint", None)
 
@@ -137,8 +137,7 @@ class KospelClimateEntity(
         controller: HeaterController = self.coordinator.data
         temperature = kwargs.get("temperature")
         if temperature is not None:
-            controller.manual_temperature = temperature
-            await controller.save()
+            await controller.set_manual_heating(temperature)
             self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
 

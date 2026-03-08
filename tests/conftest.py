@@ -74,6 +74,10 @@ def sample_registers() -> Dict[str, str]:
         "0b2f": "c201",
         # Register 0b31 - Room setpoint CO (220 = 22.0°C)
         "0b31": "dc00",
+        # Register 0b30 - CWU mode (0=economy, 1=anti-freeze, 2=comfort)
+        "0b30": "0000",
+        # Register 0b32 - Room mode (64=manual, selects manual_temperature)
+        "0b32": "4000",
         # Register 0b4e - Pressure (500 = 5.00 bar, scaled_x100)
         "0b4e": "f401",
         # Additional registers with edge cases
