@@ -121,7 +121,6 @@ class TestClimateTargetTemperature:
         result = climate_entity.target_temperature
         assert result is None
 
-
 class TestClimateSupportedFeatures:
     """Tests for supported_features (TARGET_TEMPERATURE only when manual mode)."""
 
@@ -166,19 +165,18 @@ class TestClimateSetTemperature:
         mock_controller.save.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_set_temperature_writes_when_manual_mode_on(
+    async def test_set_temperature_calls_set_manual_heating_when_manual_mode_on(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """async_set_temperature writes manual_temperature when manual mode is on."""
+        """async_set_temperature calls set_manual_heating when manual mode is on."""
         mock_controller = MagicMock()
         mock_controller.heater_mode = HeaterMode.MANUAL
-        mock_controller.save = AsyncMock()
+        mock_controller.set_manual_heating = AsyncMock(return_value=True)
         mock_coordinator.async_request_refresh = AsyncMock()
         mock_coordinator.data = mock_controller
         climate_entity.async_write_ha_state = MagicMock()
 
         await climate_entity.async_set_temperature(temperature=25.0)
 
-        assert mock_controller.manual_temperature == 25.0
-        mock_controller.save.assert_called_once()
+        mock_controller.set_manual_heating.assert_called_once_with(25.0)
         mock_coordinator.async_request_refresh.assert_called_once()
