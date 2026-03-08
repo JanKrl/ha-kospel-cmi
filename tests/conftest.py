@@ -68,8 +68,10 @@ def sample_registers() -> Dict[str, str]:
         "0b66": "9001",
         # Register 0b67 - CWU temperature comfort (450 = 45.0°C)
         "0b67": "c201",
-        # Register 0b8a - Pressure (5000 = 50.0)
-        "0b8a": "8813",
+        # Register 0b4a - Water current temperature (420 = 42.0°C)
+        "0b4a": "a401",
+        # Register 0b4e - Pressure (500 = 5.00 bar, scaled_x100)
+        "0b4e": "f401",
         # Additional registers with edge cases
         "0b00": "0000",  # Zero value
         "0b01": "ff7f",  # 32767 (max positive)

@@ -105,8 +105,10 @@
       }
     },
     "switch": {
-      "manual_mode": { "name": "Manual Mode" },
-      "water_heater": { "name": "Water Heater" }
+      "manual_mode": { "name": "Manual Mode" }
+    },
+    "water_heater": {
+      "dhw": { "name": "Domestic Hot Water" }
     },
     "climate": {
       "heater": {
@@ -116,7 +118,9 @@
             "state": {
               "Summer": "Summer",
               "Winter": "Winter",
-              "Off": "Off"
+              "Off": "Off",
+              "Party": "Party",
+              "Vacation": "Vacation"
             }
           }
         }

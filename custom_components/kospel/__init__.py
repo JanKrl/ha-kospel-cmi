@@ -26,7 +26,7 @@ from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[str] = ["climate", "sensor", "switch"]
+PLATFORMS: list[str] = ["climate", "sensor", "switch", "water_heater"]
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:

@@ -11,7 +11,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
-from kospel_cmi.registers.enums import ManualMode, WaterHeaterEnabled
+from kospel_cmi.registers.enums import ManualMode
 from kospel_cmi.controller.api import HeaterController
 
 
@@ -22,13 +22,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Kospel switch platform."""
     coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-
-    entities = [
-        KospelManualModeSwitch(coordinator, entry),
-        KospelWaterHeaterSwitch(coordinator, entry),
-    ]
-
-    async_add_entities(entities)
+    async_add_entities([KospelManualModeSwitch(coordinator, entry)])
 
 
 class KospelSwitchEntity(CoordinatorEntity[KospelDataUpdateCoordinator], SwitchEntity):
@@ -89,48 +83,6 @@ class KospelManualModeSwitch(KospelSwitchEntity):
         """Turn manual mode off."""
         controller: HeaterController = self.coordinator.data
         controller.is_manual_mode_enabled = ManualMode.DISABLED
-        await controller.save()
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
-
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self.async_write_ha_state()
-
-
-class KospelWaterHeaterSwitch(KospelSwitchEntity):
-    """Representation of a Kospel water heater switch."""
-
-    def __init__(
-        self,
-        coordinator: KospelDataUpdateCoordinator,
-        entry: ConfigEntry,
-    ) -> None:
-        """Initialize the water heater switch."""
-        super().__init__(coordinator, entry, "water_heater", "water_heater")
-
-    @property
-    def is_on(self) -> bool:
-        """Return if water heater is enabled."""
-        controller: HeaterController = self.coordinator.data
-        water_heater = getattr(controller, "is_water_heater_enabled", None)
-        if water_heater is None:
-            return False
-        # WaterHeaterEnabled is an enum, check if it's ENABLED
-        return water_heater == WaterHeaterEnabled.ENABLED
-
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn water heater on."""
-        controller: HeaterController = self.coordinator.data
-        controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
-        await controller.save()
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn water heater off."""
-        controller: HeaterController = self.coordinator.data
-        controller.is_water_heater_enabled = WaterHeaterEnabled.DISABLED
         await controller.save()
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
