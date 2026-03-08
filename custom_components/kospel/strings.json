@@ -17,6 +17,35 @@
           "option_yaml": "File-based (development)"
         }
       },
+      "http_method": {
+        "title": "Connection method",
+        "description": "Discover devices on your network or enter connection details manually.",
+        "data": {
+          "http_method": "Method"
+        },
+        "options": {
+          "option_discover": "Discover devices",
+          "option_manual": "Enter manually"
+        }
+      },
+      "discover": {
+        "title": "Scanning network",
+        "description": "Scanning for Kospel devices. This may take a minute.",
+        "data": {
+          "action": "Action"
+        },
+        "options": {
+          "option_retry": "Retry scan",
+          "option_manual": "Enter manually"
+        }
+      },
+      "select_device": {
+        "title": "Select device",
+        "description": "Choose the Kospel device to add.",
+        "data": {
+          "device": "Device"
+        }
+      },
       "http": {
         "title": "Heater connection",
         "description": "Enter the heater IP address and device ID. URL will be http://[IP]/api/dev/[ID].",
@@ -26,10 +55,17 @@
         }
       }
     },
+    "progress": {
+      "discover": {
+        "title": "Scanning network",
+        "description": "Searching for Kospel devices on your network. This may take a minute."
+      }
+    },
     "error": {
       "cannot_connect": "Failed to connect to heater",
       "invalid_auth": "Invalid authentication",
       "invalid_device_id": "Device ID must be between 1 and 255",
+      "no_devices_found": "No Kospel devices found on the network",
       "unknown": "Unexpected error occurred"
     },
     "abort": {

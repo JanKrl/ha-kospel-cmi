@@ -2,9 +2,12 @@
 
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from homeassistant.helpers.entity import DeviceInfo
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
 
 DOMAIN = "kospel"
 
@@ -12,7 +15,16 @@ DOMAIN = "kospel"
 CONF_BACKEND_TYPE = "backend_type"
 CONF_HEATER_IP = "heater_ip"
 CONF_DEVICE_ID = "device_id"
+CONF_SERIAL_NUMBER = "serial_number"
 CONF_SIMULATION_MODE = "simulation_mode"  # Deprecated; used for migration only
+
+# Default subnets for discovery when Network integration returns none
+DEFAULT_SUBNETS = [
+    "192.168.1.0/24",
+    "192.168.0.0/24",
+    "192.168.101.0/24",
+    "10.0.0.0/24",
+]
 
 # Backend type values
 BACKEND_TYPE_HTTP = "http"
@@ -45,14 +57,43 @@ def get_yaml_state_file_path(integration_dir: Optional[Path] = None) -> Path:
     return integration_dir / "data" / "state.yaml"
 
 
-def get_device_info(entry_id: str) -> DeviceInfo:
+def make_unique_id(serial_number: str, device_id: int) -> str:
+    """Build unique_id for device registry (enables discovery update on IP change).
+
+    Args:
+        serial_number: Device serial number from probe/discovery.
+        device_id: Device ID (1-255).
+
+    Returns:
+        Unique identifier string, e.g. "mi01_00006047_65".
+    """
+    return f"{serial_number}_{device_id}"
+
+
+def get_device_identifier(entry: "ConfigEntry") -> str:
+    """Return identifier for entities (unique_id prefix). Uses serial_deviceid or entry_id."""
+    serial = entry.data.get(CONF_SERIAL_NUMBER)
+    device_id = entry.data.get(CONF_DEVICE_ID)
+    if serial is not None and device_id is not None:
+        return make_unique_id(serial, device_id)
+    return entry.entry_id
+
+
+def get_device_info(entry: "ConfigEntry") -> DeviceInfo:
     """Return DeviceInfo for the heater device.
 
-    Used by all entities to attach to the same device in the device registry.
-    Device name is translatable via strings.json under device.heater.name.
+    Uses unique_id (serial_deviceid) when available for discovery updates on IP change.
+    Falls back to entry_id for legacy entries without serial_number.
+
+    Args:
+        entry: Config entry for the heater.
+
+    Returns:
+        DeviceInfo for the device registry.
     """
+    identifier = get_device_identifier(entry)
     return DeviceInfo(
-        identifiers={(DOMAIN, entry_id)},
+        identifiers={(DOMAIN, identifier)},
         name="Kospel Heater",
         manufacturer="Kospel",
         model="Electric Heater",
