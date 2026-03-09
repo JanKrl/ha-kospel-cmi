@@ -99,12 +99,12 @@ def climate_entity(mock_coordinator):
 
 
 class TestClimateTargetTemperature:
-    """Tests for target_temperature (room_setpoint)."""
+    """Tests for target_temperature (always room_setpoint)."""
 
     def test_target_temperature_returns_room_setpoint(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """target_temperature returns room_setpoint from controller."""
+        """target_temperature always returns room_setpoint from controller."""
         mock_controller = MagicMock()
         mock_controller.room_setpoint = 22.0
         mock_coordinator.data = mock_controller
@@ -115,36 +115,28 @@ class TestClimateTargetTemperature:
         self, climate_entity, mock_coordinator
     ) -> None:
         """target_temperature returns None when room_setpoint not in controller."""
-        mock_controller = MagicMock(spec=[])  # No room_setpoint
+        mock_controller = MagicMock()
+        mock_controller.room_setpoint = None
         mock_coordinator.data = mock_controller
 
         result = climate_entity.target_temperature
         assert result is None
 
+
 class TestClimateSupportedFeatures:
-    """Tests for supported_features (TARGET_TEMPERATURE only when manual mode)."""
+    """Tests for supported_features (TARGET_TEMPERATURE always shown for display)."""
 
-    def test_supported_features_includes_target_temp_when_manual_mode_on(
+    def test_supported_features_includes_target_temp_always(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """TARGET_TEMPERATURE included when manual mode is enabled."""
-        mock_controller = MagicMock()
-        mock_controller.heater_mode = HeaterMode.MANUAL
-        mock_coordinator.data = mock_controller
+        """TARGET_TEMPERATURE always included so target is displayed; only settable in manual mode."""
+        for mode in (HeaterMode.WINTER, HeaterMode.MANUAL):
+            mock_controller = MagicMock()
+            mock_controller.heater_mode = mode
+            mock_coordinator.data = mock_controller
 
-        features = climate_entity.supported_features
-        assert (features & ClimateEntityFeature.TARGET_TEMPERATURE) != 0
-
-    def test_supported_features_excludes_target_temp_when_manual_mode_off(
-        self, climate_entity, mock_coordinator
-    ) -> None:
-        """TARGET_TEMPERATURE excluded when manual mode is disabled."""
-        mock_controller = MagicMock()
-        mock_controller.heater_mode = HeaterMode.WINTER
-        mock_coordinator.data = mock_controller
-
-        features = climate_entity.supported_features
-        assert (features & ClimateEntityFeature.TARGET_TEMPERATURE) == 0
+            features = climate_entity.supported_features
+            assert (features & ClimateEntityFeature.TARGET_TEMPERATURE) != 0
 
 
 class TestClimateSetTemperature:
