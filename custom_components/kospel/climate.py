@@ -75,19 +75,17 @@ class KospelClimateEntity(
 
     @property
     def supported_features(self) -> int:
-        """Return supported features; target temperature only when manual mode is on."""
-        base = (
+        """Return supported features; target temperature always shown, but only settable in manual mode."""
+        return (
             ClimateEntityFeature.PRESET_MODE
             | ClimateEntityFeature.TURN_ON
             | ClimateEntityFeature.TURN_OFF
+            | ClimateEntityFeature.TARGET_TEMPERATURE
         )
-        if self._is_manual_mode:
-            base |= ClimateEntityFeature.TARGET_TEMPERATURE
-        return base
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the target temperature (always from room_setpoint)."""
+        """Return the target temperature (always room_setpoint)."""
         controller: HeaterController = self.coordinator.data
         return getattr(controller, "room_setpoint", None)
 
