@@ -34,7 +34,7 @@ BACKEND_TYPE_YAML = "yaml"
 YAML_STATE_FILE_RELATIVE = "data/state.yaml"
 
 # Update intervals
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=15)
 
 # Simulation mode constants (deprecated; migration only)
 SIMULATION_MODE_ENV_VAR = "SIMULATION_MODE"

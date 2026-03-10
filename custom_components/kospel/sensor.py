@@ -6,7 +6,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfPressure, UnitOfTemperature
+from homeassistant.const import UnitOfPower, UnitOfPressure, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -47,15 +47,18 @@ async def async_setup_entry(
     # Pressure sensor
     entities.append(KospelPressureSensor(coordinator, entry))
 
-    # Status sensors: (unique_id_suffix, translation_key, setting_name)
+    # Power sensor
+    entities.append(KospelPowerSensor(coordinator, entry))
+
+    # Heating status sensors: (unique_id_suffix, setting_name)
     entities.append(
-        KospelPumpStatusSensor(
-            coordinator, entry, "pump_co", "is_pump_co_running"
+        KospelHeatingStatusSensor(
+            coordinator, entry, "co_heating", "co_heating_status"
         )
     )
     entities.append(
-        KospelPumpStatusSensor(
-            coordinator, entry, "pump_circulation", "is_pump_circulation_running"
+        KospelHeatingStatusSensor(
+            coordinator, entry, "cwu_heating", "cwu_heating_status"
         )
     )
     entities.append(KospelValvePositionSensor(coordinator, entry))
@@ -143,8 +146,34 @@ class KospelPressureSensor(KospelSensorEntity):
         self.async_write_ha_state()
 
 
-class KospelPumpStatusSensor(KospelSensorEntity):
-    """Representation of a Kospel pump status sensor."""
+class KospelPowerSensor(KospelSensorEntity):
+    """Representation of a Kospel power sensor (heating element power in kW)."""
+
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.KILOWATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self,
+        coordinator: KospelDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the power sensor."""
+        super().__init__(coordinator, entry, "power", "power")
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the power value in kW."""
+        controller: HeaterController = self.coordinator.data
+        return getattr(controller, "power", None)
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.async_write_ha_state()
+
+
+class KospelHeatingStatusSensor(KospelSensorEntity):
+    """Representation of a Kospel heating status sensor (CO or CWU circuit)."""
 
     def __init__(
         self,
@@ -153,13 +182,13 @@ class KospelPumpStatusSensor(KospelSensorEntity):
         unique_id_suffix: str,
         setting_name: str,
     ) -> None:
-        """Initialize the pump status sensor."""
+        """Initialize the heating status sensor."""
         super().__init__(coordinator, entry, unique_id_suffix, unique_id_suffix)
         self._setting_name = setting_name
 
     @property
     def native_value(self) -> str | None:
-        """Return the pump status."""
+        """Return the heating status (RUNNING, IDLE, DISABLED)."""
         controller: HeaterController = self.coordinator.data
         status = getattr(controller, self._setting_name, None)
         if status is None:
