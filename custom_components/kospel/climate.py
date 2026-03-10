@@ -18,7 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
-from kospel_cmi.registers.enums import HeaterMode, PumpStatus
+from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
 from kospel_cmi.controller.api import HeaterController
 
 _LOGGER = logging.getLogger(__name__)
@@ -96,12 +96,12 @@ class KospelClimateEntity(
 
     @property
     def hvac_action(self) -> HVACAction:
-        """HVAC action is based on whether or not CO pump is running"""
+        """HVAC action is based on whether CO heating circuit is active."""
         controller: HeaterController = self.coordinator.data
         return (
             HVACAction.HEATING
-            if getattr(controller, "is_pump_co_running", PumpStatus.IDLE)
-            == PumpStatus.RUNNING
+            if getattr(controller, "co_heating_status", HeatingStatus.IDLE)
+            == HeatingStatus.RUNNING
             else HVACAction.OFF
         )
 

@@ -13,18 +13,21 @@
       "room_setpoint": { "name": "Nastawa pokojowa" },
       "supply_setpoint": { "name": "Nastawa CWU" },
       "pressure": { "name": "Ciśnienie" },
-      "pump_co": {
-        "name": "Pompa CO",
+      "power": { "name": "Moc" },
+      "co_heating": {
+        "name": "Ogrzewanie CO",
         "state": {
-          "Running": "Praca",
-          "Idle": "Bezczynność"
+          "running": "Praca",
+          "idle": "Bezczynność",
+          "disabled": "Wyłączone"
         }
       },
-      "pump_circulation": {
-        "name": "Pompa obiegowa",
+      "cwu_heating": {
+        "name": "Ogrzewanie CWU",
         "state": {
-          "Running": "Praca",
-          "Idle": "Bezczynność"
+          "running": "Praca",
+          "idle": "Bezczynność",
+          "disabled": "Wyłączone"
         }
       },
       "valve_position": {

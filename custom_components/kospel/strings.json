@@ -81,18 +81,21 @@
       "room_setpoint": { "name": "Room Setpoint" },
       "supply_setpoint": { "name": "DHW Setpoint" },
       "pressure": { "name": "Pressure" },
-      "pump_co": {
-        "name": "Pump CO",
+      "power": { "name": "Power" },
+      "co_heating": {
+        "name": "CO Heating",
         "state": {
-          "Running": "Running",
-          "Idle": "Idle"
+          "running": "Running",
+          "idle": "Idle",
+          "disabled": "Disabled"
         }
       },
-      "pump_circulation": {
-        "name": "Pump Circulation",
+      "cwu_heating": {
+        "name": "CWU Heating",
         "state": {
-          "Running": "Running",
-          "Idle": "Idle"
+          "running": "Running",
+          "idle": "Idle",
+          "disabled": "Disabled"
         }
       },
       "valve_position": {

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from kospel_cmi.registers.enums import HeaterMode
+from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
 
 # Mock homeassistant before importing integration modules.
 class _HAModule:
@@ -79,6 +79,7 @@ sys.modules["homeassistant.components.climate"] = climate_mock
 from custom_components.kospel.climate import KospelClimateEntity
 
 ClimateEntityFeature = _ClimateEntityFeature
+HVACAction = climate_mock.HVACAction
 
 
 @pytest.fixture
@@ -172,3 +173,46 @@ class TestClimateSetTemperature:
 
         mock_controller.set_manual_heating.assert_called_once_with(25.0)
         mock_coordinator.async_request_refresh.assert_called_once()
+
+
+class TestClimateHvacAction:
+    """Tests for hvac_action (heating indicator based on co_heating_status)."""
+
+    def test_hvac_action_heating_when_co_heating_status_running(
+        self, climate_entity, mock_coordinator
+    ) -> None:
+        """hvac_action returns HEATING when co_heating_status is RUNNING."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = HeatingStatus.RUNNING
+        mock_coordinator.data = mock_controller
+
+        assert climate_entity.hvac_action == HVACAction.HEATING
+
+    def test_hvac_action_off_when_co_heating_status_idle(
+        self, climate_entity, mock_coordinator
+    ) -> None:
+        """hvac_action returns OFF when co_heating_status is IDLE."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = HeatingStatus.IDLE
+        mock_coordinator.data = mock_controller
+
+        assert climate_entity.hvac_action == HVACAction.OFF
+
+    def test_hvac_action_off_when_co_heating_status_disabled(
+        self, climate_entity, mock_coordinator
+    ) -> None:
+        """hvac_action returns OFF when co_heating_status is DISABLED."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = HeatingStatus.DISABLED
+        mock_coordinator.data = mock_controller
+
+        assert climate_entity.hvac_action == HVACAction.OFF
+
+    def test_hvac_action_off_when_co_heating_status_missing(
+        self, climate_entity, mock_coordinator
+    ) -> None:
+        """hvac_action returns OFF when co_heating_status is missing (fallback to IDLE)."""
+        mock_controller = object()  # No co_heating_status attribute
+        mock_coordinator.data = mock_controller
+
+        assert climate_entity.hvac_action == HVACAction.OFF
