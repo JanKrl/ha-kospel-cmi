@@ -150,7 +150,7 @@ class KospelPowerSensor(KospelSensorEntity):
     """Representation of a Kospel power sensor (heating element power in kW)."""
 
     _attr_device_class = SensorDeviceClass.POWER
-    _attr_native_unit_of_measurement = UnitOfPower.KILOWATT
+    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
