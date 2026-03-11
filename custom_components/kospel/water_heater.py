@@ -1,12 +1,8 @@
 """Water heater entity for Kospel integration (CWU / DHW)."""
 
 import logging
-from typing import Any
 
-from homeassistant.components.water_heater import (
-    WaterHeaterEntity,
-    WaterHeaterEntityFeature,
-)
+from homeassistant.components.water_heater import WaterHeaterEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -35,12 +31,6 @@ _CWU_MODE_TO_HA: dict[int, str] = {
     CwuMode.COMFORT: STATE_PERFORMANCE,
 }
 
-_HA_TO_CWU_MODE: dict[str, CwuMode] = {
-    STATE_ECO: CwuMode.ECONOMY,
-    STATE_PERFORMANCE: CwuMode.COMFORT,
-    STATE_OFF: CwuMode.ANTI_FREEZE,
-}
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -55,7 +45,11 @@ async def async_setup_entry(
 class KospelWaterHeaterEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], WaterHeaterEntity
 ):
-    """Representation of a Kospel domestic hot water (CWU/DHW) entity."""
+    """Representation of a Kospel domestic hot water (CWU/DHW) entity.
+
+    Read-only: displays current temperature, target temperature, and operation
+    mode. Climate entity controls main power; CWU mode is not configurable here.
+    """
 
     _attr_has_entity_name = True
     _attr_name = None
@@ -64,11 +58,7 @@ class KospelWaterHeaterEntity(
     _attr_operation_list = OPERATION_LIST
     _attr_min_temp = 30.0
     _attr_max_temp = 65.0
-    _attr_supported_features = (
-        WaterHeaterEntityFeature.TARGET_TEMPERATURE
-        | WaterHeaterEntityFeature.OPERATION_MODE
-        | WaterHeaterEntityFeature.ON_OFF
-    )
+    _attr_supported_features = 0  # Read-only: no set operations
 
     def __init__(self, coordinator: KospelDataUpdateCoordinator) -> None:
         """Initialize the water heater entity."""
@@ -111,46 +101,6 @@ class KospelWaterHeaterEntity(
     def available(self) -> bool:
         """Return if entity is available."""
         return self.coordinator.last_update_success
-
-    async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set new target temperature using mode-appropriate helper."""
-        controller = self._get_controller()
-        temperature = kwargs.get("temperature")
-        if temperature is not None:
-            operation = self.current_operation
-            if operation == STATE_PERFORMANCE:
-                await controller.set_water_comfort_temperature(temperature)
-            else:
-                await controller.set_water_economy_temperature(temperature)
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
-
-    async def async_set_operation_mode(self, operation_mode: str) -> None:
-        """Set new operation mode via set_water_mode."""
-        _LOGGER.debug("Setting operation mode to %s", operation_mode)
-        if operation_mode in OPERATION_LIST:
-            cwu_mode = _HA_TO_CWU_MODE.get(operation_mode)
-            if cwu_mode is not None:
-                controller = self._get_controller()
-                await controller.set_water_mode(cwu_mode)
-                self.async_write_ha_state()
-                await self.coordinator.async_request_refresh()
-
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn water heater on."""
-        controller = self._get_controller()
-        controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
-        await controller.save()
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn water heater off."""
-        controller = self._get_controller()
-        controller.is_water_heater_enabled = WaterHeaterEnabled.DISABLED
-        await controller.save()
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

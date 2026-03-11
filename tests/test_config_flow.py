@@ -9,6 +9,7 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import voluptuous as vol
 
 # Mock homeassistant before importing integration modules.
 # homeassistant must be a module (have __path__) for "from homeassistant.x import y" to work.
@@ -20,7 +21,35 @@ class _HAModule:
 
 _ha = _HAModule()
 sys.modules["homeassistant"] = _ha
-sys.modules["homeassistant.config_entries"] = MagicMock()
+
+
+class _ConfigFlowBase:
+    """Minimal ConfigFlow stand-in (required by KospelConfigFlowHandler)."""
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        """Accept domain= and other kwargs from HA ConfigFlow pattern."""
+        super().__init_subclass__()
+
+
+class _OptionsFlowWithConfigEntryBase:
+    """Minimal OptionsFlowWithConfigEntry stand-in for options flow tests."""
+
+    def __init__(self, config_entry):
+        self.config_entry = config_entry
+        self.options = config_entry.options if config_entry.options is not None else {}
+
+    def async_create_entry(self, title, data):
+        return {"type": "create_entry", "data": data}
+
+    def async_show_form(self, step_id, data_schema):
+        return {"type": "show_form", "step_id": step_id, "data_schema": data_schema}
+
+
+_config_entries_mock = MagicMock()
+_config_entries_mock.ConfigFlow = _ConfigFlowBase
+_config_entries_mock.OptionsFlowWithConfigEntry = _OptionsFlowWithConfigEntryBase
+sys.modules["homeassistant.config_entries"] = _config_entries_mock
 sys.modules["homeassistant.components"] = MagicMock()
 sys.modules["homeassistant.components.network"] = MagicMock()
 sys.modules["homeassistant.components.climate"] = MagicMock()
@@ -44,14 +73,20 @@ sys.modules["homeassistant.helpers.entity"].DeviceInfo = _device_info
 
 from custom_components.kospel.const import (
     CONF_DEVICE_ID,
+    CONF_REFRESH_DELAY_AFTER_SET,
     CONF_SERIAL_NUMBER,
+    DEFAULT_REFRESH_DELAY_AFTER_SET,
     DEFAULT_SUBNETS,
+    REFRESH_DELAY_MAX,
+    REFRESH_DELAY_MIN,
     make_unique_id,
     get_device_identifier,
     get_device_info,
 )
 from custom_components.kospel.config_flow import (
     CannotConnect,
+    KospelConfigFlowHandler,
+    KospelOptionsFlowHandler,
     validate_http_input,
     _get_subnets_to_scan,
 )
@@ -234,3 +269,72 @@ class TestGetSubnetsToScan:
         ):
             result = await _get_subnets_to_scan(hass)
         assert result == DEFAULT_SUBNETS
+
+
+class TestKospelOptionsFlowHandler:
+    """Tests for KospelOptionsFlowHandler (options flow for refresh delay)."""
+
+    @pytest.mark.asyncio
+    async def test_init_form_shows_default_delay(self) -> None:
+        """async_step_init with no user_input shows form with default delay."""
+        config_entry = MagicMock()
+        config_entry.options = {}
+        handler = KospelOptionsFlowHandler(config_entry)
+
+        result = await handler.async_step_init(user_input=None)
+
+        assert result["type"] == "show_form"
+        assert result["step_id"] == "init"
+        assert CONF_REFRESH_DELAY_AFTER_SET in result["data_schema"].schema
+        # Default when options empty is DEFAULT_REFRESH_DELAY_AFTER_SET
+        assert handler.options.get(CONF_REFRESH_DELAY_AFTER_SET) is None
+
+    @pytest.mark.asyncio
+    async def test_init_form_saves_user_input(self) -> None:
+        """async_step_init with user_input saves and returns create_entry."""
+        config_entry = MagicMock()
+        config_entry.options = {}
+        handler = KospelOptionsFlowHandler(config_entry)
+        user_input = {CONF_REFRESH_DELAY_AFTER_SET: 2.0}
+
+        result = await handler.async_step_init(user_input=user_input)
+
+        assert result["type"] == "create_entry"
+        assert result["data"] == user_input
+
+    @pytest.mark.asyncio
+    async def test_init_form_uses_existing_option_as_default(self) -> None:
+        """async_step_init shows form when existing options present."""
+        config_entry = MagicMock()
+        config_entry.options = {CONF_REFRESH_DELAY_AFTER_SET: 2.5}
+        handler = KospelOptionsFlowHandler(config_entry)
+
+        result = await handler.async_step_init(user_input=None)
+
+        assert result["type"] == "show_form"
+        assert result["step_id"] == "init"
+        assert handler.options.get(CONF_REFRESH_DELAY_AFTER_SET) == 2.5
+
+    @pytest.mark.asyncio
+    async def test_async_get_options_flow_returns_handler(self) -> None:
+        """async_get_options_flow returns KospelOptionsFlowHandler instance."""
+        config_entry = MagicMock()
+        result = await KospelConfigFlowHandler.async_get_options_flow(config_entry)
+        assert isinstance(result, KospelOptionsFlowHandler)
+        assert result.config_entry is config_entry
+
+    def test_validation_rejects_out_of_range(self) -> None:
+        """vol.Range rejects values outside 0.5 to 5.0."""
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_REFRESH_DELAY_AFTER_SET): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=REFRESH_DELAY_MIN, max=REFRESH_DELAY_MAX),
+                ),
+            }
+        )
+        schema({CONF_REFRESH_DELAY_AFTER_SET: 2.0})  # Valid
+        with pytest.raises(vol.Invalid):
+            schema({CONF_REFRESH_DELAY_AFTER_SET: 0.1})
+        with pytest.raises(vol.Invalid):
+            schema({CONF_REFRESH_DELAY_AFTER_SET: 10.0})

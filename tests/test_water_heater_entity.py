@@ -1,11 +1,12 @@
-"""Tests for Kospel water heater entity (target_temperature, cwu_mode, set_water_*)."""
+"""Tests for Kospel water heater entity (target_temperature, current_operation)."""
 
 import sys
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from kospel_cmi.registers.enums import CwuMode
+
 
 # Mock homeassistant before importing integration modules.
 class _HAModule:
@@ -38,6 +39,7 @@ def _device_info(**kwargs):
 
 sys.modules["homeassistant.helpers.entity"].DeviceInfo = _device_info
 
+
 # Create minimal base classes to avoid metaclass conflicts
 class _CoordinatorEntityBase:
     """Minimal CoordinatorEntity stand-in for testing."""
@@ -56,12 +58,12 @@ class _WaterHeaterEntityBase:
     pass
 
 
-sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
-    _CoordinatorEntityBase
-)
-sys.modules["homeassistant.components.water_heater"].WaterHeaterEntity = (
-    _WaterHeaterEntityBase
-)
+sys.modules[
+    "homeassistant.helpers.update_coordinator"
+].CoordinatorEntity = _CoordinatorEntityBase
+sys.modules[
+    "homeassistant.components.water_heater"
+].WaterHeaterEntity = _WaterHeaterEntityBase
 
 from custom_components.kospel.water_heater import (
     KospelWaterHeaterEntity,
@@ -77,6 +79,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.entry = MagicMock()
     coordinator.entry.data = {}
+    coordinator.entry.options = {}
     coordinator.entry.entry_id = "test-entry-id"
     coordinator.last_update_success = True
     return coordinator
@@ -178,84 +181,3 @@ class TestWaterHeaterCurrentOperation:
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.current_operation == STATE_PERFORMANCE
-
-
-class TestWaterHeaterSetOperationMode:
-    """Tests for async_set_operation_mode (calls set_water_mode)."""
-
-    @pytest.mark.asyncio
-    async def test_set_operation_mode_calls_set_water_mode(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """async_set_operation_mode calls set_water_mode with correct CwuMode."""
-        mock_controller = MagicMock()
-        mock_controller.is_water_heater_enabled = MagicMock()
-        mock_controller.set_water_mode = AsyncMock(return_value=True)
-        mock_coordinator.data = mock_controller
-        mock_coordinator.async_request_refresh = AsyncMock()
-        water_heater_entity.async_write_ha_state = MagicMock()
-
-        await water_heater_entity.async_set_operation_mode(STATE_ECO)
-
-        mock_controller.set_water_mode.assert_called_once_with(CwuMode.ECONOMY)
-
-    @pytest.mark.asyncio
-    async def test_set_operation_mode_comfort_calls_set_water_mode(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """async_set_operation_mode(performance) calls set_water_mode(COMFORT)."""
-        mock_controller = MagicMock()
-        mock_controller.set_water_mode = AsyncMock(return_value=True)
-        mock_coordinator.data = mock_controller
-        mock_coordinator.async_request_refresh = AsyncMock()
-        water_heater_entity.async_write_ha_state = MagicMock()
-
-        await water_heater_entity.async_set_operation_mode(STATE_PERFORMANCE)
-
-        mock_controller.set_water_mode.assert_called_once_with(CwuMode.COMFORT)
-
-
-class TestWaterHeaterSetTemperature:
-    """Tests for async_set_temperature (calls set_water_*_temperature)."""
-
-    @pytest.mark.asyncio
-    async def test_set_temperature_economy_calls_set_water_economy_temperature(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """async_set_temperature calls set_water_economy_temperature when in eco mode."""
-        from kospel_cmi.registers.enums import WaterHeaterEnabled
-
-        mock_controller = MagicMock()
-        mock_controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
-        mock_controller.cwu_mode = CwuMode.ECONOMY
-        mock_controller.set_water_economy_temperature = AsyncMock(return_value=True)
-        mock_controller.set_water_comfort_temperature = AsyncMock(return_value=True)
-        mock_coordinator.data = mock_controller
-        mock_coordinator.async_request_refresh = AsyncMock()
-        water_heater_entity.async_write_ha_state = MagicMock()
-
-        await water_heater_entity.async_set_temperature(temperature=38.0)
-
-        mock_controller.set_water_economy_temperature.assert_called_once_with(38.0)
-        mock_controller.set_water_comfort_temperature.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_set_temperature_comfort_calls_set_water_comfort_temperature(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """async_set_temperature calls set_water_comfort_temperature when in performance mode."""
-        from kospel_cmi.registers.enums import WaterHeaterEnabled
-
-        mock_controller = MagicMock()
-        mock_controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
-        mock_controller.cwu_mode = CwuMode.COMFORT
-        mock_controller.set_water_economy_temperature = AsyncMock(return_value=True)
-        mock_controller.set_water_comfort_temperature = AsyncMock(return_value=True)
-        mock_coordinator.data = mock_controller
-        mock_coordinator.async_request_refresh = AsyncMock()
-        water_heater_entity.async_write_ha_state = MagicMock()
-
-        await water_heater_entity.async_set_temperature(temperature=45.0)
-
-        mock_controller.set_water_comfort_temperature.assert_called_once_with(45.0)
-        mock_controller.set_water_economy_temperature.assert_not_called()

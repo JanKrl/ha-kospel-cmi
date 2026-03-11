@@ -1,7 +1,7 @@
 """Tests for Kospel climate entity (target_temperature, supported_features, async_set_temperature)."""
 
 import sys
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -72,6 +72,8 @@ climate_mock = MagicMock()
 climate_mock.ClimateEntity = _ClimateEntityBase
 climate_mock.ClimateEntityFeature = _ClimateEntityFeature
 climate_mock.HVACMode = MagicMock()
+climate_mock.HVACMode.HEAT = "heat"
+climate_mock.HVACMode.OFF = "off"
 climate_mock.HVACAction = MagicMock()
 sys.modules["homeassistant.components.climate"] = climate_mock
 
@@ -80,6 +82,7 @@ from custom_components.kospel.climate import KospelClimateEntity
 
 ClimateEntityFeature = _ClimateEntityFeature
 HVACAction = climate_mock.HVACAction
+HVACMode = climate_mock.HVACMode
 
 
 @pytest.fixture
@@ -88,6 +91,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.entry = MagicMock()
     coordinator.entry.data = {}
+    coordinator.entry.options = {}
     coordinator.entry.entry_id = "test-entry-id"
     coordinator.last_update_success = True
     return coordinator
@@ -169,7 +173,8 @@ class TestClimateSetTemperature:
         mock_coordinator.data = mock_controller
         climate_entity.async_write_ha_state = MagicMock()
 
-        await climate_entity.async_set_temperature(temperature=25.0)
+        with patch("custom_components.kospel.climate.asyncio.sleep", new_callable=AsyncMock):
+            await climate_entity.async_set_temperature(temperature=25.0)
 
         mock_controller.set_manual_heating.assert_called_once_with(25.0)
         mock_coordinator.async_request_refresh.assert_called_once()
@@ -216,3 +221,25 @@ class TestClimateHvacAction:
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.OFF
+
+
+class TestClimateTurnOnOff:
+    """Tests for async_turn_on and async_turn_off (delegate to async_set_hvac_mode)."""
+
+    @pytest.mark.asyncio
+    async def test_turn_on_calls_set_hvac_mode_heat(
+        self, climate_entity, mock_coordinator
+    ) -> None:
+        """async_turn_on delegates to async_set_hvac_mode(HVACMode.HEAT)."""
+        climate_entity.async_set_hvac_mode = AsyncMock()
+        await climate_entity.async_turn_on()
+        climate_entity.async_set_hvac_mode.assert_called_once_with(HVACMode.HEAT)
+
+    @pytest.mark.asyncio
+    async def test_turn_off_calls_set_hvac_mode_off(
+        self, climate_entity, mock_coordinator
+    ) -> None:
+        """async_turn_off delegates to async_set_hvac_mode(HVACMode.OFF)."""
+        climate_entity.async_set_hvac_mode = AsyncMock()
+        await climate_entity.async_turn_off()
+        climate_entity.async_set_hvac_mode.assert_called_once_with(HVACMode.OFF)

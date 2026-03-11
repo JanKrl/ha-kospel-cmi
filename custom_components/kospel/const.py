@@ -36,6 +36,12 @@ YAML_STATE_FILE_RELATIVE = "data/state.yaml"
 # Update intervals
 SCAN_INTERVAL = timedelta(seconds=15)
 
+# Delay before coordinator refresh after set operations (device needs time to persist).
+CONF_REFRESH_DELAY_AFTER_SET = "refresh_delay_after_set"
+DEFAULT_REFRESH_DELAY_AFTER_SET = 1.0  # seconds
+REFRESH_DELAY_MIN = 0.5
+REFRESH_DELAY_MAX = 5.0
+
 # Simulation mode constants (deprecated; migration only)
 SIMULATION_MODE_ENV_VAR = "SIMULATION_MODE"
 
@@ -77,6 +83,22 @@ def get_device_identifier(entry: "ConfigEntry") -> str:
     if serial is not None and device_id is not None:
         return make_unique_id(serial, device_id)
     return entry.entry_id
+
+
+def get_refresh_delay_after_set(entry: "ConfigEntry") -> float:
+    """Return delay (seconds) before coordinator refresh after set operations.
+
+    Uses options when available; falls back to default for legacy entries.
+    Defensive against entry.options being None.
+
+    Args:
+        entry: Config entry for the heater.
+
+    Returns:
+        Delay in seconds (0.5 to 5.0).
+    """
+    options = entry.options or {}
+    return options.get(CONF_REFRESH_DELAY_AFTER_SET, DEFAULT_REFRESH_DELAY_AFTER_SET)
 
 
 def get_device_info(entry: "ConfigEntry") -> DeviceInfo:
