@@ -121,12 +121,6 @@ class KospelClimateEntity(
         """Return if entity is available."""
         return self.coordinator.last_update_success
 
-    def _get_refresh_delay(self) -> float:
-        """Delay before refresh after set (from options or default)."""
-        return self.coordinator.entry.options.get(
-            CONF_REFRESH_DELAY_AFTER_SET, DEFAULT_REFRESH_DELAY_AFTER_SET
-        )
-
     async def async_turn_on(self) -> None:
         """Turn heater on (set to HEAT mode)."""
         await self.async_set_hvac_mode(HVACMode.HEAT)
