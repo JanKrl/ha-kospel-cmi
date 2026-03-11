@@ -70,6 +70,17 @@
     },
     "abort": {
       "already_configured": "Integration is already configured"
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Integration options",
+          "description": "Kospel devices may need time to persist changes. If the UI reverts to the previous value after switching modes, increase this delay.",
+          "data": {
+            "refresh_delay_after_set": "Delay before refresh after change (seconds)"
+          }
+        }
+      }
     }
   },
   "entity": {

@@ -36,6 +36,13 @@ YAML_STATE_FILE_RELATIVE = "data/state.yaml"
 # Update intervals
 SCAN_INTERVAL = timedelta(seconds=15)
 
+# Delay before coordinator refresh after set operations (device needs time to persist).
+CONF_REFRESH_DELAY_AFTER_SET = "refresh_delay_after_set"
+DEFAULT_REFRESH_DELAY_AFTER_SET = 1.0  # seconds
+REFRESH_DELAY_MIN = 0.5
+REFRESH_DELAY_MAX = 5.0
+REFRESH_DELAY_STEP = 0.5
+
 # Simulation mode constants (deprecated; migration only)
 SIMULATION_MODE_ENV_VAR = "SIMULATION_MODE"
 

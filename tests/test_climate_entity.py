@@ -1,7 +1,7 @@
 """Tests for Kospel climate entity (target_temperature, supported_features, async_set_temperature)."""
 
 import sys
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -88,6 +88,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.entry = MagicMock()
     coordinator.entry.data = {}
+    coordinator.entry.options = {}
     coordinator.entry.entry_id = "test-entry-id"
     coordinator.last_update_success = True
     return coordinator
@@ -169,7 +170,8 @@ class TestClimateSetTemperature:
         mock_coordinator.data = mock_controller
         climate_entity.async_write_ha_state = MagicMock()
 
-        await climate_entity.async_set_temperature(temperature=25.0)
+        with patch("custom_components.kospel.climate.asyncio.sleep", new_callable=AsyncMock):
+            await climate_entity.async_set_temperature(temperature=25.0)
 
         mock_controller.set_manual_heating.assert_called_once_with(25.0)
         mock_coordinator.async_request_refresh.assert_called_once()

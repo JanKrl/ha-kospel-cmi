@@ -1,5 +1,6 @@
 """Climate entity for Kospel integration."""
 
+import asyncio
 import logging
 from typing import Any
 
@@ -15,7 +16,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, get_device_info, get_device_identifier
+from .const import (
+    CONF_REFRESH_DELAY_AFTER_SET,
+    DEFAULT_REFRESH_DELAY_AFTER_SET,
+    DOMAIN,
+    get_device_info,
+    get_device_identifier,
+)
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
@@ -115,6 +122,12 @@ class KospelClimateEntity(
         """Return if entity is available."""
         return self.coordinator.last_update_success
 
+    def _get_refresh_delay(self) -> float:
+        """Delay before refresh after set (from options or default)."""
+        return self.coordinator.entry.options.get(
+            CONF_REFRESH_DELAY_AFTER_SET, DEFAULT_REFRESH_DELAY_AFTER_SET
+        )
+
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target HVAC mode."""
         _LOGGER.debug("Setting HVAC mode to %s", hvac_mode)
@@ -125,6 +138,7 @@ class KospelClimateEntity(
         )
         await controller.save()
         self.async_write_ha_state()
+        await asyncio.sleep(self._get_refresh_delay())
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -137,6 +151,7 @@ class KospelClimateEntity(
         if temperature is not None:
             await controller.set_manual_heating(temperature)
             self.async_write_ha_state()
+            await asyncio.sleep(self._get_refresh_delay())
             await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -146,6 +161,7 @@ class KospelClimateEntity(
         controller.heater_mode = HeaterMode(preset_mode.lower())
         await controller.save()
         self.async_write_ha_state()
+        await asyncio.sleep(self._get_refresh_delay())
         await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:

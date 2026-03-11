@@ -18,11 +18,15 @@ from .const import (
     CONF_BACKEND_TYPE,
     CONF_HEATER_IP,
     CONF_DEVICE_ID,
+    CONF_REFRESH_DELAY_AFTER_SET,
     CONF_SERIAL_NUMBER,
     CONF_SIMULATION_MODE,
+    DEFAULT_REFRESH_DELAY_AFTER_SET,
     DEFAULT_SUBNETS,
     BACKEND_TYPE_HTTP,
     BACKEND_TYPE_YAML,
+    REFRESH_DELAY_MAX,
+    REFRESH_DELAY_MIN,
     make_unique_id,
 )
 
@@ -380,3 +384,39 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         hass.config_entries.async_update_entry(entry, data=data, version=2)
         return True
+
+    @staticmethod
+    async def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> "KospelOptionsFlowHandler":
+        """Get the options flow for this handler."""
+        return KospelOptionsFlowHandler(config_entry)
+
+
+class KospelOptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
+    """Handle Kospel integration options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage integration options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        default_delay = self.options.get(
+            CONF_REFRESH_DELAY_AFTER_SET, DEFAULT_REFRESH_DELAY_AFTER_SET
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_REFRESH_DELAY_AFTER_SET,
+                        default=default_delay,
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=REFRESH_DELAY_MIN, max=REFRESH_DELAY_MAX),
+                    ),
+                }
+            ),
+        )
