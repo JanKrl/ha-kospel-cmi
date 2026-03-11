@@ -1,7 +1,7 @@
-"""Tests for Kospel water heater entity (target_temperature, cwu_mode, set_operation_mode)."""
+"""Tests for Kospel water heater entity (target_temperature, current_operation)."""
 
 import sys
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -181,46 +181,3 @@ class TestWaterHeaterCurrentOperation:
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.current_operation == STATE_PERFORMANCE
-
-
-class TestWaterHeaterSetOperationMode:
-    """Tests for async_set_operation_mode (calls set_water_mode)."""
-
-    @pytest.mark.asyncio
-    async def test_set_operation_mode_calls_set_water_mode(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """async_set_operation_mode calls set_water_mode with correct CwuMode."""
-        mock_controller = MagicMock()
-        mock_controller.is_water_heater_enabled = MagicMock()
-        mock_controller.set_water_mode = AsyncMock(return_value=True)
-        mock_coordinator.data = mock_controller
-        mock_coordinator.async_request_refresh = AsyncMock()
-        water_heater_entity.async_write_ha_state = MagicMock()
-
-        with patch(
-            "custom_components.kospel.water_heater.asyncio.sleep",
-            new_callable=AsyncMock,
-        ):
-            await water_heater_entity.async_set_operation_mode(STATE_ECO)
-
-        mock_controller.set_water_mode.assert_called_once_with(CwuMode.ECONOMY)
-
-    @pytest.mark.asyncio
-    async def test_set_operation_mode_comfort_calls_set_water_mode(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """async_set_operation_mode(performance) calls set_water_mode(COMFORT)."""
-        mock_controller = MagicMock()
-        mock_controller.set_water_mode = AsyncMock(return_value=True)
-        mock_coordinator.data = mock_controller
-        mock_coordinator.async_request_refresh = AsyncMock()
-        water_heater_entity.async_write_ha_state = MagicMock()
-
-        with patch(
-            "custom_components.kospel.water_heater.asyncio.sleep",
-            new_callable=AsyncMock,
-        ):
-            await water_heater_entity.async_set_operation_mode(STATE_PERFORMANCE)
-
-        mock_controller.set_water_mode.assert_called_once_with(CwuMode.COMFORT)

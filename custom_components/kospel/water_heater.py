@@ -1,25 +1,15 @@
 """Water heater entity for Kospel integration (CWU / DHW)."""
 
-import asyncio
 import logging
 
-from homeassistant.components.water_heater import (
-    WaterHeaterEntity,
-    WaterHeaterEntityFeature,
-)
+from homeassistant.components.water_heater import WaterHeaterEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    CONF_REFRESH_DELAY_AFTER_SET,
-    DEFAULT_REFRESH_DELAY_AFTER_SET,
-    DOMAIN,
-    get_device_info,
-    get_device_identifier,
-)
+from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.registers.enums import CwuMode, WaterHeaterEnabled
@@ -41,12 +31,6 @@ _CWU_MODE_TO_HA: dict[int, str] = {
     CwuMode.COMFORT: STATE_PERFORMANCE,
 }
 
-_HA_TO_CWU_MODE: dict[str, CwuMode] = {
-    STATE_ECO: CwuMode.ECONOMY,
-    STATE_PERFORMANCE: CwuMode.COMFORT,
-    STATE_OFF: CwuMode.ANTI_FREEZE,
-}
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -61,7 +45,11 @@ async def async_setup_entry(
 class KospelWaterHeaterEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], WaterHeaterEntity
 ):
-    """Representation of a Kospel domestic hot water (CWU/DHW) entity."""
+    """Representation of a Kospel domestic hot water (CWU/DHW) entity.
+
+    Read-only: displays current temperature, target temperature, and operation
+    mode. Climate entity controls main power; CWU mode is not configurable here.
+    """
 
     _attr_has_entity_name = True
     _attr_name = None
@@ -70,9 +58,7 @@ class KospelWaterHeaterEntity(
     _attr_operation_list = OPERATION_LIST
     _attr_min_temp = 30.0
     _attr_max_temp = 65.0
-    # ON_OFF and TARGET_TEMPERATURE not supported: climate controls main power,
-    # CWU setpoint temperature is not configurable via this integration.
-    _attr_supported_features = WaterHeaterEntityFeature.OPERATION_MODE
+    _attr_supported_features = 0  # Read-only: no set operations
 
     def __init__(self, coordinator: KospelDataUpdateCoordinator) -> None:
         """Initialize the water heater entity."""
@@ -115,24 +101,6 @@ class KospelWaterHeaterEntity(
     def available(self) -> bool:
         """Return if entity is available."""
         return self.coordinator.last_update_success
-
-    def _get_refresh_delay(self) -> float:
-        """Delay before refresh after set (from options or default)."""
-        return self.coordinator.entry.options.get(
-            CONF_REFRESH_DELAY_AFTER_SET, DEFAULT_REFRESH_DELAY_AFTER_SET
-        )
-
-    async def async_set_operation_mode(self, operation_mode: str) -> None:
-        """Set new operation mode via set_water_mode."""
-        _LOGGER.debug("Setting operation mode to %s", operation_mode)
-        if operation_mode in OPERATION_LIST:
-            cwu_mode = _HA_TO_CWU_MODE.get(operation_mode)
-            if cwu_mode is not None:
-                controller = self._get_controller()
-                await controller.set_water_mode(cwu_mode)
-                self.async_write_ha_state()
-                await asyncio.sleep(self._get_refresh_delay())
-                await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

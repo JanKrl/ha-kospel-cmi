@@ -17,11 +17,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    CONF_REFRESH_DELAY_AFTER_SET,
-    DEFAULT_REFRESH_DELAY_AFTER_SET,
     DOMAIN,
     get_device_info,
     get_device_identifier,
+    get_refresh_delay_after_set,
 )
 from .coordinator import KospelDataUpdateCoordinator
 
@@ -128,6 +127,14 @@ class KospelClimateEntity(
             CONF_REFRESH_DELAY_AFTER_SET, DEFAULT_REFRESH_DELAY_AFTER_SET
         )
 
+    async def async_turn_on(self) -> None:
+        """Turn heater on (set to HEAT mode)."""
+        await self.async_set_hvac_mode(HVACMode.HEAT)
+
+    async def async_turn_off(self) -> None:
+        """Turn heater off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
+
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target HVAC mode."""
         _LOGGER.debug("Setting HVAC mode to %s", hvac_mode)
@@ -138,7 +145,7 @@ class KospelClimateEntity(
         )
         await controller.save()
         self.async_write_ha_state()
-        await asyncio.sleep(self._get_refresh_delay())
+        await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -151,7 +158,7 @@ class KospelClimateEntity(
         if temperature is not None:
             await controller.set_manual_heating(temperature)
             self.async_write_ha_state()
-            await asyncio.sleep(self._get_refresh_delay())
+            await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
             await self.coordinator.async_request_refresh()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -161,7 +168,7 @@ class KospelClimateEntity(
         controller.heater_mode = HeaterMode(preset_mode.lower())
         await controller.save()
         self.async_write_ha_state()
-        await asyncio.sleep(self._get_refresh_delay())
+        await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
 
     def _handle_coordinator_update(self) -> None:
