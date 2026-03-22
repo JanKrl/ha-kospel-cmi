@@ -132,12 +132,13 @@ class TestWaterHeaterTargetTemperature:
     def test_target_temperature_returns_none_when_setpoint_missing(
         self, water_heater_entity, mock_coordinator
     ) -> None:
-        """target_temperature returns None when setpoint not in controller."""
-        mock_controller = MagicMock(spec=[])  # No cwu_temperature_* attributes
+        """target_temperature returns None when active setpoint decodes to None."""
+        mock_controller = MagicMock()
+        mock_controller.cwu_mode = CwuMode.ECONOMY
+        mock_controller.cwu_temperature_economy = None
         mock_coordinator.data = mock_controller
 
-        result = water_heater_entity.target_temperature
-        assert result is None
+        assert water_heater_entity.target_temperature is None
 
 
 class TestWaterHeaterCurrentOperation:

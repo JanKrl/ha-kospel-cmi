@@ -134,7 +134,7 @@ class TestClimateSupportedFeatures:
     def test_supported_features_includes_target_temp_always(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """TARGET_TEMPERATURE always included so target is displayed; only settable in manual mode."""
+        """TARGET_TEMPERATURE always included so target is displayed and settable."""
         for mode in (HeaterMode.WINTER, HeaterMode.MANUAL):
             mock_controller = MagicMock()
             mock_controller.heater_mode = mode
@@ -145,27 +145,31 @@ class TestClimateSupportedFeatures:
 
 
 class TestClimateSetTemperature:
-    """Tests for async_set_temperature (no-op when manual mode off)."""
+    """Tests for async_set_temperature (delegates to set_manual_heating on the device)."""
 
     @pytest.mark.asyncio
-    async def test_set_temperature_no_op_when_manual_mode_off(
+    async def test_set_temperature_calls_set_manual_heating_from_winter_mode(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """async_set_temperature does nothing when manual mode is off."""
+        """async_set_temperature calls set_manual_heating even when not already in MANUAL."""
         mock_controller = MagicMock()
         mock_controller.heater_mode = HeaterMode.WINTER
-        mock_controller.save = AsyncMock()
+        mock_controller.set_manual_heating = AsyncMock(return_value=True)
+        mock_coordinator.async_request_refresh = AsyncMock()
         mock_coordinator.data = mock_controller
+        climate_entity.async_write_ha_state = MagicMock()
 
-        await climate_entity.async_set_temperature(temperature=25.0)
+        with patch("custom_components.kospel.climate.asyncio.sleep", new_callable=AsyncMock):
+            await climate_entity.async_set_temperature(temperature=25.0)
 
-        mock_controller.save.assert_not_called()
+        mock_controller.set_manual_heating.assert_called_once_with(25.0)
+        mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_set_temperature_calls_set_manual_heating_when_manual_mode_on(
+    async def test_set_temperature_calls_set_manual_heating_when_already_manual(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """async_set_temperature calls set_manual_heating when manual mode is on."""
+        """async_set_temperature still calls set_manual_heating when already in MANUAL."""
         mock_controller = MagicMock()
         mock_controller.heater_mode = HeaterMode.MANUAL
         mock_controller.set_manual_heating = AsyncMock(return_value=True)
@@ -209,15 +213,6 @@ class TestClimateHvacAction:
         """hvac_action returns OFF when co_heating_status is DISABLED."""
         mock_controller = MagicMock()
         mock_controller.co_heating_status = HeatingStatus.DISABLED
-        mock_coordinator.data = mock_controller
-
-        assert climate_entity.hvac_action == HVACAction.OFF
-
-    def test_hvac_action_off_when_co_heating_status_missing(
-        self, climate_entity, mock_coordinator
-    ) -> None:
-        """hvac_action returns OFF when co_heating_status is missing (fallback to IDLE)."""
-        mock_controller = object()  # No co_heating_status attribute
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.OFF

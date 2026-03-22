@@ -20,8 +20,7 @@ from .const import (
     get_yaml_state_file_path,
 )
 from .coordinator import KospelDataUpdateCoordinator
-from kospel_cmi.controller.api import HeaterController
-from kospel_cmi.controller.registry import load_registry
+from kospel_cmi.controller.device import Ekco_M3
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,8 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         backend = HttpRegisterBackend(session, api_base_url)
 
     try:
-        registry = load_registry("kospel_cmi_standard")
-        heater_controller = HeaterController(backend=backend, registry=registry)
+        heater_controller = Ekco_M3(backend=backend)
         coordinator = KospelDataUpdateCoordinator(hass, entry, heater_controller)
         hass.data[DOMAIN][entry.entry_id] = coordinator
         await coordinator.async_config_entry_first_refresh()
