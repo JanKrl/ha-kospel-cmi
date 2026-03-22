@@ -27,7 +27,7 @@ class TestYamlBackendFullCycle:
 
         await controller.refresh()
 
-        assert len(controller._registers) > 0
+        assert controller.heater_mode is not None
 
         result = await controller.set_heater_mode(HeaterMode.MANUAL)
         assert result is True
@@ -69,11 +69,7 @@ class TestYamlBackendFullCycle:
         controller = _controller_for_state_file(str(state_file))
         await controller.refresh()
 
-        assert len(controller._registers) > 0
-        assert (
-            controller.heater_mode == HeaterMode.WINTER
-            or controller.heater_mode is not None
-        )
+        assert controller.heater_mode == HeaterMode.WINTER
 
     @pytest.mark.asyncio
     async def test_state_survives_controller_recreation(self, tmp_path):
@@ -153,14 +149,15 @@ class TestYamlBackendVsRealAPI:
         state_file = tmp_path / "state.yaml"
         state_file.parent.mkdir(parents=True, exist_ok=True)
         test_state = {"0b55": "d700", "0b51": "0500"}
+        for reg_value in test_state.values():
+            assert isinstance(reg_value, str)
+            assert len(reg_value) == 4
+            assert all(c in "0123456789abcdef" for c in reg_value.lower())
+
         with open(state_file, "w") as f:
             yaml.dump(test_state, f)
 
         controller = _controller_for_state_file(str(state_file))
         await controller.refresh()
 
-        assert len(controller._registers) > 0
-        for reg_value in controller._registers.values():
-            assert isinstance(reg_value, str)
-            assert len(reg_value) == 4
-            assert all(c in "0123456789abcdef" for c in reg_value.lower())
+        assert controller.heater_mode is not None

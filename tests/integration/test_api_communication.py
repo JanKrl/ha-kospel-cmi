@@ -10,6 +10,12 @@ from kospel_cmi.kospel.backend import HttpRegisterBackend
 from kospel_cmi.registers.enums import HeaterMode
 
 
+def _get_request_count(m: object) -> int:
+    """Count mocked HTTP GET requests (aioresponses keys are (method, url) tuples)."""
+    requests = getattr(m, "requests", {})
+    return sum(1 for method, _ in requests if method == "GET")
+
+
 class TestEndToEndReadWrite:
     """Tests for full read/write cycle."""
 
@@ -37,7 +43,7 @@ class TestEndToEndReadWrite:
 
                 # Refresh from API
                 await controller.refresh()
-                assert len(controller._registers) > 0
+                assert controller.heater_mode is not None
 
                 # Modify setting via immediate write
                 result = await controller.set_heater_mode(HeaterMode.WINTER)
@@ -95,7 +101,7 @@ class TestBatchOperations:
 
                 await controller.refresh()
 
-                assert len(controller._registers) > 0
+                assert controller.heater_mode is not None
 
     @pytest.mark.asyncio
     async def test_set_heater_mode_writes_immediately(
@@ -164,6 +170,7 @@ class TestErrorRecovery:
 
                 await controller.refresh()
 
+                # Library exposes no public signal for empty batch; _registers is empty on API failure.
                 assert len(controller._registers) == 0
 
     @pytest.mark.asyncio
@@ -205,7 +212,7 @@ class TestErrorRecovery:
 
                 await controller.refresh()
 
-                assert controller.heater_mode is None or len(controller._registers) > 0
+                assert controller.heater_mode is None
 
     @pytest.mark.asyncio
     async def test_partial_write_failures(
@@ -280,12 +287,13 @@ class TestRegisterCaching:
                 controller = Ekco_M3(backend=backend)
 
                 await controller.refresh()
-                original_value = controller._registers.get("0b55")
+                original_mode = controller.heater_mode
 
                 await controller.refresh()
-                new_value = controller._registers.get("0b55")
+                new_mode = controller.heater_mode
 
-                assert original_value != new_value
+                assert original_mode != new_mode
+                assert new_mode == HeaterMode.WINTER
 
     @pytest.mark.asyncio
     async def test_cache_updated_after_successful_write(
@@ -309,4 +317,4 @@ class TestRegisterCaching:
                 result = await controller.set_heater_mode(HeaterMode.WINTER)
                 assert result is True
 
-                assert "0b55" in controller._registers
+                assert controller.heater_mode == HeaterMode.WINTER

@@ -1,7 +1,7 @@
 """Water heater entity for Kospel integration (CWU / DHW)."""
 
 import logging
-from typing import Any
+from typing import TypedDict, Unpack
 
 from homeassistant.components.water_heater import WaterHeaterEntity, WaterHeaterEntityFeature
 from homeassistant.config_entries import ConfigEntry
@@ -31,6 +31,13 @@ _CWU_MODE_TO_HA: dict[int, str] = {
     CwuMode.ANTI_FREEZE: STATE_OFF,
     CwuMode.COMFORT: STATE_PERFORMANCE,
 }
+
+
+class _WaterHeaterSetTemperatureKwargs(TypedDict, total=False):
+    """Keyword arguments Home Assistant may pass to async_set_temperature."""
+
+    temperature: float
+    operation_mode: str
 
 
 async def async_setup_entry(
@@ -74,13 +81,18 @@ class KospelWaterHeaterEntity(
         """Return the device controller from coordinator data."""
         return self.coordinator.data
 
-    async def async_set_temperature(self, **kwargs: Any) -> None:
+    async def async_set_temperature(
+        self, **kwargs: Unpack[_WaterHeaterSetTemperatureKwargs]
+    ) -> None:
         """Ignore temperature writes; DHW setpoints are changed on the device or via climate."""
         _LOGGER.debug("Ignoring set_temperature on read-only DHW entity")
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Ignore operation mode writes; CWU mode is not controlled here."""
-        _LOGGER.debug("Ignoring set_operation_mode on read-only DHW entity")
+        _LOGGER.debug(
+            "Ignoring set_operation_mode on read-only DHW entity (mode=%s)",
+            operation_mode,
+        )
 
     @property
     def current_temperature(self) -> float | None:
@@ -92,20 +104,20 @@ class KospelWaterHeaterEntity(
     def target_temperature(self) -> float | None:
         """Return the target temperature from the active setpoint (mode-dependent)."""
         controller = self._get_controller()
-        cwu_mode = getattr(controller, "cwu_mode", 0)
+        cwu_mode = controller.cwu_mode
         if cwu_mode == CwuMode.COMFORT:
-            return getattr(controller, "cwu_temperature_comfort", None)
+            return controller.cwu_temperature_comfort
         if cwu_mode == CwuMode.ANTI_FREEZE:
-            return getattr(controller, "cwu_temperature_economy", None)
-        return getattr(controller, "cwu_temperature_economy", None)
+            return controller.cwu_temperature_economy
+        return controller.cwu_temperature_economy
 
     @property
     def current_operation(self) -> str:
         """Return the current operation mode from device cwu_mode."""
         controller = self._get_controller()
-        if getattr(controller, "is_water_heater_enabled", WaterHeaterEnabled.DISABLED) != WaterHeaterEnabled.ENABLED:
+        if controller.is_water_heater_enabled != WaterHeaterEnabled.ENABLED:
             return STATE_OFF
-        cwu_mode = getattr(controller, "cwu_mode", 0)
+        cwu_mode = controller.cwu_mode
         return _CWU_MODE_TO_HA.get(cwu_mode or 0, STATE_ECO)
 
     @property

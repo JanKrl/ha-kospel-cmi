@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any
+from typing import TypedDict, Unpack
 
 from homeassistant.components.climate import (
     ClimateEntity,
@@ -28,6 +28,12 @@ from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
 from kospel_cmi.controller.device import Ekco_M3
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class _ClimateSetTemperatureKwargs(TypedDict, total=False):
+    """Keyword arguments Home Assistant may pass to async_set_temperature."""
+
+    temperature: float
 
 
 async def async_setup_entry(
@@ -74,13 +80,8 @@ class KospelClimateEntity(
         return controller.room_temperature
 
     @property
-    def _is_manual_mode(self) -> bool:
-        """Return True if manual mode is enabled."""
-        return self._heater_mode == HeaterMode.MANUAL
-
-    @property
     def supported_features(self) -> int:
-        """Return supported features; target temperature always shown, but only settable in manual mode."""
+        """Return supported features; target temperature is shown and sets manual heating when changed."""
         return (
             ClimateEntityFeature.PRESET_MODE
             | ClimateEntityFeature.TURN_ON
@@ -103,7 +104,7 @@ class KospelClimateEntity(
     def hvac_action(self) -> HVACAction:
         """HVAC action is based on whether CO heating circuit is active."""
         controller: Ekco_M3 = self.coordinator.data
-        co_status = getattr(controller, "co_heating_status", HeatingStatus.IDLE)
+        co_status = controller.co_heating_status
         return (
             HVACAction.HEATING
             if co_status == HeatingStatus.RUNNING
@@ -139,11 +140,8 @@ class KospelClimateEntity(
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
 
-    async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set new target temperature (only when manual mode is on)."""
-        if not self._is_manual_mode:
-            _LOGGER.debug("Ignoring set_temperature: manual mode is off")
-            return
+    async def async_set_temperature(self, **kwargs: Unpack[_ClimateSetTemperatureKwargs]) -> None:
+        """Set manual heating target; device switches to MANUAL mode (see Ekco_M3.set_manual_heating)."""
         controller: Ekco_M3 = self.coordinator.data
         temperature = kwargs.get("temperature")
         if temperature is not None:
