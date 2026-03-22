@@ -1,5 +1,7 @@
 """Sensor entities for Kospel integration."""
 
+from collections.abc import Callable
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -103,17 +105,17 @@ class KospelTemperatureSensor(KospelSensorEntity):
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
         unique_id_suffix: str,
-        setting_name: str,
+        value_getter: Callable[[Ekco_M3], float | None],
     ) -> None:
         """Initialize the temperature sensor."""
         super().__init__(coordinator, entry, unique_id_suffix, unique_id_suffix)
-        self._setting_name = setting_name
+        self._value_getter = value_getter
 
     @property
     def native_value(self) -> float | None:
         """Return the temperature value."""
         controller: Ekco_M3 = self.coordinator.data
-        return getattr(controller, self._setting_name, None)
+        return self._value_getter(controller)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
