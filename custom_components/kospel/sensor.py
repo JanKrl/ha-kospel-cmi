@@ -39,10 +39,13 @@ async def async_setup_entry(
         ("supply_setpoint", "supply_setpoint"),
     ]
 
-    for unique_id_suffix, setting_name in temperature_sensors:
+    for unique_id_suffix, attr_name in temperature_sensors:
         entities.append(
             KospelTemperatureSensor(
-                coordinator, entry, unique_id_suffix, setting_name
+                coordinator,
+                entry,
+                unique_id_suffix,
+                lambda c, name=attr_name: getattr(c, name, None),
             )
         )
 
