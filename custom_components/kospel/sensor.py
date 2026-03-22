@@ -14,7 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
-from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.controller.device import Ekco_M3
 
 
 async def async_setup_entry(
@@ -112,7 +112,7 @@ class KospelTemperatureSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the temperature value."""
-        controller: HeaterController = self.coordinator.data
+        controller: Ekco_M3 = self.coordinator.data
         return getattr(controller, self._setting_name, None)
 
     def _handle_coordinator_update(self) -> None:
@@ -138,8 +138,8 @@ class KospelPressureSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the pressure value."""
-        controller: HeaterController = self.coordinator.data
-        return getattr(controller, "pressure", None)
+        controller: Ekco_M3 = self.coordinator.data
+        return controller.pressure
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -147,10 +147,14 @@ class KospelPressureSensor(KospelSensorEntity):
 
 
 class KospelPowerSensor(KospelSensorEntity):
-    """Representation of a Kospel power sensor (heating element power in kW)."""
+    """Representation of instantaneous power in watts.
+
+    The library reports power in kW; this sensor exposes native W for the
+    Energy dashboard and long-term statistics.
+    """
 
     _attr_device_class = SensorDeviceClass.POWER
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
@@ -163,9 +167,12 @@ class KospelPowerSensor(KospelSensorEntity):
 
     @property
     def native_value(self) -> float | None:
-        """Return the power value in kW."""
-        controller: HeaterController = self.coordinator.data
-        return getattr(controller, "power", None)
+        """Return the power value in W (device reports kW)."""
+        controller: Ekco_M3 = self.coordinator.data
+        power_kw = controller.power
+        if power_kw is None:
+            return None
+        return power_kw * 1000.0
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -189,7 +196,7 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the heating status (RUNNING, IDLE, DISABLED)."""
-        controller: HeaterController = self.coordinator.data
+        controller: Ekco_M3 = self.coordinator.data
         status = getattr(controller, self._setting_name, None)
         if status is None:
             return None
@@ -216,8 +223,8 @@ class KospelValvePositionSensor(KospelSensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the valve position."""
-        controller: HeaterController = self.coordinator.data
-        position = getattr(controller, "valve_position", None)
+        controller: Ekco_M3 = self.coordinator.data
+        position = controller.valve_position
         if position is None:
             return None
         if hasattr(position, "value"):

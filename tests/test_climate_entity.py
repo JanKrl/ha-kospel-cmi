@@ -154,12 +154,12 @@ class TestClimateSetTemperature:
         """async_set_temperature does nothing when manual mode is off."""
         mock_controller = MagicMock()
         mock_controller.heater_mode = HeaterMode.WINTER
-        mock_controller.save = AsyncMock()
+        mock_controller.set_manual_heating = AsyncMock()
         mock_coordinator.data = mock_controller
 
         await climate_entity.async_set_temperature(temperature=25.0)
 
-        mock_controller.save.assert_not_called()
+        mock_controller.set_manual_heating.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_set_temperature_calls_set_manual_heating_when_manual_mode_on(

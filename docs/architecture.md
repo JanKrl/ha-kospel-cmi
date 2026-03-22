@@ -14,10 +14,8 @@ graph TB
     end
 
     subgraph Library["kospel-cmi-lib (external)"]
-        HeaterController[HeaterController]
+        Ekco_M3[Ekco_M3 device]
         Backend[Http or YAML backend]
-        Registry[load_registry configs/yaml]
-        API[api.py - read/write registers]
         Registers[registers - decoders encoders enums utils]
     end
 
@@ -26,17 +24,12 @@ graph TB
     end
 
     HA --> Coordinator
-    Coordinator --> HeaterController
-    ClimateEntity --> HeaterController
-    SensorEntity --> HeaterController
-    WaterHeaterEntity --> HeaterController
-    ConfigFlow --> HeaterController
+    Coordinator --> Ekco_M3
+    ClimateEntity --> Ekco_M3
+    SensorEntity --> Ekco_M3
+    WaterHeaterEntity --> Ekco_M3
 
-    HeaterController --> Backend
-    HeaterController --> Registry
-    Backend --> API
-    Registry --> Registers
-    API --> Registers
-
-    API --> HeaterAPI
+    Ekco_M3 --> Backend
+    Backend --> Registers
+    Backend --> HeaterAPI
 ```

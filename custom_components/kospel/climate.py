@@ -25,7 +25,7 @@ from .const import (
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
-from kospel_cmi.controller.api import HeaterController
+from kospel_cmi.controller.device import Ekco_M3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,15 +64,14 @@ class KospelClimateEntity(
     @property
     def _heater_mode(self) -> HeaterMode:
         """Current heater mode from the controller."""
-        controller: HeaterController = self.coordinator.data
-        return getattr(controller, "heater_mode", HeaterMode.OFF)
+        controller: Ekco_M3 = self.coordinator.data
+        return controller.heater_mode or HeaterMode.OFF
 
     @property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
-        controller: HeaterController = self.coordinator.data
-        # Use room temperature sensor (register 0b6d) as current temperature
-        return getattr(controller, "room_temperature", None)
+        controller: Ekco_M3 = self.coordinator.data
+        return controller.room_temperature
 
     @property
     def _is_manual_mode(self) -> bool:
@@ -92,8 +91,8 @@ class KospelClimateEntity(
     @property
     def target_temperature(self) -> float | None:
         """Return the target temperature (always room_setpoint)."""
-        controller: HeaterController = self.coordinator.data
-        return getattr(controller, "room_setpoint", None)
+        controller: Ekco_M3 = self.coordinator.data
+        return controller.room_setpoint
 
     @property
     def hvac_mode(self) -> HVACMode:
@@ -103,11 +102,11 @@ class KospelClimateEntity(
     @property
     def hvac_action(self) -> HVACAction:
         """HVAC action is based on whether CO heating circuit is active."""
-        controller: HeaterController = self.coordinator.data
+        controller: Ekco_M3 = self.coordinator.data
+        co_status = getattr(controller, "co_heating_status", HeatingStatus.IDLE)
         return (
             HVACAction.HEATING
-            if getattr(controller, "co_heating_status", HeatingStatus.IDLE)
-            == HeatingStatus.RUNNING
+            if co_status == HeatingStatus.RUNNING
             else HVACAction.OFF
         )
 
@@ -132,12 +131,10 @@ class KospelClimateEntity(
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target HVAC mode."""
         _LOGGER.debug("Setting HVAC mode to %s", hvac_mode)
-        controller: HeaterController = self.coordinator.data
+        controller: Ekco_M3 = self.coordinator.data
 
-        controller.heater_mode = (
-            HeaterMode.OFF if hvac_mode == HVACMode.OFF else HeaterMode.WINTER
-        )
-        await controller.save()
+        mode = HeaterMode.OFF if hvac_mode == HVACMode.OFF else HeaterMode.WINTER
+        await controller.set_heater_mode(mode)
         self.async_write_ha_state()
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
@@ -147,7 +144,7 @@ class KospelClimateEntity(
         if not self._is_manual_mode:
             _LOGGER.debug("Ignoring set_temperature: manual mode is off")
             return
-        controller: HeaterController = self.coordinator.data
+        controller: Ekco_M3 = self.coordinator.data
         temperature = kwargs.get("temperature")
         if temperature is not None:
             await controller.set_manual_heating(temperature)
@@ -158,9 +155,8 @@ class KospelClimateEntity(
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         _LOGGER.debug("Setting preset mode to %s", preset_mode)
-        controller: HeaterController = self.coordinator.data
-        controller.heater_mode = HeaterMode(preset_mode.lower())
-        await controller.save()
+        controller: Ekco_M3 = self.coordinator.data
+        await controller.set_heater_mode(HeaterMode(preset_mode.lower()))
         self.async_write_ha_state()
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
