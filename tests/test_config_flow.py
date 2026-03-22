@@ -56,7 +56,10 @@ sys.modules["homeassistant.components.climate"] = MagicMock()
 sys.modules["homeassistant.components.sensor"] = MagicMock()
 sys.modules["homeassistant.components.switch"] = MagicMock()
 sys.modules["homeassistant.const"] = MagicMock()
-sys.modules["homeassistant.core"] = MagicMock()
+_ha_core_mock = MagicMock()
+# Real identity decorator so @callback on async_get_options_flow is not a MagicMock.
+_ha_core_mock.callback = lambda f: f
+sys.modules["homeassistant.core"] = _ha_core_mock
 sys.modules["homeassistant.data_entry_flow"] = MagicMock()
 sys.modules["homeassistant.exceptions"] = MagicMock()
 sys.modules["homeassistant.helpers"] = MagicMock()
@@ -315,11 +318,10 @@ class TestKospelOptionsFlowHandler:
         assert result["step_id"] == "init"
         assert handler.options.get(CONF_REFRESH_DELAY_AFTER_SET) == 2.5
 
-    @pytest.mark.asyncio
-    async def test_async_get_options_flow_returns_handler(self) -> None:
+    def test_async_get_options_flow_returns_handler(self) -> None:
         """async_get_options_flow returns KospelOptionsFlowHandler instance."""
         config_entry = MagicMock()
-        result = await KospelConfigFlowHandler.async_get_options_flow(config_entry)
+        result = KospelConfigFlowHandler.async_get_options_flow(config_entry)
         assert isinstance(result, KospelOptionsFlowHandler)
         assert result.config_entry is config_entry
 
