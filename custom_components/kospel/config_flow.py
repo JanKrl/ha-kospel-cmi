@@ -8,7 +8,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.components import network
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 
 from kospel_cmi import discover_devices, probe_device
@@ -386,7 +386,8 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return True
 
     @staticmethod
-    async def async_get_options_flow(
+    @callback
+    def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> "KospelOptionsFlowHandler":
         """Get the options flow for this handler."""
