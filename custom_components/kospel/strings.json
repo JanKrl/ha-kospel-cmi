@@ -85,10 +85,6 @@
   },
   "entity": {
     "sensor": {
-      "room_temperature_economy": { "name": "Room Temp. Economy" },
-      "room_temperature_comfort": { "name": "Room Temp. Comfort" },
-      "room_temperature_comfort_plus": { "name": "Room Temp. Comfort Plus" },
-      "room_temperature_comfort_minus": { "name": "Room Temp. Comfort Minus" },
       "room_setpoint": { "name": "Room Setpoint" },
       "supply_setpoint": { "name": "DHW Setpoint" },
       "pressure": { "name": "Pressure" },
@@ -116,6 +112,12 @@
           "CO": "CO"
         }
       }
+    },
+    "number": {
+      "room_temperature_economy": { "name": "Eco" },
+      "room_temperature_comfort": { "name": "Comfort" },
+      "room_temperature_comfort_plus": { "name": "Comfort+" },
+      "room_temperature_comfort_minus": { "name": "Comfort−" }
     },
     "water_heater": {
       "dhw": { "name": "Domestic Hot Water" }

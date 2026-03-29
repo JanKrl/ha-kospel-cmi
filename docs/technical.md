@@ -9,7 +9,7 @@ This project provides a Home Assistant integration for Kospel electric heaters. 
 **Key Characteristics:**
 - Uses `kospel-cmi-lib` for heater API communication
 - Config flow choice: HTTP (real device) or YAML (file-based, for development)
-- Entities: climate, sensors, water heater
+- Entities: climate, number (room preset temperatures), sensors, water heater
 - `uv` for dependency management, `pytest` for testing
 
 ## Home Assistant Integration
@@ -43,6 +43,7 @@ custom_components/kospel/
 ├── config_flow.py      # Configuration UI (HTTP or YAML backend choice)
 ├── coordinator.py      # Data update coordinator
 ├── climate.py          # Climate entity
+├── number.py           # Number entities (room preset temperatures)
 ├── sensor.py           # Sensor entities
 ├── water_heater.py     # Water heater entity
 ├── const.py            # Constants

@@ -6,10 +6,6 @@
   },
   "entity": {
     "sensor": {
-      "room_temperature_economy": { "name": "Temp. pokoju ekonomiczna" },
-      "room_temperature_comfort": { "name": "Temp. pokoju komfort" },
-      "room_temperature_comfort_plus": { "name": "Temp. pokoju komfort plus" },
-      "room_temperature_comfort_minus": { "name": "Temp. pokoju komfort minus" },
       "room_setpoint": { "name": "Nastawa pokojowa" },
       "supply_setpoint": { "name": "Nastawa CWU" },
       "pressure": { "name": "Ciśnienie" },
@@ -37,6 +33,12 @@
           "CO": "CO"
         }
       }
+    },
+    "number": {
+      "room_temperature_economy": { "name": "Eko" },
+      "room_temperature_comfort": { "name": "Komfort" },
+      "room_temperature_comfort_plus": { "name": "Komfort+" },
+      "room_temperature_comfort_minus": { "name": "Komfort−" }
     },
     "water_heater": {
       "dhw": { "name": "Ciepła woda użytkowa" }

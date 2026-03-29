@@ -29,12 +29,7 @@ async def async_setup_entry(
 
     entities: list[SensorEntity] = []
 
-    # Temperature sensors: (unique_id_suffix, translation_key, setting_name)
     temperature_sensors = [
-        ("room_temperature_economy", "room_temperature_economy"),
-        ("room_temperature_comfort", "room_temperature_comfort"),
-        ("room_temperature_comfort_plus", "room_temperature_comfort_plus"),
-        ("room_temperature_comfort_minus", "room_temperature_comfort_minus"),
         ("room_setpoint", "room_setpoint"),
         ("supply_setpoint", "supply_setpoint"),
     ]
@@ -57,9 +52,7 @@ async def async_setup_entry(
 
     # Heating status sensors: (unique_id_suffix, setting_name)
     entities.append(
-        KospelHeatingStatusSensor(
-            coordinator, entry, "co_heating", "co_heating_status"
-        )
+        KospelHeatingStatusSensor(coordinator, entry, "co_heating", "co_heating_status")
     )
     entities.append(
         KospelHeatingStatusSensor(
