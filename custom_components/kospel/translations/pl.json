@@ -6,24 +6,32 @@
   },
   "entity": {
     "sensor": {
-      "room_setpoint": { "name": "Nastawa pokojowa" },
-      "supply_setpoint": { "name": "Nastawa CWU" },
-      "pressure": { "name": "Ciśnienie" },
-      "power": { "name": "Moc" },
+      "room_setpoint": {
+        "name": "Nastawa pokojowa"
+      },
+      "supply_setpoint": {
+        "name": "Nastawa CWU"
+      },
+      "pressure": {
+        "name": "Ci\u015bnienie"
+      },
+      "power": {
+        "name": "Moc"
+      },
       "co_heating": {
         "name": "Ogrzewanie CO",
         "state": {
           "running": "Praca",
-          "idle": "Bezczynność",
-          "disabled": "Wyłączone"
+          "idle": "Bezczynno\u015b\u0107",
+          "disabled": "Wy\u0142\u0105czone"
         }
       },
       "cwu_heating": {
         "name": "Ogrzewanie CWU",
         "state": {
           "running": "Praca",
-          "idle": "Bezczynność",
-          "disabled": "Wyłączone"
+          "idle": "Bezczynno\u015b\u0107",
+          "disabled": "Wy\u0142\u0105czone"
         }
       },
       "valve_position": {
@@ -32,16 +40,29 @@
           "DHW": "CWU",
           "CO": "CO"
         }
+      },
+      "max_power_limit": {
+        "name": "Limit mocy"
       }
     },
     "number": {
-      "room_temperature_economy": { "name": "Eko" },
-      "room_temperature_comfort": { "name": "Komfort" },
-      "room_temperature_comfort_plus": { "name": "Komfort+" },
-      "room_temperature_comfort_minus": { "name": "Komfort−" }
+      "room_temperature_economy": {
+        "name": "Eko"
+      },
+      "room_temperature_comfort": {
+        "name": "Komfort"
+      },
+      "room_temperature_comfort_plus": {
+        "name": "Komfort+"
+      },
+      "room_temperature_comfort_minus": {
+        "name": "Komfort\u2212"
+      }
     },
     "water_heater": {
-      "dhw": { "name": "Ciepła woda użytkowa" }
+      "dhw": {
+        "name": "Ciep\u0142a woda u\u017cytkowa"
+      }
     },
     "climate": {
       "heater": {
@@ -49,14 +70,25 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "off": "Wyłączony",
+              "off": "Wy\u0142\u0105czony",
               "summer": "Lato",
               "winter": "Zima",
               "party": "Impreza",
               "vacation": "Wakacje",
-              "manual": "Ręczny"
+              "manual": "R\u0119czny"
             }
           }
+        }
+      }
+    },
+    "select": {
+      "boiler_max_power": {
+        "name": "Maks. moc kot\u0142a",
+        "state": {
+          "kw_2": "2 kW",
+          "kw_4": "4 kW",
+          "kw_6": "6 kW",
+          "kw_8": "8 kW"
         }
       }
     }

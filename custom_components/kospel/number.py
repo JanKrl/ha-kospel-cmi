@@ -6,6 +6,7 @@ from homeassistant.components.number import NumberDeviceClass, NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -44,9 +45,14 @@ async def async_setup_entry(
 class KospelRoomPresetNumberEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], NumberEntity
 ):
-    """Room preset temperature (economy / comfort / ±) as a read/write number."""
+    """Room preset temperature (economy / comfort / ±) as a read/write number.
+
+    Shown under device **Configuration** with other system-style setpoints
+    (e.g. max boiler power select).
+    """
 
     _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.CONFIG
     _attr_native_min_value = ROOM_PRESET_TEMP_MIN
     _attr_native_max_value = ROOM_PRESET_TEMP_MAX
     _attr_native_step = ROOM_PRESET_TEMP_STEP

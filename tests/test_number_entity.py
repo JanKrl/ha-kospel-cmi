@@ -34,6 +34,9 @@ def _device_info(**kwargs):
 
 
 sys.modules["homeassistant.helpers.entity"].DeviceInfo = _device_info
+_entity_cat = MagicMock()
+_entity_cat.CONFIG = "config"
+sys.modules["homeassistant.helpers.entity"].EntityCategory = _entity_cat
 
 
 class _CoordinatorEntityBase:
@@ -154,6 +157,16 @@ class TestKospelRoomPresetNumberEntity:
         assert entity.native_min_value == ROOM_PRESET_TEMP_MIN == 10.0
         assert entity.native_max_value == ROOM_PRESET_TEMP_MAX == 25.0
         assert entity.native_step == ROOM_PRESET_TEMP_STEP == 0.1
+
+    def test_entity_category_is_config(self, mock_coordinator, mock_entry) -> None:
+        """Room presets appear under device Configuration (with max boiler power)."""
+        entity = KospelRoomPresetNumberEntity(
+            mock_coordinator,
+            mock_entry,
+            "room_temperature_economy",
+            "set_room_temperature_economy",
+        )
+        assert entity._attr_entity_category == "config"
 
     @pytest.mark.asyncio
     async def test_async_set_native_value_calls_setter_and_refreshes(

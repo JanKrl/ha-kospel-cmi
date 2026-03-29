@@ -85,10 +85,18 @@
   },
   "entity": {
     "sensor": {
-      "room_setpoint": { "name": "Room Setpoint" },
-      "supply_setpoint": { "name": "DHW Setpoint" },
-      "pressure": { "name": "Pressure" },
-      "power": { "name": "Power" },
+      "room_setpoint": {
+        "name": "Room Setpoint"
+      },
+      "supply_setpoint": {
+        "name": "DHW Setpoint"
+      },
+      "pressure": {
+        "name": "Pressure"
+      },
+      "power": {
+        "name": "Power"
+      },
       "co_heating": {
         "name": "CO Heating",
         "state": {
@@ -111,16 +119,29 @@
           "DHW": "DHW",
           "CO": "CO"
         }
+      },
+      "max_power_limit": {
+        "name": "Max power limit"
       }
     },
     "number": {
-      "room_temperature_economy": { "name": "Eco" },
-      "room_temperature_comfort": { "name": "Comfort" },
-      "room_temperature_comfort_plus": { "name": "Comfort+" },
-      "room_temperature_comfort_minus": { "name": "Comfort−" }
+      "room_temperature_economy": {
+        "name": "Eco"
+      },
+      "room_temperature_comfort": {
+        "name": "Comfort"
+      },
+      "room_temperature_comfort_plus": {
+        "name": "Comfort+"
+      },
+      "room_temperature_comfort_minus": {
+        "name": "Comfort\u2212"
+      }
     },
     "water_heater": {
-      "dhw": { "name": "Domestic Hot Water" }
+      "dhw": {
+        "name": "Domestic Hot Water"
+      }
     },
     "climate": {
       "heater": {
@@ -138,7 +159,17 @@
           }
         }
       }
+    },
+    "select": {
+      "boiler_max_power": {
+        "name": "Max boiler power",
+        "state": {
+          "kw_2": "2 kW",
+          "kw_4": "4 kW",
+          "kw_6": "6 kW",
+          "kw_8": "8 kW"
+        }
+      }
     }
   }
 }
-
