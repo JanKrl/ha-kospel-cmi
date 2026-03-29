@@ -22,6 +22,7 @@ const_mock.UnitOfTemperature = MagicMock()
 const_mock.UnitOfTemperature.CELSIUS = "°C"
 const_mock.UnitOfPressure = MagicMock()
 const_mock.UnitOfPower = MagicMock()
+const_mock.UnitOfPower.WATT = "W"
 sys.modules["homeassistant.const"] = const_mock
 sys.modules["homeassistant.core"] = MagicMock()
 sys.modules["homeassistant.exceptions"] = MagicMock()
@@ -36,6 +37,10 @@ def _device_info(**kwargs):
 
 
 sys.modules["homeassistant.helpers.entity"].DeviceInfo = _device_info
+_ec = MagicMock()
+_ec.CONFIG = "config"
+_ec.DIAGNOSTIC = "diagnostic"
+sys.modules["homeassistant.helpers.entity"].EntityCategory = _ec
 
 
 class _CoordinatorEntityBase:
@@ -59,6 +64,7 @@ sensor_mock = MagicMock()
 sensor_mock.SensorEntity = _SensorEntityBase
 sensor_mock.SensorDeviceClass = MagicMock()
 sensor_mock.SensorDeviceClass.TEMPERATURE = "temperature"
+sensor_mock.SensorDeviceClass.POWER = "power"
 sensor_mock.SensorStateClass = MagicMock()
 sensor_mock.SensorStateClass.MEASUREMENT = "measurement"
 sys.modules["homeassistant.components.sensor"] = sensor_mock
@@ -67,7 +73,10 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
     _CoordinatorEntityBase
 )
 
-from custom_components.kospel.sensor import KospelTemperatureSensor
+from custom_components.kospel.sensor import (  # noqa: E402
+    KospelMaxPowerLimitSensor,
+    KospelTemperatureSensor,
+)
 
 
 @pytest.fixture
@@ -122,4 +131,30 @@ class TestKospelTemperatureSensorNativeValue:
             lambda c, name="room_setpoint": getattr(c, name, None),
         )
 
+        assert entity.native_value is None
+
+
+class TestKospelMaxPowerLimitSensorNativeValue:
+    """Tests for max power limit sensor (kW to W)."""
+
+    def test_native_value_converts_kw_to_w(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is boiler_max_power_kw * 1000."""
+        mock_controller = MagicMock()
+        mock_controller.boiler_max_power_kw = 4.0
+        mock_coordinator.data = mock_controller
+
+        entity = KospelMaxPowerLimitSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == 4000.0
+
+    def test_native_value_none_when_missing(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is None when boiler_max_power_kw is None."""
+        mock_controller = MagicMock()
+        mock_controller.boiler_max_power_kw = None
+        mock_coordinator.data = mock_controller
+
+        entity = KospelMaxPowerLimitSensor(mock_coordinator, mock_entry)
         assert entity.native_value is None

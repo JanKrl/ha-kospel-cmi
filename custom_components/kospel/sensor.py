@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower, UnitOfPressure, UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -29,12 +30,7 @@ async def async_setup_entry(
 
     entities: list[SensorEntity] = []
 
-    # Temperature sensors: (unique_id_suffix, translation_key, setting_name)
     temperature_sensors = [
-        ("room_temperature_economy", "room_temperature_economy"),
-        ("room_temperature_comfort", "room_temperature_comfort"),
-        ("room_temperature_comfort_plus", "room_temperature_comfort_plus"),
-        ("room_temperature_comfort_minus", "room_temperature_comfort_minus"),
         ("room_setpoint", "room_setpoint"),
         ("supply_setpoint", "supply_setpoint"),
     ]
@@ -55,11 +51,12 @@ async def async_setup_entry(
     # Power sensor
     entities.append(KospelPowerSensor(coordinator, entry))
 
+    # Configured max boiler power limit (kW from device, exposed as W)
+    entities.append(KospelMaxPowerLimitSensor(coordinator, entry))
+
     # Heating status sensors: (unique_id_suffix, setting_name)
     entities.append(
-        KospelHeatingStatusSensor(
-            coordinator, entry, "co_heating", "co_heating_status"
-        )
+        KospelHeatingStatusSensor(coordinator, entry, "co_heating", "co_heating_status")
     )
     entities.append(
         KospelHeatingStatusSensor(
@@ -178,6 +175,41 @@ class KospelPowerSensor(KospelSensorEntity):
         if power_kw is None:
             return None
         return power_kw * 1000.0
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.async_write_ha_state()
+
+
+class KospelMaxPowerLimitSensor(KospelSensorEntity):
+    """Configured maximum boiler power in watts.
+
+    Reads kW from register 0b34 and exposes W (same idea as ``KospelPowerSensor``).
+    Uses ``EntityCategory.DIAGNOSTIC`` because Home Assistant rejects CONFIG on
+    sensor entities; the max-power *select* remains CONFIG.
+    """
+
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: KospelDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the max power limit sensor."""
+        super().__init__(coordinator, entry, "max_power_limit", "max_power_limit")
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the configured max power in W (register 0b34, kW × 1000)."""
+        controller: Ekco_M3 = self.coordinator.data
+        limit_kw = controller.boiler_max_power_kw
+        if limit_kw is None:
+            return None
+        return float(limit_kw) * 1000.0
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
