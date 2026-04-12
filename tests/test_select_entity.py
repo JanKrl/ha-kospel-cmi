@@ -90,21 +90,21 @@ def mock_coordinator(mock_entry):
 class TestKospelBoilerMaxPowerSelectEntity:
     """Tests for options, current_option, and async_select_option."""
 
-    def test_options_order_and_slugs(self, mock_coordinator, mock_entry) -> None:
-        """Entity exposes four options in index order 0..3."""
+    def test_options_order_and_numeric_strings(self, mock_coordinator, mock_entry) -> None:
+        """Entity exposes four kW options in index order 0..3."""
         entity = KospelBoilerMaxPowerSelectEntity(mock_coordinator, mock_entry)
-        assert entity.options == ["kw_2", "kw_4", "kw_6", "kw_8"]
+        assert entity.options == ["2", "4", "6", "8"]
 
     def test_current_option_maps_enum(
         self, mock_coordinator, mock_entry
     ) -> None:
-        """current_option returns slug for controller.boiler_max_power_index."""
+        """current_option returns kW string for controller.boiler_max_power_index."""
         mock_controller = MagicMock()
         mock_controller.boiler_max_power_index = BoilerMaxPowerIndex.KW_6
         mock_coordinator.data = mock_controller
 
         entity = KospelBoilerMaxPowerSelectEntity(mock_coordinator, mock_entry)
-        assert entity.current_option == "kw_6"
+        assert entity.current_option == "6"
 
     def test_current_option_none_when_unknown(
         self, mock_coordinator, mock_entry
@@ -132,7 +132,7 @@ class TestKospelBoilerMaxPowerSelectEntity:
         with patch(
             "custom_components.kospel.select.asyncio.sleep", new_callable=AsyncMock
         ):
-            await entity.async_select_option("kw_4")
+            await entity.async_select_option("4")
 
         mock_controller.set_boiler_max_power_index.assert_awaited_once()
         call_arg = mock_controller.set_boiler_max_power_index.await_args[0][0]
