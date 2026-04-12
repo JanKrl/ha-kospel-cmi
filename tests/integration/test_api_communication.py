@@ -5,7 +5,8 @@ from aioresponses import aioresponses
 
 import aiohttp
 
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi import KospelConnectionError, RegisterValueInvalidError
+from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.kospel.backend import HttpRegisterBackend
 from kospel_cmi.registers.enums import HeaterMode
 
@@ -39,15 +40,14 @@ class TestEndToEndReadWrite:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
 
                 # Refresh from API
                 await controller.refresh()
                 assert controller.heater_mode is not None
 
-                # Modify setting via immediate write
-                result = await controller.set_heater_mode(HeaterMode.WINTER)
-                assert result is True
+                # Modify setting via immediate write (void; raises on failure)
+                await controller.set_heater_mode(HeaterMode.WINTER)
 
                 # Verify changes are reflected
                 assert controller.heater_mode == HeaterMode.WINTER
@@ -70,11 +70,10 @@ class TestEndToEndReadWrite:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
-                result = await controller.set_heater_mode(HeaterMode.MANUAL)
-                assert result is True
+                await controller.set_heater_mode(HeaterMode.MANUAL)
 
 
 class TestBatchOperations:
@@ -97,7 +96,7 @@ class TestBatchOperations:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
 
                 await controller.refresh()
 
@@ -121,11 +120,10 @@ class TestBatchOperations:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
-                result = await controller.set_heater_mode(HeaterMode.MANUAL)
-                assert result is True
+                await controller.set_heater_mode(HeaterMode.MANUAL)
 
     @pytest.mark.asyncio
     async def test_set_manual_heating_writes_both_registers(
@@ -147,11 +145,10 @@ class TestBatchOperations:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
-                result = await controller.set_manual_heating(25.0)
-                assert result is True
+                await controller.set_manual_heating(25.0)
 
 
 class TestErrorRecovery:
@@ -159,25 +156,25 @@ class TestErrorRecovery:
 
     @pytest.mark.asyncio
     async def test_network_error_during_read(self, api_base_url):
-        """Test handling of network error during read."""
+        """Network error during read raises KospelConnectionError; cache unchanged."""
         with aioresponses() as m:
             read_url = f"{api_base_url}/0b00/256"
             m.get(read_url, exception=aiohttp.ClientError("Connection error"))
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
 
-                await controller.refresh()
+                with pytest.raises(KospelConnectionError):
+                    await controller.refresh()
 
-                # Library exposes no public signal for empty batch; _registers is empty on API failure.
                 assert len(controller._registers) == 0
 
     @pytest.mark.asyncio
-    async def test_network_error_during_write_returns_false(
+    async def test_network_error_during_write_raises(
         self, api_base_url, sample_registers
     ):
-        """Test that set_heater_mode returns False when write fails."""
+        """Test that set_heater_mode raises when write fails."""
         registers = sample_registers.copy()
 
         with aioresponses() as m:
@@ -189,17 +186,17 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
-                result = await controller.set_heater_mode(HeaterMode.WINTER)
-                assert result is False
+                with pytest.raises(KospelConnectionError):
+                    await controller.set_heater_mode(HeaterMode.WINTER)
 
     @pytest.mark.asyncio
-    async def test_invalid_register_data_handles_gracefully(
+    async def test_invalid_register_data_raises(
         self, api_base_url
     ):
-        """Test handling of invalid register data."""
+        """Invalid hex in batch read raises RegisterValueInvalidError."""
         invalid_registers = {"0b55": "invalid"}
 
         with aioresponses() as m:
@@ -208,17 +205,16 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
 
-                await controller.refresh()
-
-                assert controller.heater_mode is None
+                with pytest.raises(RegisterValueInvalidError):
+                    await controller.refresh()
 
     @pytest.mark.asyncio
     async def test_partial_write_failures(
         self, api_base_url, sample_registers
     ):
-        """Test handling of partial write failures in set_manual_heating."""
+        """Partial write failure in set_manual_heating raises KospelConnectionError."""
         registers = sample_registers.copy()
 
         with aioresponses() as m:
@@ -234,11 +230,11 @@ class TestErrorRecovery:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
-                result = await controller.set_manual_heating(25.0)
-                assert result is False
+                with pytest.raises(KospelConnectionError):
+                    await controller.set_manual_heating(25.0)
 
 
 class TestRegisterCaching:
@@ -260,13 +256,12 @@ class TestRegisterCaching:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
                 assert "0b55" in controller._registers
 
-                result = await controller.set_heater_mode(HeaterMode.WINTER)
-                assert result is True
+                await controller.set_heater_mode(HeaterMode.WINTER)
 
     @pytest.mark.asyncio
     async def test_cache_invalidated_on_refresh(
@@ -284,7 +279,7 @@ class TestRegisterCaching:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
 
                 await controller.refresh()
                 original_mode = controller.heater_mode
@@ -311,10 +306,9 @@ class TestRegisterCaching:
 
             async with aiohttp.ClientSession() as session:
                 backend = HttpRegisterBackend(session, api_base_url)
-                controller = Ekco_M3(backend=backend)
+                controller = EkcoM3(backend=backend)
                 await controller.refresh()
 
-                result = await controller.set_heater_mode(HeaterMode.WINTER)
-                assert result is True
+                await controller.set_heater_mode(HeaterMode.WINTER)
 
                 assert controller.heater_mode == HeaterMode.WINTER

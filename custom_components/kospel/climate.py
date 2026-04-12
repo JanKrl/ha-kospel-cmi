@@ -13,6 +13,7 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -24,8 +25,9 @@ from .const import (
 )
 from .coordinator import KospelDataUpdateCoordinator
 
+from kospel_cmi import KospelError
 from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,13 +72,13 @@ class KospelClimateEntity(
     @property
     def _heater_mode(self) -> HeaterMode:
         """Current heater mode from the controller."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         return controller.heater_mode or HeaterMode.OFF
 
     @property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         return controller.room_temperature
 
     @property
@@ -92,7 +94,7 @@ class KospelClimateEntity(
     @property
     def target_temperature(self) -> float | None:
         """Return the target temperature (always room_setpoint)."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         return controller.room_setpoint
 
     @property
@@ -103,7 +105,7 @@ class KospelClimateEntity(
     @property
     def hvac_action(self) -> HVACAction:
         """HVAC action is based on whether CO heating circuit is active."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         co_status = controller.co_heating_status
         return (
             HVACAction.HEATING
@@ -119,7 +121,7 @@ class KospelClimateEntity(
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return self.coordinator.last_update_success
+        return self.coordinator.communication_ok
 
     async def async_turn_on(self) -> None:
         """Turn heater on (set to HEAT mode)."""
@@ -132,20 +134,30 @@ class KospelClimateEntity(
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target HVAC mode."""
         _LOGGER.debug("Setting HVAC mode to %s", hvac_mode)
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
 
         mode = HeaterMode.OFF if hvac_mode == HVACMode.OFF else HeaterMode.WINTER
-        await controller.set_heater_mode(mode)
+        try:
+            await controller.set_heater_mode(mode)
+        except KospelError as err:
+            _LOGGER.error("Failed to set heater mode: %s", err)
+            raise HomeAssistantError(f"Failed to set heater mode: {err}") from err
         self.async_write_ha_state()
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Unpack[_ClimateSetTemperatureKwargs]) -> None:
-        """Set manual heating target; device switches to MANUAL mode (see Ekco_M3.set_manual_heating)."""
-        controller: Ekco_M3 = self.coordinator.data
+        """Set manual heating target; device switches to MANUAL mode (see EkcoM3.set_manual_heating)."""
+        controller: EkcoM3 = self.coordinator.data
         temperature = kwargs.get("temperature")
         if temperature is not None:
-            await controller.set_manual_heating(temperature)
+            try:
+                await controller.set_manual_heating(temperature)
+            except KospelError as err:
+                _LOGGER.error("Failed to set manual heating: %s", err)
+                raise HomeAssistantError(
+                    f"Failed to set manual heating: {err}"
+                ) from err
             self.async_write_ha_state()
             await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
             await self.coordinator.async_request_refresh()
@@ -153,8 +165,12 @@ class KospelClimateEntity(
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         _LOGGER.debug("Setting preset mode to %s", preset_mode)
-        controller: Ekco_M3 = self.coordinator.data
-        await controller.set_heater_mode(HeaterMode(preset_mode.lower()))
+        controller: EkcoM3 = self.coordinator.data
+        try:
+            await controller.set_heater_mode(HeaterMode(preset_mode.lower()))
+        except KospelError as err:
+            _LOGGER.error("Failed to set preset mode: %s", err)
+            raise HomeAssistantError(f"Failed to set preset mode: {err}") from err
         self.async_write_ha_state()
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()

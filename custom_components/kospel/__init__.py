@@ -20,12 +20,19 @@ from .const import (
     get_yaml_state_file_path,
 )
 from .coordinator import KospelDataUpdateCoordinator
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[str] = ["climate", "number", "select", "sensor", "water_heater"]
+PLATFORMS: list[str] = [
+    "binary_sensor",
+    "climate",
+    "number",
+    "select",
+    "sensor",
+    "water_heater",
+]
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
@@ -58,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         backend = HttpRegisterBackend(session, api_base_url)
 
     try:
-        heater_controller = Ekco_M3(backend=backend)
+        heater_controller = EkcoM3(backend=backend, strict_refresh=True)
         coordinator = KospelDataUpdateCoordinator(hass, entry, heater_controller)
         hass.data[DOMAIN][entry.entry_id] = coordinator
         await coordinator.async_config_entry_first_refresh()

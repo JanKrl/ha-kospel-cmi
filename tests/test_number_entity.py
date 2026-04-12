@@ -106,6 +106,7 @@ def mock_coordinator(mock_entry):
     coordinator = MagicMock()
     coordinator.entry = mock_entry
     coordinator.last_update_success = True
+    coordinator.communication_ok = True
     return coordinator
 
 
@@ -115,7 +116,7 @@ class TestKospelRoomPresetNumberEntity:
     def test_native_value_reads_controller_property(
         self, mock_coordinator, mock_entry
     ) -> None:
-        """native_value returns the Ekco_M3 property matching translation_key."""
+        """native_value returns the EkcoM3 property matching translation_key."""
         mock_controller = MagicMock()
         mock_controller.room_temperature_economy = 20.5
         mock_coordinator.data = mock_controller
@@ -211,7 +212,7 @@ class TestKospelRoomPresetNumberEntity:
         translation_key: str,
         setter_name: str,
     ) -> None:
-        """Each preset entity calls its corresponding Ekco_M3 setter."""
+        """Each preset entity calls its corresponding EkcoM3 setter."""
         mock_controller = MagicMock()
         for _key, _setter in [
             ("room_temperature_economy", "set_room_temperature_economy"),

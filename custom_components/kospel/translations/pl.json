@@ -5,6 +5,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Łączność"
+      }
+    },
     "sensor": {
       "room_setpoint": {
         "name": "Nastawa pokojowa"

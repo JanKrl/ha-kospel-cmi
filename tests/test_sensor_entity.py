@@ -94,6 +94,7 @@ def mock_coordinator(mock_entry):
     coordinator = MagicMock()
     coordinator.entry = mock_entry
     coordinator.last_update_success = True
+    coordinator.communication_ok = True
     return coordinator
 
 
@@ -103,7 +104,7 @@ class TestKospelTemperatureSensorNativeValue:
     def test_native_value_returns_float_from_controller_attribute(
         self, mock_coordinator, mock_entry
     ) -> None:
-        """native_value returns the float from the bound Ekco_M3 attribute."""
+        """native_value returns the float from the bound EkcoM3 attribute."""
         mock_controller = MagicMock()
         mock_controller.room_setpoint = 22.5
         mock_coordinator.data = mock_controller

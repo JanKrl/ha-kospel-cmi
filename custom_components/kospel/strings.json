@@ -84,6 +84,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      }
+    },
     "sensor": {
       "room_setpoint": {
         "name": "Room Setpoint"

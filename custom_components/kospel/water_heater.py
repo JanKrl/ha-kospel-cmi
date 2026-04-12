@@ -14,7 +14,7 @@ from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.registers.enums import CwuMode, WaterHeaterEnabled
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class KospelWaterHeaterEntity(
         self._attr_unique_id = f"{device_id}_water_heater"
         self._attr_device_info = get_device_info(coordinator.entry)
 
-    def _get_controller(self) -> Ekco_M3:
+    def _get_controller(self) -> EkcoM3:
         """Return the device controller from coordinator data."""
         return self.coordinator.data
 
@@ -128,7 +128,7 @@ class KospelWaterHeaterEntity(
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return self.coordinator.last_update_success
+        return self.coordinator.communication_ok
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

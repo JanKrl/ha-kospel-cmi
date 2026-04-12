@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import aiohttp
 
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
 
@@ -63,6 +63,14 @@ def sample_registers() -> Dict[str, str]:
         "0b67": "c201",
         # Register 0b4a - Water current temperature (420 = 42.0°C)
         "0b4a": "a401",
+        # Register 0b4b - Room temperature (210 = 21.0°C)
+        "0b4b": "d200",
+        # Register 0b46 - Power (0 kW)
+        "0b46": "0000",
+        # Register 0b34 - Max boiler power limit (e.g. 6.0 kW scaled x10)
+        "0b34": "3c00",
+        # Register 0b62 - Boiler max power index
+        "0b62": "0000",
         # Register 0b2f - Supply setpoint CWU (450 = 45.0°C)
         "0b2f": "c201",
         # Register 0b31 - Room setpoint CO (220 = 22.0°C)
@@ -140,10 +148,10 @@ def yaml_backend_state_file(tmp_path: Path) -> Path:
 @pytest.fixture
 async def heater_controller(
     mock_session: AsyncMock, api_base_url: str
-) -> Ekco_M3:
-    """Ekco_M3 instance fixture (HTTP backend)."""
+) -> EkcoM3:
+    """EkcoM3 instance fixture (HTTP backend)."""
     backend = HttpRegisterBackend(mock_session, api_base_url)
-    return Ekco_M3(backend=backend)
+    return EkcoM3(backend=backend)
 
 
 @pytest.fixture
@@ -151,10 +159,10 @@ async def heater_controller_with_registers(
     mock_session: AsyncMock,
     api_base_url: str,
     sample_registers: Dict[str, str],
-) -> Ekco_M3:
-    """Ekco_M3 instance with pre-loaded register data."""
+) -> EkcoM3:
+    """EkcoM3 instance with pre-loaded register data."""
     backend = HttpRegisterBackend(mock_session, api_base_url)
-    controller = Ekco_M3(backend=backend)
+    controller = EkcoM3(backend=backend)
     controller.from_registers(sample_registers)
     return controller
 
@@ -162,7 +170,7 @@ async def heater_controller_with_registers(
 @pytest.fixture
 async def heater_controller_yaml(
     yaml_backend_state_file: Path,
-) -> Ekco_M3:
-    """Ekco_M3 instance with YAML backend (for development/mock tests)."""
+) -> EkcoM3:
+    """EkcoM3 instance with YAML backend (for development/mock tests)."""
     backend = YamlRegisterBackend(state_file=str(yaml_backend_state_file))
-    return Ekco_M3(backend=backend)
+    return EkcoM3(backend=backend)

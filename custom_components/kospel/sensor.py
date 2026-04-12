@@ -17,7 +17,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 
 
 async def async_setup_entry(
@@ -90,7 +90,7 @@ class KospelSensorEntity(CoordinatorEntity[KospelDataUpdateCoordinator], SensorE
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return self.coordinator.last_update_success
+        return self.coordinator.communication_ok
 
 
 class KospelTemperatureSensor(KospelSensorEntity):
@@ -105,7 +105,7 @@ class KospelTemperatureSensor(KospelSensorEntity):
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
         unique_id_suffix: str,
-        value_getter: Callable[[Ekco_M3], float | None],
+        value_getter: Callable[[EkcoM3], float | None],
     ) -> None:
         """Initialize the temperature sensor."""
         super().__init__(coordinator, entry, unique_id_suffix, unique_id_suffix)
@@ -114,7 +114,7 @@ class KospelTemperatureSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the temperature value."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         return self._value_getter(controller)
 
     def _handle_coordinator_update(self) -> None:
@@ -140,7 +140,7 @@ class KospelPressureSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the pressure value."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         return controller.pressure
 
     def _handle_coordinator_update(self) -> None:
@@ -170,7 +170,7 @@ class KospelPowerSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the power value in W (device reports kW)."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         power_kw = controller.power
         if power_kw is None:
             return None
@@ -205,7 +205,7 @@ class KospelMaxPowerLimitSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the configured max power in W (register 0b34, kW × 1000)."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         limit_kw = controller.boiler_max_power_kw
         if limit_kw is None:
             return None
@@ -233,7 +233,7 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the heating status (RUNNING, IDLE, DISABLED)."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         status = getattr(controller, self._setting_name, None)
         if status is None:
             return None
@@ -260,7 +260,7 @@ class KospelValvePositionSensor(KospelSensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the valve position."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         position = controller.valve_position
         if position is None:
             return None
