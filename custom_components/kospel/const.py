@@ -1,5 +1,6 @@
 """Constants for the Kospel integration."""
 
+import math
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -35,6 +36,11 @@ YAML_STATE_FILE_RELATIVE = "data/state.yaml"
 
 # Update intervals
 SCAN_INTERVAL = timedelta(seconds=15)
+
+# Consecutive failed coordinator polls before entities report unavailable (~90s at default scan).
+COMMUNICATION_FAILURE_THRESHOLD = max(
+    1, int(math.ceil(90.0 / SCAN_INTERVAL.total_seconds()))
+)
 
 # Delay before coordinator refresh after set operations (device needs time to persist).
 CONF_REFRESH_DELAY_AFTER_SET = "refresh_delay_after_set"

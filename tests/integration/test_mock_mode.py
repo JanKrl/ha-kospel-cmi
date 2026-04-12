@@ -3,15 +3,15 @@
 import pytest
 import yaml
 
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.kospel.backend import YamlRegisterBackend
 from kospel_cmi.registers.enums import HeaterMode
 
 
-def _controller_for_state_file(state_file: str) -> Ekco_M3:
-    """Create Ekco_M3 with YamlRegisterBackend for the given state file."""
+def _controller_for_state_file(state_file: str) -> EkcoM3:
+    """Create EkcoM3 with YamlRegisterBackend for the given state file."""
     backend = YamlRegisterBackend(state_file=state_file)
-    return Ekco_M3(backend=backend)
+    return EkcoM3(backend=backend)
 
 
 class TestYamlBackendFullCycle:
@@ -29,8 +29,7 @@ class TestYamlBackendFullCycle:
 
         assert controller.heater_mode is not None
 
-        result = await controller.set_heater_mode(HeaterMode.MANUAL)
-        assert result is True
+        await controller.set_heater_mode(HeaterMode.MANUAL)
 
         assert state_file.exists()
         with open(state_file, "r") as f:

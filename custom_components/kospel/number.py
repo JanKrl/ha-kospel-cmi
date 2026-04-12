@@ -1,25 +1,30 @@
 """Number entities for Kospel integration (room preset temperatures)."""
 
 import asyncio
+import logging
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi import KospelError
+from kospel_cmi.controller.device import EkcoM3
 
 from .const import DOMAIN, get_device_info, get_device_identifier, get_refresh_delay_after_set
 from .coordinator import KospelDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 ROOM_PRESET_TEMP_MIN = 10.0
 ROOM_PRESET_TEMP_MAX = 25.0
 ROOM_PRESET_TEMP_STEP = 0.1
 
-# (translation_key / unique_id suffix / Ekco_M3 property name, async setter name)
+# (translation_key / unique_id suffix / EkcoM3 property name, async setter name)
 _ROOM_PRESET_ENTITIES: list[tuple[str, str]] = [
     ("room_temperature_economy", "set_room_temperature_economy"),
     ("room_temperature_comfort", "set_room_temperature_comfort"),
@@ -71,8 +76,8 @@ class KospelRoomPresetNumberEntity(
         Args:
             coordinator: Data update coordinator.
             entry: Config entry (device info and refresh delay options).
-            value_attr: Ekco_M3 property name (same as translation_key / unique suffix).
-            setter_name: Name of the async setter on Ekco_M3 (e.g. set_room_temperature_economy).
+            value_attr: EkcoM3 property name (same as translation_key / unique suffix).
+            setter_name: Name of the async setter on EkcoM3 (e.g. set_room_temperature_economy).
         """
         super().__init__(coordinator)
         device_id = get_device_identifier(entry)
@@ -85,19 +90,25 @@ class KospelRoomPresetNumberEntity(
     @property
     def native_value(self) -> float | None:
         """Return the current preset temperature from the controller."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         return getattr(controller, self._value_attr, None)
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return self.coordinator.last_update_success
+        return self.coordinator.communication_ok
 
     async def async_set_native_value(self, value: float) -> None:
         """Write preset temperature to the heater and refresh coordinator data."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         setter = getattr(controller, self._setter_name)
-        await setter(value)
+        try:
+            await setter(value)
+        except KospelError as err:
+            _LOGGER.error("Failed to set %s: %s", self._setter_name, err)
+            raise HomeAssistantError(
+                f"Failed to set room preset ({self._setter_name}): {err}"
+            ) from err
         self.async_write_ha_state()
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()

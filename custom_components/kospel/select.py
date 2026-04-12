@@ -1,19 +1,24 @@
 """Select entities for Kospel integration (boiler max power index)."""
 
 import asyncio
+import logging
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi import KospelError
+from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.registers.enums import BoilerMaxPowerIndex
 
 from .const import DOMAIN, get_device_info, get_device_identifier, get_refresh_delay_after_set
 from .coordinator import KospelDataUpdateCoordinator
+
+_LOGGER = logging.getLogger(__name__)
 
 # Stable order 0..3 for HA options (do not rely on Enum iteration order).
 _BOILER_MAX_POWER_ORDER: tuple[BoilerMaxPowerIndex, ...] = (
@@ -74,7 +79,7 @@ class KospelBoilerMaxPowerSelectEntity(
     @property
     def current_option(self) -> str | None:
         """Return the selected option slug, or None if the device index is unknown."""
-        controller: Ekco_M3 = self.coordinator.data
+        controller: EkcoM3 = self.coordinator.data
         index = controller.boiler_max_power_index
         if index is None:
             return None
@@ -83,7 +88,7 @@ class KospelBoilerMaxPowerSelectEntity(
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        return self.coordinator.last_update_success
+        return self.coordinator.communication_ok
 
     async def async_select_option(self, option: str) -> None:
         """Write the selected power step to the heater and refresh coordinator data."""
@@ -91,8 +96,14 @@ class KospelBoilerMaxPowerSelectEntity(
         if chosen is None:
             raise ValueError(f"Invalid option: {option}")
 
-        controller: Ekco_M3 = self.coordinator.data
-        await controller.set_boiler_max_power_index(chosen)
+        controller: EkcoM3 = self.coordinator.data
+        try:
+            await controller.set_boiler_max_power_index(chosen)
+        except KospelError as err:
+            _LOGGER.error("Failed to set boiler max power: %s", err)
+            raise HomeAssistantError(
+                f"Failed to set boiler max power: {err}"
+            ) from err
         self.async_write_ha_state()
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()

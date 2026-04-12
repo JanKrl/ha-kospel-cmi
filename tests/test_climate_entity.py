@@ -94,6 +94,7 @@ def mock_coordinator():
     coordinator.entry.options = {}
     coordinator.entry.entry_id = "test-entry-id"
     coordinator.last_update_success = True
+    coordinator.communication_ok = True
     return coordinator
 
 

@@ -20,12 +20,12 @@ The integration uses **kospel-cmi-lib** for heater communication. Imports use ab
 
 ```python
 # Correct: Absolute imports from kospel-cmi-lib (installed via manifest requirements)
-from kospel_cmi.controller.device import Ekco_M3
+from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 from kospel_cmi.registers.enums import HeaterMode
 
-# Device controller: backend only (register map is built into Ekco_M3)
-controller = Ekco_M3(backend=...)
+# Device controller: backend only; strict_refresh ensures full register batch (see library)
+controller = EkcoM3(backend=..., strict_refresh=True)
 
 # Within integration: use relative imports
 from .const import DOMAIN

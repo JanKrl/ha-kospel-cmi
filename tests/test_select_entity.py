@@ -83,6 +83,7 @@ def mock_coordinator(mock_entry):
     coordinator = MagicMock()
     coordinator.entry = mock_entry
     coordinator.last_update_success = True
+    coordinator.communication_ok = True
     return coordinator
 
 
