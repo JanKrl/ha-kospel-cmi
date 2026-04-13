@@ -1,5 +1,9 @@
 # Kospel Heater Home Assistant Integration
 
+<p align="center">
+  <img src="docs/logo.png" alt="Kospel K-CMI" width="160" height="160">
+</p>
+
 Home Assistant integration for Kospel electric heaters. Control your heater via climate entity, sensors, and water heater.
 
 > **⚠️ Development version**  
