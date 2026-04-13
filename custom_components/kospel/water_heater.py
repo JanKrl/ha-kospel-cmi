@@ -107,14 +107,14 @@ class KospelWaterHeaterEntity(
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the target temperature from the active setpoint (mode-dependent)."""
+        """Return the live CWU supply setpoint from the device (register 0b2f).
+
+        Reflects firmware output including daily programs; not derived from
+        static economy/comfort preset registers. ``None`` if the value is
+        unavailable (no substitution).
+        """
         controller = self._get_controller()
-        cwu_mode = controller.cwu_mode
-        if cwu_mode == CwuMode.COMFORT:
-            return controller.cwu_temperature_comfort
-        if cwu_mode == CwuMode.ANTI_FREEZE:
-            return controller.cwu_temperature_economy
-        return controller.cwu_temperature_economy
+        return controller.supply_setpoint
 
     @property
     def current_operation(self) -> str:
