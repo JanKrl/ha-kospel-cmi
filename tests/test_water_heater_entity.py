@@ -93,50 +93,30 @@ def water_heater_entity(mock_coordinator):
 
 
 class TestWaterHeaterTargetTemperature:
-    """Tests for target_temperature (mode-dependent setpoints)."""
+    """Tests for target_temperature (live supply setpoint only)."""
 
-    def test_target_temperature_returns_economy_setpoint_when_economy_mode(
+    def test_target_temperature_returns_supply_setpoint(
         self, water_heater_entity, mock_coordinator
     ) -> None:
-        """target_temperature returns cwu_temperature_economy when cwu_mode is economy."""
+        """target_temperature returns supply_setpoint regardless of cwu_mode."""
         mock_controller = MagicMock()
-        mock_controller.cwu_mode = CwuMode.ECONOMY
-        mock_controller.cwu_temperature_economy = 40.0
-        mock_controller.cwu_temperature_comfort = 45.0
-        mock_coordinator.data = mock_controller
-
-        assert water_heater_entity.target_temperature == 40.0
-
-    def test_target_temperature_returns_comfort_setpoint_when_comfort_mode(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """target_temperature returns cwu_temperature_comfort when cwu_mode is comfort."""
-        mock_controller = MagicMock()
-        mock_controller.cwu_mode = CwuMode.COMFORT
-        mock_controller.cwu_temperature_economy = 40.0
-        mock_controller.cwu_temperature_comfort = 45.0
-        mock_coordinator.data = mock_controller
-
-        assert water_heater_entity.target_temperature == 45.0
-
-    def test_target_temperature_returns_economy_setpoint_when_anti_freeze_mode(
-        self, water_heater_entity, mock_coordinator
-    ) -> None:
-        """target_temperature returns cwu_temperature_economy when cwu_mode is anti-freeze."""
-        mock_controller = MagicMock()
+        mock_controller.supply_setpoint = 15.0
         mock_controller.cwu_mode = CwuMode.ANTI_FREEZE
         mock_controller.cwu_temperature_economy = 40.0
+        mock_controller.cwu_temperature_comfort = 45.0
         mock_coordinator.data = mock_controller
 
-        assert water_heater_entity.target_temperature == 40.0
+        assert water_heater_entity.target_temperature == 15.0
 
-    def test_target_temperature_returns_none_when_setpoint_missing(
+    def test_target_temperature_returns_none_when_supply_setpoint_missing(
         self, water_heater_entity, mock_coordinator
     ) -> None:
-        """target_temperature returns None when active setpoint decodes to None."""
+        """target_temperature returns None when supply_setpoint is unavailable."""
         mock_controller = MagicMock()
+        mock_controller.supply_setpoint = None
         mock_controller.cwu_mode = CwuMode.ECONOMY
-        mock_controller.cwu_temperature_economy = None
+        mock_controller.cwu_temperature_economy = 40.0
+        mock_controller.cwu_temperature_comfort = 45.0
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.target_temperature is None
