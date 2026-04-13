@@ -96,6 +96,12 @@
       "supply_setpoint": {
         "name": "DHW Setpoint"
       },
+      "room_temperature": {
+        "name": "Room temperature"
+      },
+      "water_temperature": {
+        "name": "Water temperature"
+      },
       "pressure": {
         "name": "Pressure"
       },
