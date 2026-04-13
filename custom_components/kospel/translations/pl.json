@@ -73,14 +73,20 @@
       "heater": {
         "name": "Grzejnik",
         "state_attributes": {
-          "preset_mode": {
+          "hvac_mode": {
             "state": {
               "off": "Wy\u0142\u0105czony",
+              "heat": "Grzanie",
+              "auto": "Auto"
+            }
+          },
+          "preset_mode": {
+            "state": {
+              "none": "Brak",
               "summer": "Lato",
               "winter": "Zima",
               "party": "Impreza",
-              "vacation": "Wakacje",
-              "manual": "R\u0119czny"
+              "vacation": "Wakacje"
             }
           }
         }

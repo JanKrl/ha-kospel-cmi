@@ -152,14 +152,20 @@
       "heater": {
         "name": "Heater",
         "state_attributes": {
-          "preset_mode": {
+          "hvac_mode": {
             "state": {
               "off": "Off",
+              "heat": "Heat",
+              "auto": "Auto"
+            }
+          },
+          "preset_mode": {
+            "state": {
+              "none": "None",
               "summer": "Summer",
               "winter": "Winter",
               "party": "Party",
-              "vacation": "Vacation",
-              "manual": "Manual"
+              "vacation": "Vacation"
             }
           }
         }
