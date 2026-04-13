@@ -40,6 +40,11 @@ kospel-cmi-lib is installed by Home Assistant when loading the integration (via 
 custom_components/kospel/
 ├── __init__.py          # Integration entry point
 ├── manifest.json        # requirements: aiohttp, kospel-cmi-lib
+├── brand/               # Local brand images (Home Assistant 2026.3+)
+│   ├── icon.png         # Square icon (light UI)
+│   ├── logo.png         # Logo (light UI)
+│   ├── dark_icon.png    # Square icon (dark UI)
+│   └── dark_logo.png    # Logo (dark UI)
 ├── config_flow.py      # Configuration UI (HTTP or YAML backend choice)
 ├── coordinator.py      # Data update coordinator
 ├── climate.py          # Climate entity
