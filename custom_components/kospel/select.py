@@ -29,10 +29,10 @@ _BOILER_MAX_POWER_ORDER: tuple[BoilerMaxPowerIndex, ...] = (
 )
 
 _OPTION_FOR_INDEX: dict[BoilerMaxPowerIndex, str] = {
-    BoilerMaxPowerIndex.KW_2: "kw_2",
-    BoilerMaxPowerIndex.KW_4: "kw_4",
-    BoilerMaxPowerIndex.KW_6: "kw_6",
-    BoilerMaxPowerIndex.KW_8: "kw_8",
+    BoilerMaxPowerIndex.KW_2: "2",
+    BoilerMaxPowerIndex.KW_4: "4",
+    BoilerMaxPowerIndex.KW_6: "6",
+    BoilerMaxPowerIndex.KW_8: "8",
 }
 
 _INDEX_FOR_OPTION: dict[str, BoilerMaxPowerIndex] = {
@@ -78,7 +78,7 @@ class KospelBoilerMaxPowerSelectEntity(
 
     @property
     def current_option(self) -> str | None:
-        """Return the selected option slug, or None if the device index is unknown."""
+        """Return the selected kW step as a string (e.g. '4'), or None if unknown."""
         controller: EkcoM3 = self.coordinator.data
         index = controller.boiler_max_power_index
         if index is None:

@@ -169,10 +169,10 @@
       "boiler_max_power": {
         "name": "Max boiler power",
         "state": {
-          "kw_2": "2 kW",
-          "kw_4": "4 kW",
-          "kw_6": "6 kW",
-          "kw_8": "8 kW"
+          "2": "2 kW",
+          "4": "4 kW",
+          "6": "6 kW",
+          "8": "8 kW"
         }
       }
     }
