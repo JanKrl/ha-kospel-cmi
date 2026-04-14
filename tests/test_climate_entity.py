@@ -350,32 +350,32 @@ class TestClimateSetPresetMode:
 
 
 class TestClimateHvacAction:
-    """Tests for hvac_action (heating indicator based on co_heating_status)."""
+    """Tests for hvac_action (heating indicator based on CH status)."""
 
-    def test_hvac_action_heating_when_co_heating_status_running(
+    def test_hvac_action_heating_when_ch_status_running(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """hvac_action returns HEATING when co_heating_status is RUNNING."""
+        """hvac_action returns HEATING when CH status is RUNNING."""
         mock_controller = MagicMock()
         mock_controller.co_heating_status = HeatingStatus.RUNNING
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.HEATING
 
-    def test_hvac_action_off_when_co_heating_status_idle(
+    def test_hvac_action_off_when_ch_status_idle(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """hvac_action returns OFF when co_heating_status is IDLE."""
+        """hvac_action returns OFF when CH status is IDLE."""
         mock_controller = MagicMock()
         mock_controller.co_heating_status = HeatingStatus.IDLE
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.OFF
 
-    def test_hvac_action_off_when_co_heating_status_disabled(
+    def test_hvac_action_off_when_ch_status_disabled(
         self, climate_entity, mock_coordinator
     ) -> None:
-        """hvac_action returns OFF when co_heating_status is DISABLED."""
+        """hvac_action returns OFF when CH status is DISABLED."""
         mock_controller = MagicMock()
         mock_controller.co_heating_status = HeatingStatus.DISABLED
         mock_coordinator.data = mock_controller

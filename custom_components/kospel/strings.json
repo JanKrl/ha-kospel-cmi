@@ -91,33 +91,33 @@
     },
     "sensor": {
       "room_setpoint": {
-        "name": "Room Setpoint"
+        "name": "CH target temperature"
       },
       "supply_setpoint": {
-        "name": "DHW Setpoint"
+        "name": "DHW target temperature"
       },
       "room_temperature": {
-        "name": "Room temperature"
+        "name": "CH temperature"
       },
       "water_temperature": {
-        "name": "Water temperature"
+        "name": "DHW temperature"
       },
       "pressure": {
         "name": "Pressure"
       },
       "power": {
-        "name": "Power"
+        "name": "Instant power"
       },
-      "co_heating": {
-        "name": "CO Heating",
+      "ch_heating": {
+        "name": "CH heating status",
         "state": {
           "running": "Running",
           "idle": "Idle",
           "disabled": "Disabled"
         }
       },
-      "cwu_heating": {
-        "name": "CWU Heating",
+      "dhw_heating": {
+        "name": "DHW heating status",
         "state": {
           "running": "Running",
           "idle": "Idle",
@@ -128,11 +128,11 @@
         "name": "Valve Position",
         "state": {
           "DHW": "DHW",
-          "CO": "CO"
+          "CO": "CH"
         }
       },
       "max_power_limit": {
-        "name": "Max power limit"
+        "name": "Boiler max power limit"
       }
     },
     "number": {

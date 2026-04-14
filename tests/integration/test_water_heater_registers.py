@@ -49,6 +49,6 @@ class TestWaterHeaterRegisters:
     async def test_room_setpoint_decoded(
         self, heater_controller_with_registers: EkcoM3
     ) -> None:
-        """room_setpoint (CO) is decoded from register 0b31."""
+        """room_setpoint (CH) is decoded from register 0b31."""
         controller = heater_controller_with_registers
         assert controller.room_setpoint == 22.0

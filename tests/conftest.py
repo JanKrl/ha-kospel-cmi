@@ -44,7 +44,7 @@ def sample_registers() -> Dict[str, str]:
         # Value: 0x0208 = 0b0000001000001000 (bits 3 and 9 set)
         "0b55": "0802",
         # Register 0b51 - Status register (pumps and valve)
-        # Bit 0=1 (pump CO running), Bit 1=0, Bit 2=1 (valve CO position)
+        # Bit 0=1 (pump CH running), Bit 1=0, Bit 2=1 (valve CH position)
         # Value: 0x0005 = 0b0000000000000101 (bits 0 and 2 set)
         "0b51": "0500",
         # Register 0b8d - Manual temperature (215 = 21.5°C)
@@ -73,7 +73,7 @@ def sample_registers() -> Dict[str, str]:
         "0b62": "0000",
         # Register 0b2f - Supply setpoint CWU (450 = 45.0°C)
         "0b2f": "c201",
-        # Register 0b31 - Room setpoint CO (220 = 22.0°C)
+        # Register 0b31 - Room setpoint CH (220 = 22.0°C)
         "0b31": "dc00",
         # Register 0b30 - CWU mode (0=economy, 1=anti-freeze, 2=comfort)
         "0b30": "0000",

@@ -91,33 +91,33 @@
     },
     "sensor": {
       "room_setpoint": {
-        "name": "Nastawa pokojowa"
+        "name": "Temperatura zadana CO"
       },
       "supply_setpoint": {
-        "name": "Nastawa CWU"
+        "name": "Temperatura zadana CWU"
       },
       "room_temperature": {
-        "name": "Temperatura pokoju"
+        "name": "Temperatura CO"
       },
       "water_temperature": {
-        "name": "Temperatura wody"
+        "name": "Temperatura CWU"
       },
       "pressure": {
         "name": "Ci\u015bnienie"
       },
       "power": {
-        "name": "Moc"
+        "name": "Moc chwilowa"
       },
-      "co_heating": {
-        "name": "Ogrzewanie CO",
+      "ch_heating": {
+        "name": "Status ogrzewania CO",
         "state": {
           "running": "Praca",
           "idle": "Bezczynno\u015b\u0107",
           "disabled": "Wy\u0142\u0105czone"
         }
       },
-      "cwu_heating": {
-        "name": "Ogrzewanie CWU",
+      "dhw_heating": {
+        "name": "Status ogrzewania CWU",
         "state": {
           "running": "Praca",
           "idle": "Bezczynno\u015b\u0107",
@@ -125,14 +125,14 @@
         }
       },
       "valve_position": {
-        "name": "Pozycja zaworu",
+        "name": "Położenie zaworu",
         "state": {
           "DHW": "CWU",
           "CO": "CO"
         }
       },
       "max_power_limit": {
-        "name": "Limit mocy"
+        "name": "Limit mocy kotła"
       }
     },
     "number": {
