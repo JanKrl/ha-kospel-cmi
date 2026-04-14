@@ -57,8 +57,8 @@ class KospelWaterHeaterEntity(
 
     Read-only for writes: displays current temperature, target temperature, and
     operation mode. Target/operation controls on this entity are intentionally
-    no-ops; DHW/CWU setpoints and modes follow the heater presets and the
-    climate entity, not the water heater card.
+    no-ops; DHW/CWU setpoints and modes follow the device and the climate entity
+    (HVAC / auto programs), not the water heater card.
     """
 
     _attr_has_entity_name = True
@@ -70,7 +70,8 @@ class KospelWaterHeaterEntity(
     _attr_max_temp = 65.0
     # OPERATION_MODE and TARGET_TEMPERATURE are declared so Home Assistant shows
     # current operation and temperatures in the UI. Writes are ignored here by design:
-    # DHW/CWU behaviour is driven by the device and by climate presets (see async_set_*).
+    # DHW/CWU behaviour is driven by the device and by the climate entity (HVAC mode
+    # and auto presets; see climate.async_set_*).
     _attr_supported_features = (
         WaterHeaterEntityFeature.OPERATION_MODE | WaterHeaterEntityFeature.TARGET_TEMPERATURE
     )
