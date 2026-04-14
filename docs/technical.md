@@ -14,6 +14,14 @@ This project provides a Home Assistant integration for Kospel electric heaters. 
 
 ## Home Assistant Integration
 
+### Naming Convention
+
+- Internal code identifiers (entity translation keys, variable names, comments, tests) use English terminology.
+- Device-library compatibility fields keep library naming where required (for example `co_heating_status`, `cwu_heating_status`) and are mapped to English integration keys.
+- User-facing labels are localized in translation files:
+  - `strings.json`: English labels (`CH`, `DHW`)
+  - `translations/pl.json`: Polish labels (`CO`, `CWU`)
+
 ### Import Rules
 
 The integration uses **kospel-cmi-lib** for heater communication. Imports use absolute paths to the installed package:

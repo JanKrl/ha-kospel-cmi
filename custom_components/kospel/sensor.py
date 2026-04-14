@@ -58,11 +58,11 @@ async def async_setup_entry(
 
     # Heating status sensors: (unique_id_suffix, setting_name)
     entities.append(
-        KospelHeatingStatusSensor(coordinator, entry, "co_heating", "co_heating_status")
+        KospelHeatingStatusSensor(coordinator, entry, "ch_heating", "co_heating_status")
     )
     entities.append(
         KospelHeatingStatusSensor(
-            coordinator, entry, "cwu_heating", "cwu_heating_status"
+            coordinator, entry, "dhw_heating", "cwu_heating_status"
         )
     )
     entities.append(KospelValvePositionSensor(coordinator, entry))
@@ -219,7 +219,7 @@ class KospelMaxPowerLimitSensor(KospelSensorEntity):
 
 
 class KospelHeatingStatusSensor(KospelSensorEntity):
-    """Representation of a Kospel heating status sensor (CO or CWU circuit)."""
+    """Representation of a Kospel heating status sensor (CH or CWU circuit)."""
 
     def __init__(
         self,
