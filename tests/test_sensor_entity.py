@@ -134,6 +134,56 @@ class TestKospelTemperatureSensorNativeValue:
 
         assert entity.native_value is None
 
+    def test_native_value_room_temperature(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value reads room_temperature from controller."""
+        mock_controller = MagicMock()
+        mock_controller.room_temperature = 21.0
+        mock_coordinator.data = mock_controller
+
+        entity = KospelTemperatureSensor(
+            mock_coordinator,
+            mock_entry,
+            "room_temperature",
+            lambda c, name="room_temperature": getattr(c, name, None),
+        )
+
+        assert entity.native_value == 21.0
+
+    def test_native_value_water_temperature_reads_water_current_temperature(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """Water sensor uses translation id water_temperature; value from water_current_temperature."""
+        mock_controller = MagicMock()
+        mock_controller.water_current_temperature = 42.0
+        mock_coordinator.data = mock_controller
+
+        entity = KospelTemperatureSensor(
+            mock_coordinator,
+            mock_entry,
+            "water_temperature",
+            lambda c, name="water_current_temperature": getattr(c, name, None),
+        )
+
+        assert entity.native_value == 42.0
+
+    def test_native_value_water_temperature_none_when_attr_missing(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """Water temperature sensor returns None without water_current_temperature."""
+        mock_controller = object()
+        mock_coordinator.data = mock_controller
+
+        entity = KospelTemperatureSensor(
+            mock_coordinator,
+            mock_entry,
+            "water_temperature",
+            lambda c, name="water_current_temperature": getattr(c, name, None),
+        )
+
+        assert entity.native_value is None
+
 
 class TestKospelMaxPowerLimitSensorNativeValue:
     """Tests for max power limit sensor (kW to W)."""

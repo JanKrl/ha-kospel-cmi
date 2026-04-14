@@ -1,5 +1,9 @@
 # Kospel Heater Home Assistant Integration
 
+<p align="center">
+  <img src="custom_components/kospel/brand/icon.png" alt="Kospel K-CMI" width="160" height="160">
+</p>
+
 Home Assistant integration for Kospel electric heaters. Control your heater via climate entity, sensors, and water heater.
 
 > **⚠️ Development version**  
@@ -31,7 +35,8 @@ See [INSTALLATION.md](INSTALLATION.md) for manual installation and troubleshooti
 
 ## Requirements
 
-- Home Assistant 2024.1 or later
+- Home Assistant 2024.1 or later (integration features)
+- Home Assistant **2026.3** or later for the bundled integration logo under **Settings → Devices & services** (local `brand/` images). Older releases show the default placeholder unless icons are added via the [Home Assistant brands](https://github.com/home-assistant/brands) repository.
 - Kospel heater on your network (for real device) or use File-based mode for testing
 
 ## License

@@ -33,6 +33,8 @@ async def async_setup_entry(
     temperature_sensors = [
         ("room_setpoint", "room_setpoint"),
         ("supply_setpoint", "supply_setpoint"),
+        ("room_temperature", "room_temperature"),
+        ("water_temperature", "water_current_temperature"),
     ]
 
     for unique_id_suffix, attr_name in temperature_sensors:
