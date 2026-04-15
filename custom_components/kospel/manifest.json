@@ -6,6 +6,11 @@
   "documentation": "https://github.com/JanKrl/ha-kospel-cmi",
   "issue_tracker": "https://github.com/JanKrl/ha-kospel-cmi/issues",
   "dependencies": ["http", "network"],
+  "dhcp": [
+    {
+      "macaddress": "70B3D5*"
+    }
+  ],
   "requirements": [
     "aiohttp>=3.13.3",
     "kospel-cmi-lib==1.0.0b1"

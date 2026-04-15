@@ -19,13 +19,9 @@ CONF_DEVICE_ID = "device_id"
 CONF_SERIAL_NUMBER = "serial_number"
 CONF_SIMULATION_MODE = "simulation_mode"  # Deprecated; used for migration only
 
-# Default subnets for discovery when Network integration returns none
-DEFAULT_SUBNETS = [
-    "192.168.1.0/24",
-    "192.168.0.0/24",
-    "192.168.101.0/24",
-    "10.0.0.0/24",
-]
+# Kospel S.A. MA-S prefix from IEEE registry / vendor lookup (36-bit).
+# Normalized format strips separators and uses lowercase hex.
+KOSPEL_MAC_PREFIXES = ("70b3d5249",)
 
 # Backend type values
 BACKEND_TYPE_HTTP = "http"

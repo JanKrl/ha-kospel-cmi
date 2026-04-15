@@ -19,12 +19,13 @@
       },
       "http_method": {
         "title": "Connection method",
-        "description": "Discover devices on your network or enter connection details manually.",
+        "description": "Choose automatic discovery by MAC candidates, full network scan, or manual entry.",
         "data": {
           "http_method": "Method"
         },
         "options": {
-          "option_discover": "Discover devices",
+          "option_auto_discovery": "Auto discovery (MAC candidates)",
+          "option_network_scan": "Network scan (all adapter subnets)",
           "option_manual": "Enter manually"
         }
       },
@@ -69,7 +70,8 @@
       "unknown": "Unexpected error occurred"
     },
     "abort": {
-      "already_configured": "Integration is already configured"
+      "already_configured": "Integration is already configured",
+      "not_kospel_device": "Discovered device does not match Kospel DHCP signature"
     },
     "options": {
       "step": {

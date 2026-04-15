@@ -79,7 +79,6 @@ from custom_components.kospel.const import (
     CONF_REFRESH_DELAY_AFTER_SET,
     CONF_SERIAL_NUMBER,
     DEFAULT_REFRESH_DELAY_AFTER_SET,
-    DEFAULT_SUBNETS,
     REFRESH_DELAY_MAX,
     REFRESH_DELAY_MIN,
     make_unique_id,
@@ -91,7 +90,12 @@ from custom_components.kospel.config_flow import (
     KospelConfigFlowHandler,
     KospelOptionsFlowHandler,
     validate_http_input,
+    _DHCP_CANDIDATE_HOSTS,
+    _discover_by_kospel_mac,
+    _discover_by_network_scan,
     _get_subnets_to_scan,
+    _is_kospel_mac,
+    _normalize_mac,
 )
 
 
@@ -214,8 +218,8 @@ class TestGetSubnetsToScan:
     """Tests for _get_subnets_to_scan."""
 
     @pytest.mark.asyncio
-    async def test_returns_default_subnets_when_network_fails(self) -> None:
-        """_get_subnets_to_scan returns DEFAULT_SUBNETS when network raises."""
+    async def test_returns_empty_when_network_fails(self) -> None:
+        """_get_subnets_to_scan returns empty when network raises."""
         hass = MagicMock()
         with patch(
             "custom_components.kospel.config_flow.network.async_get_adapters",
@@ -223,7 +227,7 @@ class TestGetSubnetsToScan:
             side_effect=Exception("Network not loaded"),
         ):
             result = await _get_subnets_to_scan(hass)
-        assert result == DEFAULT_SUBNETS
+        assert result == []
 
     @pytest.mark.asyncio
     async def test_returns_subnets_from_adapters(self) -> None:
@@ -258,11 +262,11 @@ class TestGetSubnetsToScan:
             return_value=adapters,
         ):
             result = await _get_subnets_to_scan(hass)
-        assert result == DEFAULT_SUBNETS
+        assert result == []
 
     @pytest.mark.asyncio
-    async def test_returns_default_when_no_ipv4(self) -> None:
-        """_get_subnets_to_scan returns DEFAULT_SUBNETS when no IPv4 addresses."""
+    async def test_returns_empty_when_no_ipv4(self) -> None:
+        """_get_subnets_to_scan returns empty when no IPv4 addresses."""
         hass = MagicMock()
         adapters = [{"enabled": True, "ipv4": []}]
         with patch(
@@ -271,7 +275,251 @@ class TestGetSubnetsToScan:
             return_value=adapters,
         ):
             result = await _get_subnets_to_scan(hass)
-        assert result == DEFAULT_SUBNETS
+        assert result == []
+
+
+class TestMacFilteringHelpers:
+    """Tests for MAC normalization and Kospel MAC filtering."""
+
+    def test_normalize_mac_removes_separators_and_lowercases(self) -> None:
+        """_normalize_mac returns lowercase hex string without separators."""
+        assert _normalize_mac("70:B3:D5:24:9A:BC") == "70b3d5249abc"
+
+    def test_is_kospel_mac_matches_registered_prefix(self) -> None:
+        """_is_kospel_mac returns True for known Kospel vendor prefix."""
+        assert _is_kospel_mac("70-B3-D5-24-9F-00")
+
+    def test_is_kospel_mac_rejects_other_vendors(self) -> None:
+        """_is_kospel_mac returns False for non-Kospel prefixes."""
+        assert not _is_kospel_mac("AA:BB:CC:DD:EE:FF")
+
+class TestDiscoverByKospelMac:
+    """Tests for discovery path using DHCP candidate hosts."""
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_when_no_dhcp_candidates(self) -> None:
+        """_discover_by_kospel_mac returns empty when no DHCP candidates exist."""
+        _DHCP_CANDIDATE_HOSTS.clear()
+        result = await _discover_by_kospel_mac(MagicMock())
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_discovers_from_dhcp_candidate_hosts(self) -> None:
+        """_discover_by_kospel_mac probes DHCP hosts and expands device IDs."""
+        _DHCP_CANDIDATE_HOSTS.clear()
+        _DHCP_CANDIDATE_HOSTS.update({"192.168.1.10"})
+        session = MagicMock()
+        discovered = MagicMock()
+        discovered.device_ids = [65, 66]
+
+        with patch(
+            "custom_components.kospel.config_flow.probe_device",
+            new_callable=AsyncMock,
+            return_value=discovered,
+        ) as mock_probe:
+            result = await _discover_by_kospel_mac(session)
+
+        mock_probe.assert_awaited_once_with(session, "192.168.1.10")
+        assert result == [(discovered, 65), (discovered, 66)]
+
+
+class TestConfigFlowDiscoveryFallback:
+    """Tests for config flow fallback behavior in discovery."""
+
+    @pytest.mark.asyncio
+    async def test_run_discovery_falls_back_to_subnet_scan(self) -> None:
+        """_async_run_discovery uses network scan when method is network_scan."""
+        handler = KospelConfigFlowHandler()
+        handler.hass = MagicMock()
+        handler._discovery_method = "network_scan"
+        handler.async_show_progress_done = lambda next_step_id: {
+            "type": "progress_done",
+            "next_step_id": next_step_id,
+        }
+
+        found = MagicMock()
+        found.device_ids = [65]
+
+        with patch(
+            "custom_components.kospel.config_flow._discover_by_network_scan",
+            new_callable=AsyncMock,
+            return_value=[(found, 65)],
+        ) as mock_discover:
+            result = await handler._async_run_discovery()
+
+        mock_discover.assert_awaited_once()
+        assert handler._discovered_devices == [(found, 65)]
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_discover_step_transitions_when_task_done(self) -> None:
+        """async_step_discover returns progress_done when task already finished."""
+        handler = KospelConfigFlowHandler()
+        handler.hass = MagicMock()
+        handler._discover_task = MagicMock()
+        handler._discover_task.done.return_value = True
+        handler.async_show_progress_done = lambda next_step_id: {
+            "type": "progress_done",
+            "next_step_id": next_step_id,
+        }
+
+        result = await handler.async_step_discover()
+
+        assert result == {"type": "progress_done", "next_step_id": "discover_result"}
+        assert handler._discover_task is None
+
+    @pytest.mark.asyncio
+    async def test_discover_result_with_no_devices_shows_manual_retry(self) -> None:
+        """async_step_discover_result shows no-devices form with manual/retry choices."""
+        handler = KospelConfigFlowHandler()
+        handler._discovered_devices = []
+        handler.async_show_form = lambda step_id, data_schema, errors=None: {
+            "type": "show_form",
+            "step_id": step_id,
+            "data_schema": data_schema,
+            "errors": errors,
+        }
+
+        result = await handler.async_step_discover_result()
+
+        assert result["type"] == "show_form"
+        assert result["step_id"] == "discover"
+        assert result["errors"] == {"base": "no_devices_found"}
+
+    @pytest.mark.asyncio
+    async def test_run_discovery_uses_auto_discovery_by_default(self) -> None:
+        """_async_run_discovery uses MAC candidate auto discovery by default."""
+        handler = KospelConfigFlowHandler()
+        handler.hass = MagicMock()
+        handler.async_show_progress_done = lambda next_step_id: {
+            "type": "progress_done",
+            "next_step_id": next_step_id,
+        }
+        found = MagicMock()
+        found.device_ids = [65]
+
+        with patch(
+            "custom_components.kospel.config_flow._discover_by_kospel_mac",
+            new_callable=AsyncMock,
+            return_value=[(found, 65)],
+        ) as mock_auto:
+            await handler._async_run_discovery()
+
+        mock_auto.assert_awaited_once()
+
+
+class TestDhcpDiscoveryStep:
+    """Tests for Home Assistant DHCP discovery flow step."""
+
+    @pytest.mark.asyncio
+    async def test_dhcp_ignores_non_kospel_mac(self) -> None:
+        """async_step_dhcp aborts for non-Kospel MAC addresses."""
+        handler = KospelConfigFlowHandler()
+        handler.async_abort = lambda reason: {"type": "abort", "reason": reason}
+        result = await handler.async_step_dhcp(
+            {"ip": "192.168.1.10", "macaddress": "AA:BB:CC:DD:EE:FF"}
+        )
+        assert result == {"type": "abort", "reason": "not_kospel_device"}
+
+    @pytest.mark.asyncio
+    async def test_dhcp_creates_entry_for_single_device(self) -> None:
+        """async_step_dhcp probes host and creates entry for single device ID."""
+        handler = KospelConfigFlowHandler()
+        _DHCP_CANDIDATE_HOSTS.clear()
+        info = MagicMock()
+        info.device_ids = [65]
+        info.serial_number = "mi01_123"
+        info.host = "192.168.1.10"
+        handler.async_create_entry = lambda title, data: {
+            "type": "create_entry",
+            "title": title,
+            "data": data,
+        }
+        handler.async_set_unique_id = AsyncMock()
+        handler._abort_if_unique_id_configured = MagicMock()
+
+        with patch(
+            "custom_components.kospel.config_flow.probe_device",
+            new_callable=AsyncMock,
+            return_value=info,
+        ):
+            result = await handler.async_step_dhcp(
+                {"ip": "192.168.1.10", "macaddress": "70:B3:D5:24:9A:CC"}
+            )
+
+        assert "192.168.1.10" in _DHCP_CANDIDATE_HOSTS
+        assert result["type"] == "create_entry"
+
+
+class TestDiscoverByNetworkScan:
+    """Tests for adapter-subnet network scan discovery."""
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_without_subnets(self) -> None:
+        """_discover_by_network_scan returns empty when no adapter subnets exist."""
+        with patch(
+            "custom_components.kospel.config_flow._get_subnets_to_scan",
+            new_callable=AsyncMock,
+            return_value=[],
+        ):
+            result = await _discover_by_network_scan(MagicMock(), MagicMock())
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_scans_all_subnets_and_expands_device_ids(self) -> None:
+        """_discover_by_network_scan scans all subnets from adapters."""
+        info = MagicMock()
+        info.device_ids = [65, 66]
+        with patch(
+            "custom_components.kospel.config_flow._get_subnets_to_scan",
+            new_callable=AsyncMock,
+            return_value=["192.168.1.0/24", "10.0.0.0/24"],
+        ), patch(
+            "custom_components.kospel.config_flow.discover_devices",
+            new_callable=AsyncMock,
+            side_effect=[[info], []],
+        ) as mock_discover:
+            result = await _discover_by_network_scan(MagicMock(), MagicMock())
+        assert mock_discover.await_count == 2
+        assert result == [(info, 65), (info, 66)]
+
+
+class TestHttpMethodSelection:
+    """Tests for explicit HTTP connection method selection."""
+
+    @pytest.mark.asyncio
+    async def test_http_method_selects_auto_discovery(self) -> None:
+        """Selecting auto_discovery stores method and continues to discover step."""
+        handler = KospelConfigFlowHandler()
+        with patch.object(
+            handler,
+            "async_step_discover",
+            new_callable=AsyncMock,
+            return_value={"type": "discover"},
+        ) as mock_step:
+            result = await handler.async_step_http_method(
+                {"http_method": "auto_discovery"}
+            )
+        assert handler._discovery_method == "auto_discovery"
+        mock_step.assert_awaited_once()
+        assert result == {"type": "discover"}
+
+    @pytest.mark.asyncio
+    async def test_http_method_selects_network_scan(self) -> None:
+        """Selecting network_scan stores method and continues to discover step."""
+        handler = KospelConfigFlowHandler()
+        with patch.object(
+            handler,
+            "async_step_discover",
+            new_callable=AsyncMock,
+            return_value={"type": "discover"},
+        ) as mock_step:
+            result = await handler.async_step_http_method(
+                {"http_method": "network_scan"}
+            )
+        assert handler._discovery_method == "network_scan"
+        mock_step.assert_awaited_once()
+        assert result == {"type": "discover"}
 
 
 class TestKospelOptionsFlowHandler:

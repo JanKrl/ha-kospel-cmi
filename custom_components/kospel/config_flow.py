@@ -1,6 +1,9 @@
 """Config flow for Kospel integration."""
 
+import asyncio
+import logging
 from ipaddress import ip_interface
+from ipaddress import ip_network
 from typing import Any
 
 import aiohttp
@@ -22,7 +25,7 @@ from .const import (
     CONF_SERIAL_NUMBER,
     CONF_SIMULATION_MODE,
     DEFAULT_REFRESH_DELAY_AFTER_SET,
-    DEFAULT_SUBNETS,
+    KOSPEL_MAC_PREFIXES,
     BACKEND_TYPE_HTTP,
     BACKEND_TYPE_YAML,
     REFRESH_DELAY_MAX,
@@ -30,9 +33,59 @@ from .const import (
     make_unique_id,
 )
 
+LOGGER = logging.getLogger(__name__)
+DISCOVERY_TIMEOUT_SECONDS = 90.0
+MAX_NETWORK_SCAN_HOSTS = 1024
+
 
 class CannotConnect(Exception):
     """Raised when connection to heater fails."""
+
+
+_DHCP_CANDIDATE_HOSTS: set[str] = set()
+
+
+def _normalize_mac(mac: str | None) -> str | None:
+    """Return lowercase hex-only MAC string or None for invalid values."""
+    if not mac:
+        return None
+    normalized = "".join(char for char in mac.lower() if char in "0123456789abcdef")
+    return normalized if len(normalized) >= 9 else None
+
+
+def _is_kospel_mac(mac: str | None) -> bool:
+    """Return True when MAC belongs to known Kospel vendor prefixes."""
+    normalized = _normalize_mac(mac)
+    if normalized is None:
+        return False
+    return any(normalized.startswith(prefix) for prefix in KOSPEL_MAC_PREFIXES)
+
+
+async def _discover_by_kospel_mac(
+    session: aiohttp.ClientSession,
+) -> list[tuple[Any, int]]:
+    """Discover devices from DHCP auto-discovered Kospel candidates."""
+    if not _DHCP_CANDIDATE_HOSTS:
+        LOGGER.debug("Auto discovery has no DHCP candidate hosts")
+        return []
+
+    LOGGER.debug(
+        "Auto discovery probing DHCP candidates: %s",
+        sorted(_DHCP_CANDIDATE_HOSTS),
+    )
+    probe_results = await asyncio.gather(
+        *[probe_device(session, host) for host in sorted(_DHCP_CANDIDATE_HOSTS)],
+        return_exceptions=True,
+    )
+
+    discovered: list[tuple[Any, int]] = []
+    for result in probe_results:
+        if isinstance(result, Exception) or result is None:
+            continue
+        for device_id in result.device_ids:
+            discovered.append((result, device_id))
+    LOGGER.debug("Auto discovery found %s device candidates", len(discovered))
+    return discovered
 
 
 async def validate_http_input(
@@ -67,11 +120,12 @@ async def validate_http_input(
 
 
 async def _get_subnets_to_scan(hass: HomeAssistant) -> list[str]:
-    """Get subnets to scan from Network integration or fallback to defaults."""
+    """Get subnets to scan from enabled IPv4 adapters."""
     try:
         adapters = await network.async_get_adapters(hass)
     except Exception:
-        return DEFAULT_SUBNETS
+        LOGGER.exception("Could not read network adapters for subnet scan")
+        return []
 
     subnets: set[str] = set()
     for adapter in adapters:
@@ -79,14 +133,52 @@ async def _get_subnets_to_scan(hass: HomeAssistant) -> list[str]:
             continue
         for ipv4 in adapter.get("ipv4", []):
             try:
-                iface = ip_interface(
-                    f"{ipv4['address']}/{ipv4['network_prefix']}"
-                )
+                iface = ip_interface(f"{ipv4['address']}/{ipv4['network_prefix']}")
                 subnets.add(str(iface.network))
             except (ValueError, KeyError):
                 continue
 
-    return list(subnets) if subnets else DEFAULT_SUBNETS
+    result = sorted(subnets)
+    LOGGER.debug("Network scan subnets resolved: %s", result)
+    return result
+
+
+async def _discover_by_network_scan(
+    hass: HomeAssistant, session: aiohttp.ClientSession
+) -> list[tuple[Any, int]]:
+    """Discover devices by scanning all IPv4 subnets from network adapters."""
+    subnets = await _get_subnets_to_scan(hass)
+    if not subnets:
+        LOGGER.warning("Network scan has no enabled IPv4 subnets to scan")
+        return []
+
+    discovered: list[tuple[Any, int]] = []
+    for subnet in subnets:
+        try:
+            network_obj = ip_network(subnet, strict=False)
+            host_count = max(0, int(network_obj.num_addresses) - 2)
+        except ValueError:
+            LOGGER.warning("Skipping invalid subnet from adapter list: %s", subnet)
+            continue
+
+        if host_count > MAX_NETWORK_SCAN_HOSTS:
+            LOGGER.warning(
+                "Skipping large subnet %s (%s hosts > limit %s)",
+                subnet,
+                host_count,
+                MAX_NETWORK_SCAN_HOSTS,
+            )
+            continue
+
+        LOGGER.info("Network scan probing subnet=%s", subnet)
+        devices = await discover_devices(
+            session, subnet, timeout=3.0, concurrency_limit=20
+        )
+        for info in devices:
+            for device_id in info.device_ids:
+                discovered.append((info, device_id))
+    LOGGER.debug("Network scan found %s device candidates", len(discovered))
+    return discovered
 
 
 class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -97,7 +189,68 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize config flow."""
         self._backend_type: str | None = None
-        self._discovered_devices: list[tuple[Any, int]] = []  # (KospelDeviceInfo, device_id)
+        self._discovered_devices: list[
+            tuple[Any, int]
+        ] = []  # (KospelDeviceInfo, device_id)
+        self._discovery_method: str = "auto_discovery"
+        self._discover_task: asyncio.Task[None] | None = None
+
+    async def async_step_dhcp(self, discovery_info: dict[str, Any]) -> FlowResult:
+        """Handle discovery from Home Assistant DHCP integration."""
+        mac_address = discovery_info.get("macaddress")
+        if not _is_kospel_mac(mac_address):
+            LOGGER.debug(
+                "Ignoring DHCP discovery with non-Kospel MAC: %s",
+                mac_address,
+            )
+            return self.async_abort(reason="not_kospel_device")
+
+        host = discovery_info.get("ip")
+        if not isinstance(host, str):
+            LOGGER.warning("DHCP discovery missing IP field: %s", discovery_info)
+            return self.async_abort(reason="unknown")
+
+        _DHCP_CANDIDATE_HOSTS.add(host)
+        LOGGER.info(
+            "Stored DHCP discovery candidate host=%s (total_candidates=%s)",
+            host,
+            len(_DHCP_CANDIDATE_HOSTS),
+        )
+
+        async with aiohttp.ClientSession() as session:
+            info = await probe_device(session, host)
+        if info is None or not info.device_ids:
+            LOGGER.warning("DHCP candidate probe failed for host=%s", host)
+            return self.async_abort(reason="cannot_connect")
+
+        if len(info.device_ids) == 1:
+            device_id = info.device_ids[0]
+            unique_id = make_unique_id(info.serial_number, device_id)
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+            heater_ip = info.host.split(":")[0] if ":" in info.host else info.host
+            LOGGER.info(
+                "DHCP discovery created entry host=%s device_id=%s",
+                heater_ip,
+                device_id,
+            )
+            return self.async_create_entry(
+                title=f"Kospel Heater {heater_ip} (device {device_id})",
+                data={
+                    CONF_BACKEND_TYPE: BACKEND_TYPE_HTTP,
+                    CONF_HEATER_IP: heater_ip,
+                    CONF_DEVICE_ID: device_id,
+                    CONF_SERIAL_NUMBER: info.serial_number,
+                },
+            )
+
+        self._discovered_devices = [(info, device_id) for device_id in info.device_ids]
+        LOGGER.info(
+            "DHCP discovery found multiple device IDs at host=%s: %s",
+            host,
+            info.device_ids,
+        )
+        return await self.async_step_discover_result()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -134,14 +287,15 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        # HTTP: show connection method choice (Discover vs Manual)
+        # HTTP: show connection method choice.
         return self.async_show_form(
             step_id="http_method",
             data_schema=vol.Schema(
                 {
-                    vol.Required("http_method", default="discover"): vol.In(
+                    vol.Required("http_method", default="auto_discovery"): vol.In(
                         {
-                            "discover": "option_discover",
+                            "auto_discovery": "option_auto_discovery",
+                            "network_scan": "option_network_scan",
                             "manual": "option_manual",
                         }
                     ),
@@ -152,15 +306,16 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_http_method(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle HTTP connection method: Discover or Manual."""
+        """Handle HTTP connection method selection."""
         if user_input is None:
             return self.async_show_form(
                 step_id="http_method",
                 data_schema=vol.Schema(
                     {
-                        vol.Required("http_method", default="discover"): vol.In(
+                        vol.Required("http_method", default="auto_discovery"): vol.In(
                             {
-                                "discover": "option_discover",
+                                "auto_discovery": "option_auto_discovery",
+                                "network_scan": "option_network_scan",
                                 "manual": "option_manual",
                             }
                         ),
@@ -168,7 +323,11 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
             )
 
-        if user_input["http_method"] == "discover":
+        method = user_input["http_method"]
+        if method in {"auto_discovery", "network_scan"}:
+            self._discover_task = None
+            self._discovery_method = method
+            LOGGER.info("HTTP discovery method selected: %s", method)
             return await self.async_step_discover()
         return self.async_show_form(
             step_id="http",
@@ -180,31 +339,49 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             ),
         )
 
-    async def _async_run_discovery(self) -> FlowResult:
-        """Run network discovery and return progress_done to transition to result step."""
+    async def _async_run_discovery(self) -> None:
+        """Run discovery task and store results for discover_result step."""
         try:
-            subnets = await _get_subnets_to_scan(self.hass)
+            LOGGER.info("Starting discovery run via method=%s", self._discovery_method)
             all_devices: list[tuple[Any, int]] = []
 
             async with aiohttp.ClientSession() as session:
-                for subnet in subnets:
-                    devices = await discover_devices(
-                        session, subnet, timeout=3.0, concurrency_limit=20
+                if self._discovery_method == "network_scan":
+                    all_devices = await asyncio.wait_for(
+                        _discover_by_network_scan(self.hass, session),
+                        timeout=DISCOVERY_TIMEOUT_SECONDS,
                     )
-                    for info in devices:
-                        for device_id in info.device_ids:
-                            all_devices.append((info, device_id))
+                else:
+                    all_devices = await asyncio.wait_for(
+                        _discover_by_kospel_mac(session),
+                        timeout=DISCOVERY_TIMEOUT_SECONDS,
+                    )
 
             self._discovered_devices = all_devices
-            return self.async_show_progress_done(next_step_id="discover_result")
-        except Exception:
+            LOGGER.debug(
+                "Discovery completed via method=%s found_devices=%s",
+                self._discovery_method,
+                len(self._discovered_devices),
+            )
+        except asyncio.TimeoutError:
+            LOGGER.warning(
+                "Discovery timed out after %s seconds via method=%s",
+                DISCOVERY_TIMEOUT_SECONDS,
+                self._discovery_method,
+            )
             self._discovered_devices = []
-            return self.async_show_progress_done(next_step_id="discover_result")
+        except Exception:
+            LOGGER.exception("Discovery failed via method=%s", self._discovery_method)
+            self._discovered_devices = []
 
     async def async_step_discover(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Scan network for Kospel devices."""
+        LOGGER.warning(
+            "Discovery UI step entered (method=%s)",
+            self._discovery_method,
+        )
         if user_input and user_input.get("action") == "manual":
             return self.async_show_form(
                 step_id="http",
@@ -216,18 +393,44 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
             )
 
-        progress_task = self.hass.async_create_task(self._async_run_discovery())
+        # Avoid progress-step edge cases when auto discovery has no DHCP candidates.
+        if (
+            self._discovery_method == "auto_discovery"
+            and not _DHCP_CANDIDATE_HOSTS
+            and self._discover_task is None
+        ):
+            LOGGER.info(
+                "Auto discovery has no DHCP candidates, showing result directly"
+            )
+            self._discovered_devices = []
+            return await self.async_step_discover_result()
+
+        if self._discover_task is None:
+            LOGGER.debug("Creating new discovery progress task")
+            self._discover_task = self.hass.async_create_task(self._async_run_discovery())
+        elif not self._discover_task.done():
+            LOGGER.debug("Reusing running discovery progress task")
+        else:
+            LOGGER.debug("Discovery progress task is done, moving to result step")
+            self._discover_task = None
+            return self.async_show_progress_done(next_step_id="discover_result")
         return self.async_show_progress(
             step_id="discover",
             progress_action="discover",
-            progress_task=progress_task,
+            progress_task=self._discover_task,
         )
 
     async def async_step_discover_result(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle discovery result: show device list or retry form."""
+        # Clear cached task only after progress step transitions to result.
+        self._discover_task = None
         if not self._discovered_devices:
+            LOGGER.debug(
+                "Discovery result empty for method=%s",
+                self._discovery_method,
+            )
             return self.async_show_form(
                 step_id="discover",
                 data_schema=vol.Schema(
@@ -252,6 +455,7 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             options[unique_id] = (
                 f"{info.host} — {info.serial_number} (dev {device_id}, {model})"
             )
+        LOGGER.debug("Discovery result offers %s selectable devices", len(options))
 
         return self.async_show_form(
             step_id="select_device",
