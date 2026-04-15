@@ -43,6 +43,11 @@ class CannotConnect(Exception):
 
 
 _DHCP_CANDIDATE_HOSTS: set[str] = set()
+# NOTE:
+# Auto-discovery via DHCP/OUI is intentionally kept in code but hidden from
+# the user-facing flow. During field testing we observed MAC-prefix mismatch
+# on a real device, so the manifest DHCP matcher is disabled for now.
+# Keep this logic for future re-enable once OUI matching is verified.
 
 
 def _normalize_mac(mac: str | None) -> str | None:
@@ -64,7 +69,11 @@ def _is_kospel_mac(mac: str | None) -> bool:
 async def _discover_by_kospel_mac(
     session: aiohttp.ClientSession,
 ) -> list[tuple[Any, int]]:
-    """Discover devices from DHCP auto-discovered Kospel candidates."""
+    """Discover devices from DHCP auto-discovered Kospel candidates.
+
+    This path is currently dormant in normal UX because we hide auto-discovery
+    until MAC-prefix matching for real devices is validated.
+    """
     if not _DHCP_CANDIDATE_HOSTS:
         LOGGER.debug("Auto discovery has no DHCP candidate hosts")
         return []
@@ -188,7 +197,6 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize config flow."""
-        self._backend_type: str | None = None
         self._discovered_devices: list[
             tuple[Any, int]
         ] = []  # (KospelDeviceInfo, device_id)
@@ -196,7 +204,10 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._discover_task: asyncio.Task[None] | None = None
 
     async def async_step_dhcp(self, discovery_info: dict[str, Any]) -> FlowResult:
-        """Handle discovery from Home Assistant DHCP integration."""
+        """Handle discovery from Home Assistant DHCP integration.
+
+        Kept for future re-enable when DHCP matcher is restored in manifest.
+        """
         mac_address = discovery_info.get("macaddress")
         if not _is_kospel_mac(mac_address):
             LOGGER.debug(
@@ -255,31 +266,25 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step: choose backend type (HTTP or YAML)."""
+        """Handle initial step with connection mode choices."""
         if user_input is None:
             return self.async_show_form(
                 step_id="user",
                 data_schema=vol.Schema(
                     {
-                        vol.Required(
-                            CONF_BACKEND_TYPE,
-                            default=BACKEND_TYPE_HTTP,
-                        ): vol.In(
+                        vol.Required("connection_mode", default="network_scan"): vol.In(
                             {
-                                BACKEND_TYPE_HTTP: "option_http",
-                                BACKEND_TYPE_YAML: "option_yaml",
+                                "network_scan": "Network scan",
+                                "manual": "Manual entry",
+                                "yaml": "YAML (for development only)",
                             }
-                        ),
+                        )
                     }
                 ),
-                description_placeholders={
-                    "yaml_path": "custom_components/kospel/data/state.yaml",
-                },
             )
 
-        self._backend_type = user_input[CONF_BACKEND_TYPE]
-
-        if self._backend_type == BACKEND_TYPE_YAML:
+        mode = user_input["connection_mode"]
+        if mode == "yaml":
             return self.async_create_entry(
                 title="Kospel Heater (YAML / development)",
                 data={
@@ -287,43 +292,13 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        # HTTP: show connection method choice.
-        return self.async_show_form(
-            step_id="http_method",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("http_method", default="auto_discovery"): vol.In(
-                        {
-                            "auto_discovery": "option_auto_discovery",
-                            "network_scan": "option_network_scan",
-                            "manual": "option_manual",
-                        }
-                    ),
-                }
-            ),
-        )
+        return await self._async_continue_http_method(mode)
 
-    async def async_step_http_method(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Handle HTTP connection method selection."""
-        if user_input is None:
-            return self.async_show_form(
-                step_id="http_method",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required("http_method", default="auto_discovery"): vol.In(
-                            {
-                                "auto_discovery": "option_auto_discovery",
-                                "network_scan": "option_network_scan",
-                                "manual": "option_manual",
-                            }
-                        ),
-                    }
-                ),
-            )
-
-        method = user_input["http_method"]
+    async def _async_continue_http_method(self, method: str) -> FlowResult:
+        """Continue flow for selected HTTP method."""
+        # Keep auto_discovery implementation for future use, but hide it from UI
+        # because current MAC prefix assumptions do not match at least one
+        # production device and need investigation before re-enabling.
         if method in {"auto_discovery", "network_scan"}:
             self._discover_task = None
             self._discovery_method = method
@@ -338,6 +313,28 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
         )
+
+    async def async_step_http_method(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle HTTP connection method selection (legacy step)."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="http_method",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required("http_method", default="auto_discovery"): vol.In(
+                            {
+                                "auto_discovery": "Auto discovery",
+                                "network_scan": "Network scan",
+                                "manual": "Manual entry",
+                            }
+                        ),
+                    }
+                ),
+            )
+
+        return await self._async_continue_http_method(user_input["http_method"])
 
     async def _async_run_discovery(self) -> None:
         """Run discovery task and store results for discover_result step."""
@@ -378,7 +375,7 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Scan network for Kospel devices."""
-        LOGGER.warning(
+        LOGGER.info(
             "Discovery UI step entered (method=%s)",
             self._discovery_method,
         )
@@ -407,7 +404,9 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if self._discover_task is None:
             LOGGER.debug("Creating new discovery progress task")
-            self._discover_task = self.hass.async_create_task(self._async_run_discovery())
+            self._discover_task = self.hass.async_create_task(
+                self._async_run_discovery()
+            )
         elif not self._discover_task.done():
             LOGGER.debug("Reusing running discovery progress task")
         else:
@@ -437,8 +436,8 @@ class KospelConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     {
                         vol.Required("action", default="manual"): vol.In(
                             {
-                                "retry": "option_retry",
-                                "manual": "option_manual",
+                                "retry": "Retry scan",
+                                "manual": "Manual entry",
                             }
                         ),
                     }

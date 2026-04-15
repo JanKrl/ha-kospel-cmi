@@ -7,14 +7,10 @@
   "config": {
     "step": {
       "user": {
-        "title": "Wybierz typ po\u0142\u0105czenia",
-        "description": "Wybierz spos\u00f3b po\u0142\u0105czenia: HTTP (prawdziwe urz\u0105dzenie) lub plik YAML (rozw\u00f3j). W trybie YAML stan jest zapisywany w {yaml_path}.",
+        "title": "Wybierz metod\u0119 po\u0142\u0105czenia",
+        "description": "Wybierz skanowanie sieci, r\u0119czne wprowadzenie albo tryb YAML do rozwoju.",
         "data": {
-          "backend_type": "Typ po\u0142\u0105czenia"
-        },
-        "options": {
-          "option_http": "Grzejnik (HTTP)",
-          "option_yaml": "Plik (rozw\u00f3j)"
+          "connection_mode": "Metoda"
         }
       },
       "http_method": {
@@ -44,7 +40,7 @@
         "title": "Wybierz urz\u0105dzenie",
         "description": "Wybierz grzejnik Kospel do dodania.",
         "data": {
-          "device": "Urz\u0105dzenie"
+          "device": "Znalezione urz\u0105dzenia"
         }
       },
       "http": {

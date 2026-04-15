@@ -7,14 +7,10 @@
   "config": {
     "step": {
       "user": {
-        "title": "Choose connection type",
-        "description": "Select how to connect: HTTP (real device) or YAML file (development). For YAML, state is stored in {yaml_path}.",
+        "title": "Choose connection method",
+        "description": "Select network scan, manual entry, or YAML mode for development.",
         "data": {
-          "backend_type": "Connection type"
-        },
-        "options": {
-          "option_http": "Heater (HTTP)",
-          "option_yaml": "File-based (development)"
+          "connection_mode": "Method"
         }
       },
       "http_method": {
@@ -44,7 +40,7 @@
         "title": "Select device",
         "description": "Choose the Kospel device to add.",
         "data": {
-          "device": "Device"
+          "device": "Found devices"
         }
       },
       "http": {
