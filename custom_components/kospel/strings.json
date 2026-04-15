@@ -7,24 +7,21 @@
   "config": {
     "step": {
       "user": {
-        "title": "Choose connection type",
-        "description": "Select how to connect: HTTP (real device) or YAML file (development). For YAML, state is stored in {yaml_path}.",
+        "title": "Choose connection method",
+        "description": "Select network scan, manual entry, or YAML mode for development.",
         "data": {
-          "backend_type": "Connection type"
-        },
-        "options": {
-          "option_http": "Heater (HTTP)",
-          "option_yaml": "File-based (development)"
+          "connection_mode": "Method"
         }
       },
       "http_method": {
         "title": "Connection method",
-        "description": "Discover devices on your network or enter connection details manually.",
+        "description": "Choose automatic discovery by MAC candidates, full network scan, or manual entry.",
         "data": {
           "http_method": "Method"
         },
         "options": {
-          "option_discover": "Discover devices",
+          "option_auto_discovery": "Auto discovery (MAC candidates)",
+          "option_network_scan": "Network scan (all adapter subnets)",
           "option_manual": "Enter manually"
         }
       },
@@ -43,7 +40,7 @@
         "title": "Select device",
         "description": "Choose the Kospel device to add.",
         "data": {
-          "device": "Device"
+          "device": "Found devices"
         }
       },
       "http": {
@@ -69,7 +66,8 @@
       "unknown": "Unexpected error occurred"
     },
     "abort": {
-      "already_configured": "Integration is already configured"
+      "already_configured": "Integration is already configured",
+      "not_kospel_device": "Discovered device does not match Kospel DHCP signature"
     },
     "options": {
       "step": {

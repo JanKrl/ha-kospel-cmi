@@ -7,24 +7,21 @@
   "config": {
     "step": {
       "user": {
-        "title": "Wybierz typ po\u0142\u0105czenia",
-        "description": "Wybierz spos\u00f3b po\u0142\u0105czenia: HTTP (prawdziwe urz\u0105dzenie) lub plik YAML (rozw\u00f3j). W trybie YAML stan jest zapisywany w {yaml_path}.",
+        "title": "Wybierz metod\u0119 po\u0142\u0105czenia",
+        "description": "Wybierz skanowanie sieci, r\u0119czne wprowadzenie albo tryb YAML do rozwoju.",
         "data": {
-          "backend_type": "Typ po\u0142\u0105czenia"
-        },
-        "options": {
-          "option_http": "Grzejnik (HTTP)",
-          "option_yaml": "Plik (rozw\u00f3j)"
+          "connection_mode": "Metoda"
         }
       },
       "http_method": {
         "title": "Spos\u00f3b po\u0142\u0105czenia",
-        "description": "Wykryj urz\u0105dzenia w sieci lub wprowad\u017a dane r\u0119cznie.",
+        "description": "Wybierz automatyczne wykrywanie po MAC, pe\u0142ne skanowanie sieci albo wprowadzenie danych r\u0119cznie.",
         "data": {
           "http_method": "Metoda"
         },
         "options": {
-          "option_discover": "Wykryj urz\u0105dzenia",
+          "option_auto_discovery": "Automatyczne wykrywanie (kandydaci po MAC)",
+          "option_network_scan": "Skanowanie sieci (wszystkie podsieci adapter\u00f3w)",
           "option_manual": "Wprowad\u017a r\u0119cznie"
         }
       },
@@ -43,7 +40,7 @@
         "title": "Wybierz urz\u0105dzenie",
         "description": "Wybierz grzejnik Kospel do dodania.",
         "data": {
-          "device": "Urz\u0105dzenie"
+          "device": "Znalezione urz\u0105dzenia"
         }
       },
       "http": {
@@ -69,7 +66,8 @@
       "unknown": "Wyst\u0105pi\u0142 nieoczekiwany b\u0142\u0105d"
     },
     "abort": {
-      "already_configured": "Integracja jest ju\u017c skonfigurowana"
+      "already_configured": "Integracja jest ju\u017c skonfigurowana",
+      "not_kospel_device": "Wykryte urz\u0105dzenie nie pasuje do sygnatury DHCP Kospel"
     },
     "options": {
       "step": {

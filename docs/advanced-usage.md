@@ -9,6 +9,9 @@ This page is for users who want deeper control, better diagnostics, or developme
 - Connects to a real Kospel module over LAN.
 - Uses heater IP and device ID selected in config flow.
 - Best choice for normal Home Assistant usage.
+- Note: MAC-based auto-discovery is currently hidden/disabled in UI due to
+  unresolved MAC-prefix mismatch observed on a real device. Network scan and
+  manual entry are the supported setup paths until discovery matching is revised.
 
 ### YAML backend (development mode)
 
