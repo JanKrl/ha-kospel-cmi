@@ -1,4 +1,4 @@
-# Kospel Electric Heaters for Home Assistant (Beta)
+# Kospel Electric Heaters for Home Assistant
 
 <p align="center">
   <img src="custom_components/kospel/brand/icon.png" alt="Kospel K-CMI" width="160" height="160">
@@ -7,7 +7,8 @@
 Control and monitor compatible Kospel electric heaters from Home Assistant using local network communication.
 
 > [!WARNING]
-> This is a beta integration. Features and behavior may still change before stable release.
+> This is an unofficial, community-maintained integration and is not affiliated with or endorsed by Kospel.
+> Use it at your own responsibility.
 
 ## What You Can Do
 
@@ -63,7 +64,7 @@ The integration creates these Home Assistant platforms:
 - **Climate target temperature** can be changed only in **Heat** (manual) HVAC mode.
 - **Auto mode presets** are available as climate presets (`winter`, `summer`, `party`, `vacation`).
 - **Auto mode schedules** can be read from the device state, but editing schedules from Home Assistant is not supported yet.
-- **DHW water heater entity** is intentionally read-only for writes in this beta; it reflects device state.
+- **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
 - After changing values, refresh can be slightly delayed by design (configurable integration option).
 
 ## Troubleshooting
