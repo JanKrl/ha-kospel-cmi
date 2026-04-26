@@ -10,12 +10,25 @@ Control and monitor compatible Kospel electric heaters from Home Assistant using
 > This is an unofficial, community-maintained integration and is not affiliated with or endorsed by Kospel.
 > Use it at your own responsibility.
 
-## What You Can Do
+## Capabilities
 
-- Monitor heater and system values (room/water temperatures, pressure, power, heating status, valve position).
-- Control core heating behavior from one climate entity (off/heat/auto + presets).
-- Manage selected configuration values (room preset temperatures and max boiler power step).
-- Expose DHW state in Home Assistant with a dedicated water heater entity.
+This integration allows you to:
+
+- **Control central heating from a single climate entity**:
+  - Set HVAC mode: `off`, `heat`, `auto`.
+  - Use presets in auto mode: `winter`, `summer`, `party`, `vacation`.
+  - Adjust target temperature in manual heat mode.
+- **Monitor key operating values**:
+  - CH and DHW temperatures.
+  - CH and DHW target temperatures.
+  - Instant power and pressure.
+  - CH/DHW heating status and valve position.
+- **Manage selected configuration values**:
+  - Room preset temperatures (`eco`, `comfort`, `comfort+`, `comfort-`).
+  - Maximum boiler power step (`2`, `4`, `6`, `8` kW).
+- **Track connectivity and DHW state**:
+  - Online/offline connectivity status.
+  - Dedicated domestic hot water entity with current and target temperature attributes.
 
 ## Installation (HACS)
 
@@ -49,15 +62,62 @@ When adding the integration in Home Assistant:
 - **EKCO.M3**.
 - Want to add support for more models? Please contribute in [kospel-cmi-lib](https://github.com/JanKrl/kospel-cmi-lib).
 
-## Entities Created
+## Entities
 
-The integration creates these Home Assistant platforms:
+The integration creates the following entities in Home Assistant.
+Entity IDs below are representative examples and can vary based on your device naming:
 
-- `climate` (main heater control)
-- `water_heater` (DHW state and temperatures)
-- `sensor` + `binary_sensor` (telemetry and status)
-- `number` (room preset temperatures; configuration)
-- `select` (boiler max power step; configuration)
+### Climate
+
+- **Climate Entity**: `climate.heater`
+  - **HVAC Modes**: `off`, `heat`, `auto`
+  - **Preset Modes**: `winter`, `summer`, `party`, `vacation`
+  - **Attributes**:
+    - Current temperature (CH temperature)
+    - Target temperature (in manual heat mode)
+
+### Water Heater
+
+- **Water Heater Entity**: `water_heater.domestic_hot_water`
+  - **Purpose**: DHW state visualization
+  - **Attributes**:
+    - Current water temperature
+    - Target DHW temperature
+
+### Sensors
+
+- **Temperature and Setpoint Sensors**:
+  - `sensor.ch_temperature`
+  - `sensor.dhw_temperature`
+  - `sensor.ch_target_temperature`
+  - `sensor.dhw_target_temperature`
+- **System Sensors**:
+  - `sensor.pressure`
+  - `sensor.instant_power`
+  - `sensor.boiler_max_power_limit`
+- **Status Sensors**:
+  - `sensor.ch_heating_status` (`running`, `idle`, `disabled`)
+  - `sensor.dhw_heating_status` (`running`, `idle`, `disabled`)
+  - `sensor.valve_position` (`CH`/`DHW`)
+
+### Binary Sensors
+
+- **Connectivity Sensor**:
+  - `binary_sensor.connectivity`
+
+### Number (Configuration)
+
+- **Room Preset Temperature Entities**:
+  - `number.eco`
+  - `number.comfort`
+  - `number.comfort_plus`
+  - `number.comfort_minus`
+
+### Select (Configuration)
+
+- **Max Boiler Power Entity**:
+  - `select.max_boiler_power`
+  - Available options: `2 kW`, `4 kW`, `6 kW`, `8 kW`
 
 ## How To Use (Important Notes)
 
