@@ -122,6 +122,15 @@
           "disabled": "Disabled"
         }
       },
+      "heating_mode": {
+        "name": "Heating mode",
+        "state": {
+          "off": "Off",
+          "idle": "Idle",
+          "ch": "CH",
+          "dwh": "DWH"
+        }
+      },
       "valve_position": {
         "name": "Valve Position",
         "state": {
