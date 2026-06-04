@@ -74,6 +74,7 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
 )
 
 from custom_components.kospel.sensor import (  # noqa: E402
+    KospelHeatingModeSensor,
     KospelMaxPowerLimitSensor,
     KospelTemperatureSensor,
 )
@@ -208,4 +209,106 @@ class TestKospelMaxPowerLimitSensorNativeValue:
         mock_coordinator.data = mock_controller
 
         entity = KospelMaxPowerLimitSensor(mock_coordinator, mock_entry)
+        assert entity.native_value is None
+
+
+class TestKospelHeatingModeSensorNativeValue:
+    """Tests for combined heating mode sensor."""
+
+    def test_heating_mode_ch_running(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is 'ch' when CH is running."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = "running"
+        mock_controller.cwu_heating_status = "idle"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == "ch"
+
+    def test_heating_mode_dwh_running(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is 'dwh' when DHW is running."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = "idle"
+        mock_controller.cwu_heating_status = "running"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == "dwh"
+
+    def test_heating_mode_both_idle(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is 'idle' when both are idle."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = "idle"
+        mock_controller.cwu_heating_status = "idle"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == "idle"
+
+    def test_heating_mode_ch_idle_dwh_disabled(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is 'idle' when CH is idle and DHW disabled."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = "idle"
+        mock_controller.cwu_heating_status = "disabled"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == "idle"
+
+    def test_heating_mode_both_disabled(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is 'off' when both are disabled."""
+        mock_controller = MagicMock()
+        mock_controller.co_heating_status = "disabled"
+        mock_controller.cwu_heating_status = "disabled"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == "off"
+
+    def test_heating_mode_with_enum_values(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value works with enum-like objects that have .value attribute."""
+        mock_controller = MagicMock()
+        mock_ch_status = MagicMock()
+        mock_ch_status.value = "RUNNING"
+        mock_dwh_status = MagicMock()
+        mock_dwh_status.value = "IDLE"
+        mock_controller.co_heating_status = mock_ch_status
+        mock_controller.cwu_heating_status = mock_dwh_status
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == "ch"
+
+    def test_heating_mode_none_when_missing_ch(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is None when CH status is missing."""
+        mock_controller = MagicMock(spec=[])
+        mock_controller.cwu_heating_status = "idle"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
+        assert entity.native_value is None
+
+    def test_heating_mode_none_when_missing_dwh(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value is None when DHW status is missing."""
+        mock_controller = MagicMock(spec=[])
+        mock_controller.co_heating_status = "idle"
+        mock_coordinator.data = mock_controller
+
+        entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
         assert entity.native_value is None

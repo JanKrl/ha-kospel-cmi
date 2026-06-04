@@ -7,75 +7,75 @@
   "config": {
     "step": {
       "user": {
-        "title": "Wybierz metod\u0119 po\u0142\u0105czenia",
-        "description": "Wybierz skanowanie sieci, r\u0119czne wprowadzenie albo tryb YAML do rozwoju.",
+        "title": "Wybierz metodę połączenia",
+        "description": "Wybierz skanowanie sieci, ręczne wprowadzenie albo tryb YAML do rozwoju.",
         "data": {
           "connection_mode": "Metoda"
         }
       },
       "http_method": {
-        "title": "Spos\u00f3b po\u0142\u0105czenia",
-        "description": "Wybierz automatyczne wykrywanie po MAC, pe\u0142ne skanowanie sieci albo wprowadzenie danych r\u0119cznie.",
+        "title": "Sposób połączenia",
+        "description": "Wybierz automatyczne wykrywanie po MAC, pełne skanowanie sieci albo wprowadzenie danych ręcznie.",
         "data": {
           "http_method": "Metoda"
         },
         "options": {
           "option_auto_discovery": "Automatyczne wykrywanie (kandydaci po MAC)",
-          "option_network_scan": "Skanowanie sieci (wszystkie podsieci adapter\u00f3w)",
-          "option_manual": "Wprowad\u017a r\u0119cznie"
+          "option_network_scan": "Skanowanie sieci (wszystkie podsieci adapterów)",
+          "option_manual": "Wprowadź ręcznie"
         }
       },
       "discover": {
         "title": "Skanowanie sieci",
-        "description": "Skanowanie urz\u0105dze\u0144 Kospel. Mo\u017ce to potrwa\u0107 do minuty.",
+        "description": "Skanowanie urządzeń Kospel. Może to potrwać do minuty.",
         "data": {
           "action": "Akcja"
         },
         "options": {
           "option_retry": "Skanuj ponownie",
-          "option_manual": "Wprowad\u017a r\u0119cznie"
+          "option_manual": "Wprowadź ręcznie"
         }
       },
       "select_device": {
-        "title": "Wybierz urz\u0105dzenie",
+        "title": "Wybierz urządzenie",
         "description": "Wybierz grzejnik Kospel do dodania.",
         "data": {
-          "device": "Znalezione urz\u0105dzenia"
+          "device": "Znalezione urządzenia"
         }
       },
       "http": {
-        "title": "Po\u0142\u0105czenie z grzejnikiem",
-        "description": "Podaj adres IP grzejnika i identyfikator urz\u0105dzenia. Adres URL: http://[IP]/api/dev/[ID].",
+        "title": "Połączenie z grzejnikiem",
+        "description": "Podaj adres IP grzejnika i identyfikator urządzenia. Adres URL: http://[IP]/api/dev/[ID].",
         "data": {
           "heater_ip": "Adres IP grzejnika",
-          "device_id": "Identyfikator urz\u0105dzenia"
+          "device_id": "Identyfikator urządzenia"
         }
       }
     },
     "progress": {
       "discover": {
         "title": "Skanowanie sieci",
-        "description": "Wyszukiwanie urz\u0105dze\u0144 Kospel w sieci. Mo\u017ce to potrwa\u0107 do minuty."
+        "description": "Wyszukiwanie urządzeń Kospel w sieci. Może to potrwać do minuty."
       }
     },
     "error": {
-      "cannot_connect": "Nie uda\u0142o si\u0119 po\u0142\u0105czy\u0107 z grzejnikiem",
-      "invalid_auth": "Nieprawid\u0142owe uwierzytelnienie",
-      "invalid_device_id": "Identyfikator urz\u0105dzenia musi by\u0107 z zakresu 1\u2013255",
-      "no_devices_found": "Nie znaleziono urz\u0105dze\u0144 Kospel w sieci",
-      "unknown": "Wyst\u0105pi\u0142 nieoczekiwany b\u0142\u0105d"
+      "cannot_connect": "Nie udało się połączyć z grzejnikiem",
+      "invalid_auth": "Nieprawidłowe uwierzytelnienie",
+      "invalid_device_id": "Identyfikator urządzenia musi być z zakresu 1–255",
+      "no_devices_found": "Nie znaleziono urządzeń Kospel w sieci",
+      "unknown": "Wystąpił nieoczekiwany błąd"
     },
     "abort": {
-      "already_configured": "Integracja jest ju\u017c skonfigurowana",
-      "not_kospel_device": "Wykryte urz\u0105dzenie nie pasuje do sygnatury DHCP Kospel"
+      "already_configured": "Integracja jest już skonfigurowana",
+      "not_kospel_device": "Wykryte urządzenie nie pasuje do sygnatury DHCP Kospel"
     },
     "options": {
       "step": {
         "init": {
           "title": "Opcje integracji",
-          "description": "Grzejniki Kospel mog\u0105 potrzebowa\u0107 czasu na zapis zmian. Je\u015bli interfejs wraca do poprzedniej warto\u015bci po prze\u0142\u0105czeniu tryb\u00f3w, zwi\u0119ksz to op\u00f3\u017anienie.",
+          "description": "Grzejniki Kospel mogą potrzebować czasu na zapis zmian. Jeśli interfejs wraca do poprzedniej wartości po przełączeniu trybów, zwiększ to opóźnienie.",
           "data": {
-            "refresh_delay_after_set": "Op\u00f3\u017anienie od\u015bwie\u017cenia po zmianie (sekundy)"
+            "refresh_delay_after_set": "Opóźnienie odświeżenia po zmianie (sekundy)"
           }
         }
       }
@@ -101,25 +101,25 @@
         "name": "Temperatura CWU"
       },
       "pressure": {
-        "name": "Ci\u015bnienie"
+        "name": "Ciśnienie"
       },
       "power": {
         "name": "Moc chwilowa"
       },
       "ch_heating": {
-        "name": "Status ogrzewania CO",
+        "name": "[DEPRECATED] Status ogrzewania CO",
         "state": {
           "running": "Praca",
-          "idle": "Bezczynno\u015b\u0107",
-          "disabled": "Wy\u0142\u0105czone"
+          "idle": "Bezczynność",
+          "disabled": "Wyłączone"
         }
       },
       "dhw_heating": {
-        "name": "Status ogrzewania CWU",
+        "name": "[DEPRECATED] Status ogrzewania CWU",
         "state": {
           "running": "Praca",
-          "idle": "Bezczynno\u015b\u0107",
-          "disabled": "Wy\u0142\u0105czone"
+          "idle": "Bezczynność",
+          "disabled": "Wyłączone"
         }
       },
       "valve_position": {
@@ -131,6 +131,15 @@
       },
       "max_power_limit": {
         "name": "Limit mocy kotła"
+      },
+      "heating_mode": {
+        "name": "Tryb ogrzewania",
+        "state": {
+          "off": "Wyłączony",
+          "idle": "Bezczynność",
+          "ch": "CO",
+          "dwh": "CWU"
+        }
       }
     },
     "number": {
@@ -144,12 +153,12 @@
         "name": "Komfort+"
       },
       "room_temperature_comfort_minus": {
-        "name": "Komfort\u2212"
+        "name": "Komfort−"
       }
     },
     "water_heater": {
       "dhw": {
-        "name": "Ciep\u0142a woda u\u017cytkowa"
+        "name": "Ciepła woda użytkowa"
       }
     },
     "climate": {
@@ -158,7 +167,7 @@
         "state_attributes": {
           "hvac_mode": {
             "state": {
-              "off": "Wy\u0142\u0105czony",
+              "off": "Wyłączony",
               "heat": "Grzanie",
               "auto": "Auto"
             }
@@ -177,7 +186,7 @@
     },
     "select": {
       "boiler_max_power": {
-        "name": "Maks. moc kot\u0142a",
+        "name": "Maks. moc kotła",
         "state": {
           "2": "2 kW",
           "4": "4 kW",

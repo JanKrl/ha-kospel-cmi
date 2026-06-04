@@ -66,6 +66,9 @@ async def async_setup_entry(
         )
     )
     entities.append(KospelValvePositionSensor(coordinator, entry))
+    
+    # Combined heating mode sensor
+    entities.append(KospelHeatingModeSensor(coordinator, entry))
 
     async_add_entities(entities)
 
@@ -219,7 +222,14 @@ class KospelMaxPowerLimitSensor(KospelSensorEntity):
 
 
 class KospelHeatingStatusSensor(KospelSensorEntity):
-    """Representation of a Kospel heating status sensor (CH or CWU circuit)."""
+    """Representation of a Kospel heating status sensor (CH or CWU circuit).
+    
+    .. deprecated:: 0.2.0
+        Use :class:`KospelHeatingModeSensor` instead (sensor.heating_mode).
+        This sensor will be removed in v1.0.0 (breaking change).
+    """
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -269,6 +279,64 @@ class KospelValvePositionSensor(KospelSensorEntity):
         if hasattr(position, "value"):
             return position.value
         return str(position)
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.async_write_ha_state()
+
+
+class KospelHeatingModeSensor(KospelSensorEntity):
+    """Combined heating mode sensor (CH, DHW, Idle, or Off).
+    
+    Since CH and DHW heating can never run simultaneously by design,
+    this sensor provides a single state indicating the current mode.
+    """
+
+    def __init__(
+        self,
+        coordinator: KospelDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the heating mode sensor."""
+        super().__init__(coordinator, entry, "heating_mode", "heating_mode")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the heating mode (off, idle, ch, or dwh).
+        
+        Logic:
+        - Both DISABLED → "off"
+        - At least one IDLE (none RUNNING) → "idle"
+        - CH RUNNING → "ch"
+        - DHW RUNNING → "dwh"
+        """
+        controller: EkcoM3 = self.coordinator.data
+        
+        ch_status = getattr(controller, "co_heating_status", None)
+        dwh_status = getattr(controller, "cwu_heating_status", None)
+        
+        if ch_status is None or dwh_status is None:
+            return None
+        
+        # Normalize status values to lowercase string
+        ch_str = ch_status.value if hasattr(ch_status, "value") else str(ch_status)
+        dwh_str = dwh_status.value if hasattr(dwh_status, "value") else str(dwh_status)
+        
+        ch_str = ch_str.lower()
+        dwh_str = dwh_str.lower()
+        
+        # Check for RUNNING states (only one can be running at a time by design)
+        if ch_str == "running":
+            return "ch"
+        if dwh_str == "running":
+            return "dwh"
+        
+        # If neither is running, check for idle
+        if ch_str == "idle" or dwh_str == "idle":
+            return "idle"
+        
+        # Both must be disabled
+        return "off"
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
