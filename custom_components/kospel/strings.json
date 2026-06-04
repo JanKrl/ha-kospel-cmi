@@ -107,7 +107,7 @@
         "name": "Instant power"
       },
       "ch_heating": {
-        "name": "CH heating status",
+        "name": "[DEPRECATED] CH heating status",
         "state": {
           "running": "Running",
           "idle": "Idle",
@@ -115,7 +115,7 @@
         }
       },
       "dhw_heating": {
-        "name": "DHW heating status",
+        "name": "[DEPRECATED] DHW heating status",
         "state": {
           "running": "Running",
           "idle": "Idle",

@@ -96,8 +96,9 @@ Entity IDs below are representative examples and can vary based on your device n
   - `sensor.instant_power`
   - `sensor.boiler_max_power_limit`
 - **Status Sensors**:
-  - `sensor.ch_heating_status` (`running`, `idle`, `disabled`)
-  - `sensor.dhw_heating_status` (`running`, `idle`, `disabled`)
+  - `sensor.heating_mode` (`off`, `idle`, `ch`, `dwh`) - **Recommended**: Combined heating mode for simplified monitoring
+  - ~~`sensor.ch_heating_status` (`running`, `idle`, `disabled`)~~ - **[DEPRECATED]** Use `sensor.heating_mode` instead
+  - ~~`sensor.dhw_heating_status` (`running`, `idle`, `disabled`)~~ - **[DEPRECATED]** Use `sensor.heating_mode` instead
   - `sensor.valve_position` (`CH`/`DHW`)
 
 ### Binary Sensors
@@ -126,6 +127,24 @@ Entity IDs below are representative examples and can vary based on your device n
 - **Auto mode schedules** can be read from the device state, but editing schedules from Home Assistant is not supported yet.
 - **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
 - After changing values, refresh can be slightly delayed by design (configurable integration option).
+
+## Deprecations
+
+### Heating Status Sensors (v0.2.0+)
+
+The individual `sensor.ch_heating_status` and `sensor.dhw_heating_status` are **deprecated** in favor of the new `sensor.heating_mode` sensor.
+
+**Why?** The new combined sensor provides a clearer view of the heater's operational mode since CH and DHW can never run simultaneously by design. It has four possible states:
+- `off` – Both circuits disabled
+- `idle` – At least one circuit idle (none running)
+- `ch` – Central Heating running
+- `dwh` – Domestic Hot Water running
+
+**Migration:**
+- For existing installations: deprecated sensors remain available but are hidden in the main UI (moved to Diagnostic category)
+- For new installations: only the new `sensor.heating_mode` is added
+
+**Removal:** These sensors will be removed in v1.0.0 (breaking change release)
 
 ## Troubleshooting
 

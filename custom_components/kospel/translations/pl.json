@@ -107,7 +107,7 @@
         "name": "Moc chwilowa"
       },
       "ch_heating": {
-        "name": "Status ogrzewania CO",
+        "name": "[DEPRECATED] Status ogrzewania CO",
         "state": {
           "running": "Praca",
           "idle": "Bezczynność",
@@ -115,7 +115,7 @@
         }
       },
       "dhw_heating": {
-        "name": "Status ogrzewania CWU",
+        "name": "[DEPRECATED] Status ogrzewania CWU",
         "state": {
           "running": "Praca",
           "idle": "Bezczynność",

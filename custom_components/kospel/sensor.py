@@ -222,7 +222,14 @@ class KospelMaxPowerLimitSensor(KospelSensorEntity):
 
 
 class KospelHeatingStatusSensor(KospelSensorEntity):
-    """Representation of a Kospel heating status sensor (CH or CWU circuit)."""
+    """Representation of a Kospel heating status sensor (CH or CWU circuit).
+    
+    .. deprecated:: 0.2.0
+        Use :class:`KospelHeatingModeSensor` instead (sensor.heating_mode).
+        This sensor will be removed in v1.0.0 (breaking change).
+    """
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
