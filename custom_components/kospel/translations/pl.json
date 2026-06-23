@@ -154,6 +154,12 @@
       },
       "room_temperature_comfort_minus": {
         "name": "Komfort−"
+      },
+      "dhw_temperature_economy": {
+        "name": "CWU Eko"
+      },
+      "dhw_temperature_comfort": {
+        "name": "CWU Komfort"
       }
     },
     "water_heater": {

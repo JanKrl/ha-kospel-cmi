@@ -42,6 +42,8 @@ This page is for users who want deeper control, better diagnostics, or developme
 
 - `number` entities expose room preset temperatures:
   - economy, comfort, comfort+, comfort-
+- `number` entities also expose DHW preset temperatures:
+  - economy, comfort
 - `select` entity exposes boiler max power step:
   - power steps are device-specific,
   - `2`, `4`, `6`, `8` kW steps are for **EKCO.M3**.

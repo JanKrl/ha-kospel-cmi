@@ -113,6 +113,9 @@ Entity IDs below are representative examples and can vary based on your device n
   - `number.comfort`
   - `number.comfort_plus`
   - `number.comfort_minus`
+- **DHW Preset Temperature Entities**:
+  - `number.dhw_eco`
+  - `number.dhw_comfort`
 
 ### Select (Configuration)
 

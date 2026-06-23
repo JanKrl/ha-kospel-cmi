@@ -1,4 +1,4 @@
-"""Number entities for Kospel integration (room preset temperatures)."""
+"""Number entities for Kospel integration (room and DHW preset temperatures)."""
 
 import asyncio
 import logging
@@ -22,14 +22,54 @@ _LOGGER = logging.getLogger(__name__)
 
 ROOM_PRESET_TEMP_MIN = 10.0
 ROOM_PRESET_TEMP_MAX = 25.0
-ROOM_PRESET_TEMP_STEP = 0.1
+DHW_PRESET_TEMP_MIN = 30.0
+DHW_PRESET_TEMP_MAX = 65.0
+PRESET_TEMP_STEP = 0.1
 
-# (translation_key / unique_id suffix / EkcoM3 property name, async setter name)
-_ROOM_PRESET_ENTITIES: list[tuple[str, str]] = [
-    ("room_temperature_economy", "set_room_temperature_economy"),
-    ("room_temperature_comfort", "set_room_temperature_comfort"),
-    ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus"),
-    ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus"),
+# (translation_key / controller property name / async setter name / min temp / max temp)
+_PRESET_ENTITIES: list[tuple[str, str, str, float, float]] = [
+    (
+        "room_temperature_economy",
+        "room_temperature_economy",
+        "set_room_temperature_economy",
+        ROOM_PRESET_TEMP_MIN,
+        ROOM_PRESET_TEMP_MAX,
+    ),
+    (
+        "room_temperature_comfort",
+        "room_temperature_comfort",
+        "set_room_temperature_comfort",
+        ROOM_PRESET_TEMP_MIN,
+        ROOM_PRESET_TEMP_MAX,
+    ),
+    (
+        "room_temperature_comfort_plus",
+        "room_temperature_comfort_plus",
+        "set_room_temperature_comfort_plus",
+        ROOM_PRESET_TEMP_MIN,
+        ROOM_PRESET_TEMP_MAX,
+    ),
+    (
+        "room_temperature_comfort_minus",
+        "room_temperature_comfort_minus",
+        "set_room_temperature_comfort_minus",
+        ROOM_PRESET_TEMP_MIN,
+        ROOM_PRESET_TEMP_MAX,
+    ),
+    (
+        "dhw_temperature_economy",
+        "cwu_temperature_economy",
+        "set_water_economy_temperature",
+        DHW_PRESET_TEMP_MIN,
+        DHW_PRESET_TEMP_MAX,
+    ),
+    (
+        "dhw_temperature_comfort",
+        "cwu_temperature_comfort",
+        "set_water_comfort_temperature",
+        DHW_PRESET_TEMP_MIN,
+        DHW_PRESET_TEMP_MAX,
+    ),
 ]
 
 
@@ -41,16 +81,24 @@ async def async_setup_entry(
     """Set up Kospel number entities."""
     coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[NumberEntity] = [
-        KospelRoomPresetNumberEntity(coordinator, entry, prop_key, setter_name)
-        for prop_key, setter_name in _ROOM_PRESET_ENTITIES
+        KospelPresetNumberEntity(
+            coordinator,
+            entry,
+            translation_key,
+            value_attr,
+            setter_name,
+            min_temp,
+            max_temp,
+        )
+        for translation_key, value_attr, setter_name, min_temp, max_temp in _PRESET_ENTITIES
     ]
     async_add_entities(entities)
 
 
-class KospelRoomPresetNumberEntity(
+class KospelPresetNumberEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], NumberEntity
 ):
-    """Room preset temperature (economy / comfort / ±) as a read/write number.
+    """Preset temperature (room / DHW) as a read/write number.
 
     Shown under device **Configuration** with other system-style setpoints
     (e.g. max boiler power select).
@@ -58,32 +106,41 @@ class KospelRoomPresetNumberEntity(
 
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_native_min_value = ROOM_PRESET_TEMP_MIN
-    _attr_native_max_value = ROOM_PRESET_TEMP_MAX
-    _attr_native_step = ROOM_PRESET_TEMP_STEP
     _attr_device_class = NumberDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_native_step = PRESET_TEMP_STEP
 
     def __init__(
         self,
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
+        translation_key: str,
         value_attr: str,
         setter_name: str,
+        min_temp: float,
+        max_temp: float,
+        step: float = PRESET_TEMP_STEP,
     ) -> None:
-        """Initialize the room preset number entity.
+        """Initialize the preset temperature number entity.
 
         Args:
             coordinator: Data update coordinator.
             entry: Config entry (device info and refresh delay options).
-            value_attr: EkcoM3 property name (same as translation_key / unique suffix).
-            setter_name: Name of the async setter on EkcoM3 (e.g. set_room_temperature_economy).
+            translation_key: Translation key used for human-friendly entity naming.
+            value_attr: EkcoM3 property name to read from the controller.
+            setter_name: Name of the async setter on EkcoM3.
+            min_temp: Minimum supported temperature for this preset.
+            max_temp: Maximum supported temperature for this preset.
+            step: Supported step size for this preset.
         """
         super().__init__(coordinator)
         device_id = get_device_identifier(entry)
         self._attr_unique_id = f"{device_id}_{value_attr}"
-        self._attr_translation_key = value_attr
+        self._attr_translation_key = translation_key
         self._attr_device_info = get_device_info(entry)
+        self._attr_native_min_value = min_temp
+        self._attr_native_max_value = max_temp
+        self._attr_native_step = step
         self._value_attr = value_attr
         self._setter_name = setter_name
 
