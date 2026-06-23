@@ -97,6 +97,9 @@
       "room_temperature": {
         "name": "Temperatura CO"
       },
+      "outside_temperature": {
+        "name": "Temperatura zewnętrzna"
+      },
       "water_temperature": {
         "name": "Temperatura CWU"
       },

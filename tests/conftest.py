@@ -63,6 +63,8 @@ def sample_registers() -> Dict[str, str]:
         "0b67": "c201",
         # Register 0b4a - Water current temperature (420 = 42.0°C)
         "0b4a": "a401",
+        # Register 0b4c - Outside temperature (150 = 15.0°C)
+        "0b4c": "9600",
         # Register 0b4b - Room temperature (210 = 21.0°C)
         "0b4b": "d200",
         # Register 0b46 - Power (0 kW)
