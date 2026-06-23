@@ -19,6 +19,16 @@ class TestWaterHeaterRegisters:
         assert controller.water_current_temperature == 42.0
 
     @pytest.mark.asyncio
+    async def test_outside_temperature_decoded(
+        self, heater_controller_with_registers: EkcoM3
+    ) -> None:
+        """outside_temperature is decoded from register 0b4c."""
+        controller = heater_controller_with_registers
+        assert hasattr(controller, "outside_temperature")
+        # sample_registers has 0b4c: "9600" = 150 = 15.0°C
+        assert controller.outside_temperature == 15.0
+
+    @pytest.mark.asyncio
     async def test_pressure_decoded_from_0b4e(
         self, heater_controller_with_registers: EkcoM3
     ) -> None:
