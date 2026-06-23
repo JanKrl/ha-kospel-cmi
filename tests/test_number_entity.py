@@ -171,7 +171,7 @@ class TestKospelPresetNumberEntity:
         assert entity.native_step == PRESET_TEMP_STEP == 0.1
 
     def test_dhw_temperature_bounds(self, mock_coordinator, mock_entry) -> None:
-        """DHW preset entities expose 30–65 °C range."""
+        """DHW preset entities expose 30–80 °C range."""
         entity = KospelPresetNumberEntity(
             mock_coordinator,
             mock_entry,
@@ -183,7 +183,7 @@ class TestKospelPresetNumberEntity:
         )
 
         assert entity.native_min_value == DHW_PRESET_TEMP_MIN == 30.0
-        assert entity.native_max_value == DHW_PRESET_TEMP_MAX == 65.0
+        assert entity.native_max_value == DHW_PRESET_TEMP_MAX == 80.0
         assert entity.native_step == PRESET_TEMP_STEP == 0.1
 
     def test_entity_category_is_config(self, mock_coordinator, mock_entry) -> None:

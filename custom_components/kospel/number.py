@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 ROOM_PRESET_TEMP_MIN = 10.0
 ROOM_PRESET_TEMP_MAX = 25.0
 DHW_PRESET_TEMP_MIN = 30.0
-DHW_PRESET_TEMP_MAX = 65.0
+DHW_PRESET_TEMP_MAX = 80.0
 PRESET_TEMP_STEP = 0.1
 
 # (translation_key / controller property name / async setter name / min temp / max temp)
