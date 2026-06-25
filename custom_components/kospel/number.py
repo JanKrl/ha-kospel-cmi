@@ -3,7 +3,7 @@
 import asyncio
 import logging
 
-from homeassistant.components.number import NumberDeviceClass, NumberEntity
+from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
@@ -109,6 +109,7 @@ class KospelPresetNumberEntity(
     _attr_device_class = NumberDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_native_step = PRESET_TEMP_STEP
+    _attr_mode = NumberMode.BOX
 
     def __init__(
         self,
