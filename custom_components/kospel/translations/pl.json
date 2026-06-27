@@ -103,6 +103,9 @@
       "water_temperature": {
         "name": "Temperatura CWU"
       },
+      "outside_temperature": {
+        "name": "Temperatura zewnętrzna"
+      },
       "pressure": {
         "name": "Ciśnienie"
       },
@@ -157,6 +160,15 @@
       },
       "room_temperature_comfort_minus": {
         "name": "Komfort−"
+      },
+      "dhw_temperature_economy": {
+        "name": "CWU Eko"
+      },
+      "dhw_temperature_comfort": {
+        "name": "CWU Komfort"
+      },
+      "outside_temperature_off": {
+        "name": "Limit temperatury zewnętrznej do wyłączenia"
       }
     },
     "water_heater": {

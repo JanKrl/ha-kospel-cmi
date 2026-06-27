@@ -83,10 +83,12 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
 )
 
 from custom_components.kospel.number import (  # noqa: E402
-    KospelRoomPresetNumberEntity,
+    KospelPresetNumberEntity,
+    DHW_PRESET_TEMP_MAX,
+    DHW_PRESET_TEMP_MIN,
+    PRESET_TEMP_STEP,
     ROOM_PRESET_TEMP_MAX,
     ROOM_PRESET_TEMP_MIN,
-    ROOM_PRESET_TEMP_STEP,
 )
 
 
@@ -110,7 +112,7 @@ def mock_coordinator(mock_entry):
     return coordinator
 
 
-class TestKospelRoomPresetNumberEntity:
+class TestKospelPresetNumberEntity:
     """Tests for native value, bounds, and async_set_native_value."""
 
     def test_native_value_reads_controller_property(
@@ -121,11 +123,14 @@ class TestKospelRoomPresetNumberEntity:
         mock_controller.room_temperature_economy = 20.5
         mock_coordinator.data = mock_controller
 
-        entity = KospelRoomPresetNumberEntity(
+        entity = KospelPresetNumberEntity(
             mock_coordinator,
             mock_entry,
             "room_temperature_economy",
+            "room_temperature_economy",
             "set_room_temperature_economy",
+            ROOM_PRESET_TEMP_MIN,
+            ROOM_PRESET_TEMP_MAX,
         )
 
         assert entity.native_value == 20.5
@@ -137,35 +142,60 @@ class TestKospelRoomPresetNumberEntity:
         mock_controller = object()
         mock_coordinator.data = mock_controller
 
-        entity = KospelRoomPresetNumberEntity(
+        entity = KospelPresetNumberEntity(
             mock_coordinator,
             mock_entry,
             "room_temperature_economy",
+            "room_temperature_economy",
             "set_room_temperature_economy",
+            ROOM_PRESET_TEMP_MIN,
+            ROOM_PRESET_TEMP_MAX,
         )
 
         assert entity.native_value is None
 
     def test_temperature_bounds_and_step(self, mock_coordinator, mock_entry) -> None:
         """Entity exposes 10–25 °C range and 0.1 step (matches module constants)."""
-        entity = KospelRoomPresetNumberEntity(
+        entity = KospelPresetNumberEntity(
             mock_coordinator,
             mock_entry,
             "room_temperature_comfort",
+            "room_temperature_comfort",
             "set_room_temperature_comfort",
+            ROOM_PRESET_TEMP_MIN,
+            ROOM_PRESET_TEMP_MAX,
         )
 
         assert entity.native_min_value == ROOM_PRESET_TEMP_MIN == 10.0
         assert entity.native_max_value == ROOM_PRESET_TEMP_MAX == 25.0
-        assert entity.native_step == ROOM_PRESET_TEMP_STEP == 0.1
+        assert entity.native_step == PRESET_TEMP_STEP == 0.1
+
+    def test_dhw_temperature_bounds(self, mock_coordinator, mock_entry) -> None:
+        """DHW preset entities expose 30–80 °C range."""
+        entity = KospelPresetNumberEntity(
+            mock_coordinator,
+            mock_entry,
+            "dhw_temperature_economy",
+            "cwu_temperature_economy",
+            "set_water_economy_temperature",
+            DHW_PRESET_TEMP_MIN,
+            DHW_PRESET_TEMP_MAX,
+        )
+
+        assert entity.native_min_value == DHW_PRESET_TEMP_MIN == 30.0
+        assert entity.native_max_value == DHW_PRESET_TEMP_MAX == 80.0
+        assert entity.native_step == PRESET_TEMP_STEP == 0.1
 
     def test_entity_category_is_config(self, mock_coordinator, mock_entry) -> None:
         """Room presets appear under device Configuration (with max boiler power)."""
-        entity = KospelRoomPresetNumberEntity(
+        entity = KospelPresetNumberEntity(
             mock_coordinator,
             mock_entry,
             "room_temperature_economy",
+            "room_temperature_economy",
             "set_room_temperature_economy",
+            ROOM_PRESET_TEMP_MIN,
+            ROOM_PRESET_TEMP_MAX,
         )
         assert entity._attr_entity_category == "config"
 
@@ -180,11 +210,14 @@ class TestKospelRoomPresetNumberEntity:
         mock_coordinator.data = mock_controller
         mock_coordinator.async_request_refresh = AsyncMock()
 
-        entity = KospelRoomPresetNumberEntity(
+        entity = KospelPresetNumberEntity(
             mock_coordinator,
             mock_entry,
             "room_temperature_economy",
+            "room_temperature_economy",
             "set_room_temperature_economy",
+            ROOM_PRESET_TEMP_MIN,
+            ROOM_PRESET_TEMP_MAX,
         )
 
         with patch(
@@ -197,12 +230,14 @@ class TestKospelRoomPresetNumberEntity:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ("translation_key", "setter_name"),
+        ("translation_key", "setter_name", "value_attr"),
         [
-            ("room_temperature_economy", "set_room_temperature_economy"),
-            ("room_temperature_comfort", "set_room_temperature_comfort"),
-            ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus"),
-            ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus"),
+            ("room_temperature_economy", "set_room_temperature_economy", "room_temperature_economy"),
+            ("room_temperature_comfort", "set_room_temperature_comfort", "room_temperature_comfort"),
+            ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus", "room_temperature_comfort_plus"),
+            ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus", "room_temperature_comfort_minus"),
+            ("dhw_temperature_economy", "set_water_economy_temperature", "cwu_temperature_economy"),
+            ("dhw_temperature_comfort", "set_water_comfort_temperature", "cwu_temperature_comfort"),
         ],
     )
     async def test_each_preset_uses_matching_setter(
@@ -211,21 +246,30 @@ class TestKospelRoomPresetNumberEntity:
         mock_entry,
         translation_key: str,
         setter_name: str,
+        value_attr: str,
     ) -> None:
         """Each preset entity calls its corresponding EkcoM3 setter."""
         mock_controller = MagicMock()
-        for _key, _setter in [
-            ("room_temperature_economy", "set_room_temperature_economy"),
-            ("room_temperature_comfort", "set_room_temperature_comfort"),
-            ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus"),
-            ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus"),
+        for _key, _setter, _value_attr in [
+            ("room_temperature_economy", "set_room_temperature_economy", "room_temperature_economy"),
+            ("room_temperature_comfort", "set_room_temperature_comfort", "room_temperature_comfort"),
+            ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus", "room_temperature_comfort_plus"),
+            ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus", "room_temperature_comfort_minus"),
+            ("dhw_temperature_economy", "set_water_economy_temperature", "cwu_temperature_economy"),
+            ("dhw_temperature_comfort", "set_water_comfort_temperature", "cwu_temperature_comfort"),
         ]:
             setattr(mock_controller, _setter, AsyncMock(return_value=True))
         mock_coordinator.data = mock_controller
         mock_coordinator.async_request_refresh = AsyncMock()
 
-        entity = KospelRoomPresetNumberEntity(
-            mock_coordinator, mock_entry, translation_key, setter_name
+        entity = KospelPresetNumberEntity(
+            mock_coordinator,
+            mock_entry,
+            translation_key,
+            value_attr,
+            setter_name,
+            ROOM_PRESET_TEMP_MIN if translation_key.startswith("room_") else DHW_PRESET_TEMP_MIN,
+            ROOM_PRESET_TEMP_MAX if translation_key.startswith("room_") else DHW_PRESET_TEMP_MAX,
         )
 
         with patch(
