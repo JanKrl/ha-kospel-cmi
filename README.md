@@ -10,53 +10,6 @@ Control and monitor compatible Kospel electric heaters from Home Assistant using
 > This is an unofficial, community-maintained integration and is not affiliated with or endorsed by Kospel.
 > Use it at your own responsibility.
 
-## Capabilities
-
-This integration allows you to:
-
-- **Control central heating from a single climate entity**:
-  - Set HVAC mode: `off`, `heat`, `auto`.
-  - Use presets in auto mode: `winter`, `summer`, `party`, `vacation`.
-  - Adjust target temperature in manual heat mode.
-- **Monitor key operating values**:
-  - CH and DHW temperatures.
-  - CH and DHW target temperatures.
-  - Instant power and pressure.
-  - CH/DHW heating status and valve position.
-- **Manage selected configuration values**:
-  - Room preset temperatures (`eco`, `comfort`, `comfort+`, `comfort-`).
-  - Maximum boiler power step (`2`, `4`, `6`, `8` kW).
-- **Track connectivity and DHW state**:
-  - Online/offline connectivity status.
-  - Dedicated domestic hot water entity with current and target temperature attributes.
-
-## Installation (HACS)
-
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=JanKrl&repository=ha-kospel-cmi&category=integration)
-
-Manual HACS steps:
-
-1. Open **HACS** -> **Integrations** -> **three-dot menu** -> **Custom repositories**.
-2. Add repository URL: `https://github.com/JanKrl/ha-kospel-cmi`.
-3. Category: **Integration**.
-4. Install **Kospel Electric Heaters** from HACS.
-5. Restart Home Assistant.
-6. Go to **Settings** -> **Devices & Services** -> **Add Integration** -> **Kospel Electric Heaters**.
-
-## First-Time Setup
-
-When adding the integration in Home Assistant:
-
-- Choose **Discover** to scan your network for compatible devices, or
-- choose **Manual** and enter heater IP + device ID.
-
-## Requirements
-
-- Home Assistant `2024.1+` with support for custom integrations (HACS recommended).
-- Your Home Assistant instance must be able to reach the heater in your local network.
-- The integration works on older Home Assistant versions too; `2026.3+` only improves branding (custom icon/logo in UI).
-- To show branded icons/logos on older Home Assistant versions, integration assets must be added to the [Home Assistant brands repository](https://github.com/home-assistant/brands).
-
 ## Supported Devices
 
 - **EKCO.M3**.
@@ -129,23 +82,32 @@ Entity IDs below are representative examples and can vary based on your device n
 - **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
 - After changing values, refresh can be slightly delayed by design (configurable integration option).
 
-## Deprecations
+## Installation (HACS)
 
-### Heating Status Sensors (v0.2.0+)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=JanKrl&repository=ha-kospel-cmi&category=integration)
 
-The individual `sensor.ch_heating_status` and `sensor.dhw_heating_status` are **deprecated** in favor of the new `sensor.heating_mode` sensor.
+Manual HACS steps:
 
-**Why?** The new combined sensor provides a clearer view of the heater's operational mode since CH and DHW can never run simultaneously by design. It has four possible states:
-- `off` – Both circuits disabled
-- `idle` – At least one circuit idle (none running)
-- `ch` – Central Heating running
-- `dwh` – Domestic Hot Water running
+1. Open **HACS** -> **Integrations** -> **three-dot menu** -> **Custom repositories**.
+2. Add repository URL: `https://github.com/JanKrl/ha-kospel-cmi`.
+3. Category: **Integration**.
+4. Install **Kospel Electric Heaters** from HACS.
+5. Restart Home Assistant.
+6. Go to **Settings** -> **Devices & Services** -> **Add Integration** -> **Kospel Electric Heaters**.
 
-**Migration:**
-- For existing installations: deprecated sensors remain available but are hidden in the main UI (moved to Diagnostic category)
-- For new installations: only the new `sensor.heating_mode` is added
+## First-Time Setup
 
-**Removal:** These sensors will be removed in v1.0.0 (breaking change release)
+When adding the integration in Home Assistant:
+
+- Choose **Discover** to scan your network for compatible devices, or
+- choose **Manual** and enter heater IP + device ID.
+
+## Requirements
+
+- Home Assistant `2024.1+` with support for custom integrations (HACS recommended).
+- Your Home Assistant instance must be able to reach the heater in your local network.
+- The integration works on older Home Assistant versions too; `2026.3+` only improves branding (custom icon/logo in UI).
+- To show branded icons/logos on older Home Assistant versions, integration assets must be added to the [Home Assistant brands repository](https://github.com/home-assistant/brands).
 
 ## Troubleshooting
 
