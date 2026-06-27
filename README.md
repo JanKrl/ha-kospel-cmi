@@ -79,7 +79,7 @@ Entity IDs below are representative examples and can vary based on your device n
 ### Water Heater
 
 - **Water Heater Entity**: `water_heater.domestic_hot_water`
-  - **Purpose**: DHW state visualization
+  - **Modes**: Controlled by climate preset modes
   - **Attributes**:
     - Current water temperature
     - Target DHW temperature
@@ -87,41 +87,39 @@ Entity IDs below are representative examples and can vary based on your device n
 ### Sensors
 
 - **Temperature and Setpoint Sensors**:
-  - `sensor.ch_temperature`
-  - `sensor.dhw_temperature`
-  - `sensor.ch_target_temperature`
-  - `sensor.dhw_target_temperature`
+  - Central heating (CH) current temperature
+  - Domestic water heating (DWH) current temperature
+  - CH target temperature
+  - DWH target temperature
+  - Outside temperature
 - **System Sensors**:
-  - `sensor.pressure`
-  - `sensor.instant_power`
-  - `sensor.boiler_max_power_limit`
-- **Status Sensors**:
-  - `sensor.heating_mode` (`off`, `idle`, `ch`, `dwh`) - **Recommended**: Combined heating mode for simplified monitoring
-  - ~~`sensor.ch_heating_status` (`running`, `idle`, `disabled`)~~ - **[DEPRECATED]** Use `sensor.heating_mode` instead
-  - ~~`sensor.dhw_heating_status` (`running`, `idle`, `disabled`)~~ - **[DEPRECATED]** Use `sensor.heating_mode` instead
-  - `sensor.valve_position` (`CH`/`DHW`)
+  - System pressure
+  - Current power consumption
+  - Valve position CO / DWH
+  - Heating mode CO / DWH
 
 ### Binary Sensors
 
 - **Connectivity Sensor**:
-  - `binary_sensor.connectivity`
+  - Connectivity
 
 ### Number (Configuration)
 
 - **Room Preset Temperature Entities**:
-  - `number.eco`
-  - `number.comfort`
-  - `number.comfort_plus`
-  - `number.comfort_minus`
+  - Economy
+  - Comfort
+  - Comfort+
+  - Comfort-
 - **DHW Preset Temperature Entities**:
-  - `number.dhw_eco`
-  - `number.dhw_comfort`
+  - Eco
+  - Comfort
+- **Limit Entities**:
+  - Outside temperature switch threshold
 
 ### Select (Configuration)
 
 - **Max Boiler Power Entity**:
-  - `select.max_boiler_power`
-  - Available options: `2 kW`, `4 kW`, `6 kW`, `8 kW`
+  - Limit device power to: `2 kW`, `4 kW`, `6 kW`, `8 kW`
 
 ## How To Use (Important Notes)
 
