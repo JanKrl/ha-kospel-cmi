@@ -126,6 +126,9 @@ See [Advanced usage and technical notes](docs/advanced-usage.md) for:
 - development and test commands,
 - architecture references.
 
+For contributors, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For AI coding agents (Claude, Antigravity, etc.), see [CLAUDE.md](CLAUDE.md).
+
 ## Feedback and Issues
 
 - Bug reports and feature requests: [GitHub Issues](https://github.com/JanKrl/ha-kospel-cmi/issues)

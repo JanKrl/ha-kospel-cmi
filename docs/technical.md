@@ -75,13 +75,21 @@ custom_components/kospel/
 
 ```
 tests/
-├── conftest.py              # Shared fixtures
-└── integration/             # Integration tests
-    ├── test_api_communication.py
-    └── test_mock_mode.py
+├── conftest.py                        # Shared fixtures (mock sessions, sample registers)
+├── test_climate_entity.py             # Climate entity (HVAC modes, presets, temperature)
+├── test_config_flow.py                # Config flow (all steps, validation, migration)
+├── test_sensor_entity.py              # Sensor entities (temperatures, pressure, power)
+├── test_number_entity.py              # Number entities (preset temperature read/write)
+├── test_select_entity.py              # Select entity (boiler max power)
+├── test_water_heater_entity.py        # Water heater entity
+├── test_kospel_library_contract.py    # Library import contract verification
+└── integration/                       # Integration tests
+    ├── test_api_communication.py      # HTTP backend communication
+    ├── test_mock_mode.py              # YAML backend mock mode
+    └── test_water_heater_registers.py # Water heater register-level tests
 ```
 
-Library layer tests live in the kospel-cmi-lib repository.
+Library layer tests live in the [kospel-cmi-lib](https://github.com/JanKrl/kospel-cmi-lib) repository.
 
 ### Running Tests
 
@@ -98,6 +106,6 @@ uv run python -m pytest tests/ -v
 
 ## References
 
-- **Architecture**: `docs/architecture.md`
-- **Status**: `docs/status.md`
-- **Installation**: `INSTALLATION.md`
+- **Architecture**: [docs/architecture.md](architecture.md)
+- **Advanced usage**: [docs/advanced-usage.md](advanced-usage.md)
+- **AI agent context**: [CLAUDE.md](../CLAUDE.md)
