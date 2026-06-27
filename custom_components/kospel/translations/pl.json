@@ -100,6 +100,9 @@
       "water_temperature": {
         "name": "Temperatura CWU"
       },
+      "outside_temperature": {
+        "name": "Temperatura zewnętrzna"
+      },
       "pressure": {
         "name": "Ciśnienie"
       },
@@ -160,6 +163,9 @@
       },
       "dhw_temperature_comfort": {
         "name": "CWU Komfort"
+      },
+      "outside_temperature_off": {
+        "name": "Limit temperatury zewnętrznej do wyłączenia"
       }
     },
     "water_heater": {

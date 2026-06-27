@@ -100,6 +100,9 @@
       "water_temperature": {
         "name": "DHW temperature"
       },
+      "outside_temperature": {
+        "name": "Outside temperature"
+      },
       "pressure": {
         "name": "Pressure"
       },
@@ -160,6 +163,9 @@
       },
       "dhw_temperature_comfort": {
         "name": "DHW Comfort"
+      },
+      "outside_temperature_off": {
+        "name": "Outside temperature switch off threshold"
       }
     },
     "water_heater": {

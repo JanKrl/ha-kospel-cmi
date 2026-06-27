@@ -24,6 +24,8 @@ ROOM_PRESET_TEMP_MIN = 10.0
 ROOM_PRESET_TEMP_MAX = 25.0
 DHW_PRESET_TEMP_MIN = 30.0
 DHW_PRESET_TEMP_MAX = 80.0
+OUTSIDE_THRESHOLD_MIN = 0
+OUTSIDE_THRESHOLD_MAX = 30
 PRESET_TEMP_STEP = 0.1
 
 # (translation_key / controller property name / async setter name / min temp / max temp)
@@ -70,6 +72,13 @@ _PRESET_ENTITIES: list[tuple[str, str, str, float, float]] = [
         DHW_PRESET_TEMP_MIN,
         DHW_PRESET_TEMP_MAX,
     ),
+    (
+        "outside_temperature_off",
+        "outside_temperature_off",
+        "set_outside_temperature_off",
+        OUTSIDE_THRESHOLD_MIN,
+        OUTSIDE_THRESHOLD_MAX,
+    )
 ]
 
 
