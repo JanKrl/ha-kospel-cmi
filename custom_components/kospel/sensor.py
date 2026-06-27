@@ -34,6 +34,7 @@ async def async_setup_entry(
         ("room_setpoint", "room_setpoint"),
         ("supply_setpoint", "supply_setpoint"),
         ("room_temperature", "room_temperature"),
+        ("outside_temperature", "outside_temperature"),
         ("water_temperature", "water_current_temperature"),
         ("outside_temperature", "outside_temperature"),
     ]

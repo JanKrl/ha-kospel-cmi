@@ -97,6 +97,9 @@
       "room_temperature": {
         "name": "CH temperature"
       },
+      "outside_temperature": {
+        "name": "Outside temperature"
+      },
       "water_temperature": {
         "name": "DHW temperature"
       },
