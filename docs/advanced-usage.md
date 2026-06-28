@@ -44,9 +44,17 @@ This page is for users who want deeper control, better diagnostics, or developme
   - economy, comfort, comfort+, comfort-
 - `number` entities also expose DHW preset temperatures:
   - economy, comfort
+- `number` entity exposes the outside temperature switch-off threshold:
+  - When outside temperature exceeds this threshold, the heater turns off.
 - `select` entity exposes boiler max power step:
   - power steps are device-specific,
   - `2`, `4`, `6`, `8` kW steps are for **EKCO.M3**.
+
+### Heating status sensors (deprecated)
+
+The individual CH and DHW heating status sensors (`sensor.ch_heating`, `sensor.dhw_heating`) are **deprecated** and will be removed in v1.0.0.
+
+Use the combined **Heating mode** sensor (`sensor.heating_mode`) instead, which reports a single state: `off`, `idle`, `ch`, or `dwh`. Since CH and DHW heating can never run simultaneously by design, this combined sensor is more useful.
 
 ## Tuning
 

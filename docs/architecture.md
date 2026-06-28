@@ -5,12 +5,15 @@ System architecture for the Kospel Heater Home Assistant integration.
 ```mermaid
 graph TB
     subgraph Integration["custom_components/kospel (this repo)"]
-        HA[Home Assistant Entities]
         ConfigFlow[config_flow.py]
         Coordinator[coordinator.py]
-        SensorEntity[sensor.py]
+        Const[const.py]
         ClimateEntity[climate.py]
         WaterHeaterEntity[water_heater.py]
+        SensorEntity[sensor.py]
+        BinarySensorEntity[binary_sensor.py]
+        NumberEntity[number.py]
+        SelectEntity[select.py]
     end
 
     subgraph Library["kospel-cmi-lib (external)"]
@@ -23,11 +26,14 @@ graph TB
         HeaterAPI[Kospel Heater HTTP API]
     end
 
-    HA --> Coordinator
+    ConfigFlow --> Coordinator
     Coordinator --> EkcoM3
-    ClimateEntity --> EkcoM3
-    SensorEntity --> EkcoM3
-    WaterHeaterEntity --> EkcoM3
+    ClimateEntity --> Coordinator
+    WaterHeaterEntity --> Coordinator
+    SensorEntity --> Coordinator
+    BinarySensorEntity --> Coordinator
+    NumberEntity --> Coordinator
+    SelectEntity --> Coordinator
 
     EkcoM3 --> Backend
     Backend --> Registers
