@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: "actions/checkout@v4"
       - name: Hassfest validation
-        uses: "homeassistant/actions/hassfest@master"
+        uses: "home-assistant/actions/hassfest@master"
 
   lint:
     name: Lint with Ruff
