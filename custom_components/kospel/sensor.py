@@ -279,8 +279,8 @@ class KospelValvePositionSensor(KospelSensorEntity):
         if position is None:
             return None
         if hasattr(position, "value"):
-            return position.value
-        return str(position)
+            return str(position.value).lower()
+        return str(position).lower()
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

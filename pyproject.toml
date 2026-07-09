@@ -69,3 +69,6 @@ precision = 2
 show_missing = true
 skip_covered = false
 fail_under = 0
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["E402"]

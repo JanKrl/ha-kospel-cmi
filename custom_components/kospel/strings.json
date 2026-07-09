@@ -18,11 +18,6 @@
         "description": "Choose automatic discovery by MAC candidates, full network scan, or manual entry.",
         "data": {
           "http_method": "Method"
-        },
-        "options": {
-          "option_auto_discovery": "Auto discovery (MAC candidates)",
-          "option_network_scan": "Network scan (all adapter subnets)",
-          "option_manual": "Enter manually"
         }
       },
       "discover": {
@@ -30,10 +25,6 @@
         "description": "Scanning for Kospel devices. This may take a minute.",
         "data": {
           "action": "Action"
-        },
-        "options": {
-          "option_retry": "Retry scan",
-          "option_manual": "Enter manually"
         }
       },
       "select_device": {
@@ -53,10 +44,7 @@
       }
     },
     "progress": {
-      "discover": {
-        "title": "Scanning network",
-        "description": "Searching for Kospel devices on your network. This may take a minute."
-      }
+      "discover": "Searching for Kospel devices on your network. This may take a minute."
     },
     "error": {
       "cannot_connect": "Failed to connect to heater",
@@ -68,15 +56,15 @@
     "abort": {
       "already_configured": "Integration is already configured",
       "not_kospel_device": "Discovered device does not match Kospel DHCP signature"
-    },
-    "options": {
-      "step": {
-        "init": {
-          "title": "Integration options",
-          "description": "Kospel devices may need time to persist changes. If the UI reverts to the previous value after switching modes, increase this delay.",
-          "data": {
-            "refresh_delay_after_set": "Delay before refresh after change (seconds)"
-          }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Integration options",
+        "description": "Kospel devices may need time to persist changes. If the UI reverts to the previous value after switching modes, increase this delay.",
+        "data": {
+          "refresh_delay_after_set": "Delay before refresh after change (seconds)"
         }
       }
     }
@@ -140,8 +128,8 @@
       "valve_position": {
         "name": "Valve Position",
         "state": {
-          "DHW": "DHW",
-          "CO": "CH"
+          "dhw": "DHW",
+          "co": "CH"
         }
       },
       "max_power_limit": {

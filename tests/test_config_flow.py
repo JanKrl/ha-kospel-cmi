@@ -78,7 +78,6 @@ from custom_components.kospel.const import (
     CONF_DEVICE_ID,
     CONF_REFRESH_DELAY_AFTER_SET,
     CONF_SERIAL_NUMBER,
-    DEFAULT_REFRESH_DELAY_AFTER_SET,
     REFRESH_DELAY_MAX,
     REFRESH_DELAY_MIN,
     make_unique_id,
