@@ -35,11 +35,6 @@ PLATFORMS: list[str] = [
 ]
 
 
-async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
-    """Set up the Kospel integration."""
-    return True
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Kospel from a config entry."""
     hass.data.setdefault(DOMAIN, {})
