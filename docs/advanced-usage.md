@@ -47,8 +47,7 @@ This page is for users who want deeper control, better diagnostics, or developme
 - `number` entity exposes the outside temperature switch-off threshold:
   - When outside temperature exceeds this threshold, the heater turns off.
 - `select` entity exposes boiler max power step:
-  - power steps are device-specific,
-  - `2`, `4`, `6`, `8` kW steps are for **EKCO.M3**.
+  - power steps are dynamically discovered based on the connected device hardware configuration.
 
 ### Heating status sensors (deprecated)
 
