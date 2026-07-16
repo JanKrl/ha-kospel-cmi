@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from kospel_cmi.registers.enums import BoilerMaxPowerIndex
+
 
 # Mock homeassistant before importing integration modules.
 class _HAModule:
@@ -91,16 +91,20 @@ class TestKospelBoilerMaxPowerSelectEntity:
     """Tests for options, current_option, and async_select_option."""
 
     def test_options_order_and_numeric_strings(self, mock_coordinator, mock_entry) -> None:
-        """Entity exposes four kW options in index order 0..3."""
+        """Entity exposes options derived dynamically from available settings."""
+        mock_controller = MagicMock()
+        mock_controller.available_boiler_max_power_settings = [4.0, 6.0, 8.0]
+        mock_coordinator.data = mock_controller
         entity = KospelBoilerMaxPowerSelectEntity(mock_coordinator, mock_entry)
-        assert entity.options == ["2", "4", "6", "8"]
+        assert entity.options == ["4", "6", "8"]
 
     def test_current_option_maps_enum(
         self, mock_coordinator, mock_entry
     ) -> None:
         """current_option returns kW string for controller.boiler_max_power_index."""
         mock_controller = MagicMock()
-        mock_controller.boiler_max_power_index = BoilerMaxPowerIndex.KW_6
+        mock_controller.boiler_max_power_index = 1
+        mock_controller.available_boiler_max_power_settings = [4.0, 6.0, 8.0]
         mock_coordinator.data = mock_controller
 
         entity = KospelBoilerMaxPowerSelectEntity(mock_coordinator, mock_entry)
@@ -123,6 +127,7 @@ class TestKospelBoilerMaxPowerSelectEntity:
     ) -> None:
         """set_boiler_max_power_index is awaited; coordinator refresh runs."""
         mock_controller = MagicMock()
+        mock_controller.available_boiler_max_power_settings = [4.0, 6.0, 8.0]
         mock_controller.set_boiler_max_power_index = AsyncMock(return_value=True)
         mock_coordinator.data = mock_controller
         mock_coordinator.async_request_refresh = AsyncMock()
@@ -132,11 +137,11 @@ class TestKospelBoilerMaxPowerSelectEntity:
         with patch(
             "custom_components.kospel.select.asyncio.sleep", new_callable=AsyncMock
         ):
-            await entity.async_select_option("4")
+            await entity.async_select_option("6")
 
         mock_controller.set_boiler_max_power_index.assert_awaited_once()
         call_arg = mock_controller.set_boiler_max_power_index.await_args[0][0]
-        assert call_arg == BoilerMaxPowerIndex.KW_4
+        assert call_arg == 1
         mock_coordinator.async_request_refresh.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -145,6 +150,7 @@ class TestKospelBoilerMaxPowerSelectEntity:
     ) -> None:
         """Invalid option string raises ValueError."""
         mock_controller = MagicMock()
+        mock_controller.available_boiler_max_power_settings = [4.0, 6.0, 8.0]
         mock_coordinator.data = mock_controller
 
         entity = KospelBoilerMaxPowerSelectEntity(mock_coordinator, mock_entry)

@@ -10,7 +10,7 @@
   "issue_tracker": "https://github.com/JanKrl/ha-kospel-cmi/issues",
   "requirements": [
     "aiohttp>=3.13.3",
-    "kospel-cmi-lib>=1.0.2,<2.0.0"
+    "kospel-cmi-lib>=1.1.0,<2.0.0"
   ],
   "version": "0.1.0"
 }

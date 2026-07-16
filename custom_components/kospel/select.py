@@ -13,32 +13,11 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from kospel_cmi import KospelError
 from kospel_cmi.controller.device import EkcoM3
-from kospel_cmi.registers.enums import BoilerMaxPowerIndex
 
 from .const import DOMAIN, get_device_info, get_device_identifier, get_refresh_delay_after_set
 from .coordinator import KospelDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-# Stable order 0..3 for HA options (do not rely on Enum iteration order).
-_BOILER_MAX_POWER_ORDER: tuple[BoilerMaxPowerIndex, ...] = (
-    BoilerMaxPowerIndex.KW_2,
-    BoilerMaxPowerIndex.KW_4,
-    BoilerMaxPowerIndex.KW_6,
-    BoilerMaxPowerIndex.KW_8,
-)
-
-_OPTION_FOR_INDEX: dict[BoilerMaxPowerIndex, str] = {
-    BoilerMaxPowerIndex.KW_2: "2",
-    BoilerMaxPowerIndex.KW_4: "4",
-    BoilerMaxPowerIndex.KW_6: "6",
-    BoilerMaxPowerIndex.KW_8: "8",
-}
-
-_INDEX_FOR_OPTION: dict[str, BoilerMaxPowerIndex] = {
-    v: k for k, v in _OPTION_FOR_INDEX.items()
-}
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -58,7 +37,6 @@ class KospelBoilerMaxPowerSelectEntity(
     _attr_has_entity_name = True
     _attr_translation_key = "boiler_max_power"
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_options = [_OPTION_FOR_INDEX[idx] for idx in _BOILER_MAX_POWER_ORDER]
 
     def __init__(
         self,
@@ -77,13 +55,22 @@ class KospelBoilerMaxPowerSelectEntity(
         self._attr_device_info = get_device_info(entry)
 
     @property
+    def options(self) -> list[str]:
+        """Return a set of selectable options dynamically from the heater."""
+        controller: EkcoM3 = self.coordinator.data
+        return [str(int(kw)) for kw in controller.available_boiler_max_power_settings]
+
+    @property
     def current_option(self) -> str | None:
         """Return the selected kW step as a string (e.g. '4'), or None if unknown."""
         controller: EkcoM3 = self.coordinator.data
         index = controller.boiler_max_power_index
         if index is None:
             return None
-        return _OPTION_FOR_INDEX.get(index)
+        available = controller.available_boiler_max_power_settings
+        if index < len(available):
+            return str(int(available[index]))
+        return None
 
     @property
     def available(self) -> bool:
@@ -92,11 +79,14 @@ class KospelBoilerMaxPowerSelectEntity(
 
     async def async_select_option(self, option: str) -> None:
         """Write the selected power step to the heater and refresh coordinator data."""
-        chosen = _INDEX_FOR_OPTION.get(option)
-        if chosen is None:
+        controller: EkcoM3 = self.coordinator.data
+        available_strs = [str(int(kw)) for kw in controller.available_boiler_max_power_settings]
+        
+        try:
+            chosen = available_strs.index(option)
+        except ValueError:
             raise ValueError(f"Invalid option: {option}")
 
-        controller: EkcoM3 = self.coordinator.data
         try:
             await controller.set_boiler_max_power_index(chosen)
         except KospelError as err:
