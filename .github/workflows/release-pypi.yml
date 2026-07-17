@@ -1,0 +1,57 @@
+# Build and publish to PyPI when a new tag is pushed.
+# Tag format: v* (e.g. v0.1.0, v1.2.0). Package version is taken from the tag (without the "v").
+#
+# Setup (choose one):
+# 1. Trusted Publishing (recommended): In PyPI project settings, add this repo as a trusted publisher
+#    (pypa/gh-action-pypi-publish). No secrets required.
+# 2. API token: Add repository secret PYPI_API_TOKEN with a PyPI API token, and pass it to the action.
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for PyPI Trusted Publishing (OIDC)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set version from tag
+        id: version
+        run: |
+          # Strip leading 'v' if present (v0.1.0 -> 0.1.0)
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Package version: $VERSION"
+
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i 's/^version = .*/version = "'"${{ steps.version.outputs.version }}"'"/' pyproject.toml
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          python-version: "3.12"
+
+      - name: Install dependencies and run tests
+        run: |
+          uv sync --all-groups
+          uv run pytest
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Omit 'token' to use Trusted Publishing (configure in PyPI). Otherwise set secret PYPI_API_TOKEN.
+          # token: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true  # Do not fail if this version is already published
