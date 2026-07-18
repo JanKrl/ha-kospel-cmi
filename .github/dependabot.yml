@@ -11,7 +11,3 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    # Ignore major version bumps to prevent breaking changes
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
