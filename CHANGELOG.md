@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.1...v1.3.2) (2026-07-18)
+
+
+### Bug Fixes
+
+* resolve enum error by publishing library and forcing upgrade ([#87](https://github.com/JanKrl/ha-kospel-cmi/issues/87)) ([8c79abf](https://github.com/JanKrl/ha-kospel-cmi/commit/8c79abf46962dccbfbc79252d9d615acd95a8cde))
+
 ## [1.3.1](https://github.com/JanKrl/ha-kospel-cmi/compare/ha-kospel-cmi-v1.3.0...ha-kospel-cmi-v1.3.1) (2026-07-18)
 
 
