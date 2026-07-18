@@ -26,6 +26,12 @@ classifiers = [
 keywords = ["kospel", "heater", "cmi", "home-assistant", "hacs", "iot", "async"]
 urls = { Repository = "https://github.com/JanKrl/ha-kospel-cmi" }
 
+[tool.uv.workspace]
+members = ["lib"]
+
+[tool.uv.sources]
+kospel-cmi-lib = { workspace = true }
+
 
 [dependency-groups]
 dev = [

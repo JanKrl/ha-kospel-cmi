@@ -63,3 +63,24 @@ jobs:
         run: uv sync --all-groups
       - name: Run pytest
         run: uv run python -m pytest tests/ -v
+
+  test-lib:
+    name: Run Library Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv sync --all-groups
+      - name: Run library pytest
+        run: uv run python -m pytest tests/ -v
+        working-directory: lib
+

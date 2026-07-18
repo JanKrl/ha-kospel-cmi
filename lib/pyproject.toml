@@ -1,10 +1,10 @@
 [build-system]
-requires = ["uv_build>=0.9.28,<0.10.0"]
+requires = ["uv_build>=0.9.28"]
 build-backend = "uv_build"
 
 [project]
 name = "kospel-cmi-lib"
-version = "0.1.0a2"
+version = "1.1.0"
 description = "Python client for Kospel C.MI electric heater HTTP API"
 readme = "README.md"
 license = "Apache-2.0"
@@ -30,7 +30,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 keywords = ["kospel", "heater", "cmi", "home-assistant", "iot", "async"]
-urls = { Repository = "https://github.com/JanKrl/kospel-cmi-lib" }
+urls = { Repository = "https://github.com/JanKrl/ha-kospel-cmi", Source = "https://github.com/JanKrl/ha-kospel-cmi/tree/master/lib" }
 
 [project.scripts]
 kospel-discover = "kospel_cmi.tools.discover:main"
