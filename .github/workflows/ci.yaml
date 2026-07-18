@@ -12,7 +12,7 @@ jobs:
     name: HACS Validation
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v7"
       - name: HACS validation
         uses: "hacs/action@main"
         with:
@@ -22,7 +22,7 @@ jobs:
     name: Hassfest Validation
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v7"
       - name: Hassfest validation
         uses: "home-assistant/actions/hassfest@master"
 
@@ -30,7 +30,7 @@ jobs:
     name: Lint with Ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
@@ -49,7 +49,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
@@ -68,7 +68,7 @@ jobs:
     name: Run Library Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
