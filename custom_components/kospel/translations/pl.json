@@ -131,8 +131,8 @@
       "valve_position": {
         "name": "Położenie zaworu",
         "state": {
-          "DHW": "CWU",
-          "CO": "CO"
+          "dhw": "CWU",
+          "ch": "CO"
         }
       },
       "max_power_limit": {
@@ -144,7 +144,7 @@
           "off": "Wyłączony",
           "idle": "Bezczynność",
           "ch": "CO",
-          "dwh": "CWU"
+          "dhw": "CWU"
         }
       }
     },

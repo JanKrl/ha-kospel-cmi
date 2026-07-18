@@ -18,17 +18,17 @@ class HeaterMode(Enum):
 
 
 class WaterHeaterEnabled(Enum):
-    """Water heater enabled."""
+    """Water heater enabled/disabled state."""
 
-    ENABLED = "Water heater enabled"  # Water heater is enabled
-    DISABLED = "Water heater disabled"  # Water heater is disabled
+    ENABLED = "enabled"
+    DISABLED = "disabled"
 
 
 class ValvePosition(Enum):
     """Valve position."""
 
-    DHW = "DHW"  # Domestic Hot Water
-    CO = "CO"  # Central Heating
+    DHW = "dhw"  # Domestic Hot Water
+    CH = "ch"  # Central Heating
 
 
 class HeatingStatus(Enum):

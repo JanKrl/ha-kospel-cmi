@@ -279,8 +279,8 @@ class KospelValvePositionSensor(KospelSensorEntity):
         if position is None:
             return None
         if hasattr(position, "value"):
-            return str(position.value).lower()
-        return str(position).lower()
+            return position.value
+        return str(position)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -304,13 +304,13 @@ class KospelHeatingModeSensor(KospelSensorEntity):
 
     @property
     def native_value(self) -> str | None:
-        """Return the heating mode (off, idle, ch, or dwh).
+        """Return the heating mode (off, idle, ch, or dhw).
         
         Logic:
         - Both DISABLED → "off"
         - At least one IDLE (none RUNNING) → "idle"
         - CH RUNNING → "ch"
-        - DHW RUNNING → "dwh"
+        - DHW RUNNING → "dhw"
         """
         controller: EkcoM3 = self.coordinator.data
         
@@ -331,7 +331,7 @@ class KospelHeatingModeSensor(KospelSensorEntity):
         if ch_str == "running":
             return "ch"
         if dwh_str == "running":
-            return "dwh"
+            return "dhw"
         
         # If neither is running, check for idle
         if ch_str == "idle" or dwh_str == "idle":

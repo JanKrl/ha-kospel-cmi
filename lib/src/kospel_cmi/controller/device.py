@@ -49,7 +49,7 @@ _decode_co_heating_active = decode_map(
 _decode_cwu_heating_active = decode_map(
     HeatingCircuitActive.ACTIVE, HeatingCircuitActive.INACTIVE
 )
-_decode_valve_position = decode_map(ValvePosition.CO, ValvePosition.DHW)
+_decode_valve_position = decode_map(ValvePosition.CH, ValvePosition.DHW)
 
 _encode_water_heater_enabled = encode_map(
     WaterHeaterEnabled.ENABLED, WaterHeaterEnabled.DISABLED
