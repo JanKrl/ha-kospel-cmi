@@ -6,8 +6,14 @@ updates:
     schedule:
       interval: "weekly"
 
-  # Maintain Python dependencies for the integration and library
+  # Maintain Python dependencies for the root Home Assistant integration
   - package-ecosystem: "pip"
     directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Maintain Python dependencies for the kospel-cmi-lib package
+  - package-ecosystem: "pip"
+    directory: "/lib"
     schedule:
       interval: "weekly"
