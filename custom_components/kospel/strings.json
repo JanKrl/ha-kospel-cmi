@@ -122,14 +122,14 @@
           "off": "Off",
           "idle": "Idle",
           "ch": "CH",
-          "dwh": "DWH"
+          "dhw": "DHW"
         }
       },
       "valve_position": {
         "name": "Valve Position",
         "state": {
           "dhw": "DHW",
-          "co": "CH"
+          "ch": "CH"
         }
       },
       "max_power_limit": {

@@ -18,6 +18,7 @@ from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.controller.device import EkcoM3
+from kospel_cmi.registers.enums import HeaterMode, HeatingStatus, ValvePosition
 
 
 async def async_setup_entry(
@@ -232,6 +233,8 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
     """
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [e.value for e in HeatingStatus]
 
     def __init__(
         self,
@@ -263,6 +266,9 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
 class KospelValvePositionSensor(KospelSensorEntity):
     """Representation of a Kospel valve position sensor."""
 
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [e.value for e in ValvePosition]
+
     def __init__(
         self,
         coordinator: KospelDataUpdateCoordinator,
@@ -279,8 +285,8 @@ class KospelValvePositionSensor(KospelSensorEntity):
         if position is None:
             return None
         if hasattr(position, "value"):
-            return str(position.value).lower()
-        return str(position).lower()
+            return position.value
+        return str(position)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -294,6 +300,14 @@ class KospelHeatingModeSensor(KospelSensorEntity):
     this sensor provides a single state indicating the current mode.
     """
 
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [
+        HeaterMode.OFF.value,
+        HeatingStatus.IDLE.value,
+        ValvePosition.CH.value,
+        ValvePosition.DHW.value,
+    ]
+
     def __init__(
         self,
         coordinator: KospelDataUpdateCoordinator,
@@ -304,13 +318,13 @@ class KospelHeatingModeSensor(KospelSensorEntity):
 
     @property
     def native_value(self) -> str | None:
-        """Return the heating mode (off, idle, ch, or dwh).
+        """Return the heating mode (off, idle, ch, or dhw).
         
         Logic:
         - Both DISABLED → "off"
         - At least one IDLE (none RUNNING) → "idle"
         - CH RUNNING → "ch"
-        - DHW RUNNING → "dwh"
+        - DHW RUNNING → "dhw"
         """
         controller: EkcoM3 = self.coordinator.data
         
@@ -331,7 +345,7 @@ class KospelHeatingModeSensor(KospelSensorEntity):
         if ch_str == "running":
             return "ch"
         if dwh_str == "running":
-            return "dwh"
+            return "dhw"
         
         # If neither is running, check for idle
         if ch_str == "idle" or dwh_str == "idle":

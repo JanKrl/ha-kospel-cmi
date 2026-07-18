@@ -230,14 +230,14 @@ class TestKospelHeatingModeSensorNativeValue:
     def test_heating_mode_dwh_running(
         self, mock_coordinator, mock_entry
     ) -> None:
-        """native_value is 'dwh' when DHW is running."""
+        """native_value is 'dhw' when DHW is running."""
         mock_controller = MagicMock()
         mock_controller.co_heating_status = "idle"
         mock_controller.cwu_heating_status = "running"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
-        assert entity.native_value == "dwh"
+        assert entity.native_value == "dhw"
 
     def test_heating_mode_both_idle(
         self, mock_coordinator, mock_entry
