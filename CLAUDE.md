@@ -280,6 +280,11 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
 7. **Power values**: The library reports kW but HA expects W. Always multiply by 1000 when creating power sensors.
 8. **Config flow VERSION is 2** — any structural changes to config entry data require a new migration step.
 
+## AI Agent Behavioral Guidelines
+
+1. **Commit and Push Approval**: NEVER push commits to an upstream remote branch (e.g. `origin`) without explicit prior approval from the user.
+2. **Force Pushing**: NEVER use force pushes (`--force` or `-f`) without explicit prior approval from the user. When asking for approval, you MUST provide a clear and detailed explanation of exactly why a force push is necessary (e.g., rewriting history, fixing a broken rebase) and what it will overwrite.
+
 ## References
 
 - [README.md](README.md) — User-facing documentation
