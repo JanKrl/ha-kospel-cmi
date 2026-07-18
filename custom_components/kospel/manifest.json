@@ -17,5 +17,5 @@
     "aiohttp~=3.13.3",
     "kospel-cmi-lib~=1.1.0"
   ],
-  "version": "1.3.0"
+  "version": "1.4.0"
 }
