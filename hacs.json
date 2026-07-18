@@ -3,5 +3,5 @@
   "content_in_root": false,
   "homeassistant": "2024.1.0",
   "persistent_directory": "data",
-  "release_tag_pattern": "^v\\d+\\.\\d+\\.\\d+$"
+
 }
