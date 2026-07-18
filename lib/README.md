@@ -1,5 +1,6 @@
 # kospel-cmi-lib
 
+
 Python client for the Kospel C.MI electric heater HTTP API.
 
 This library provides a Python client for controlling Kospel C.MI electric heaters via their HTTP API. It is designed for integration with Home Assistant and other automation systems, and supports device discovery, register-based control, and offline development with a YAML simulator.
