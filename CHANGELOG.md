@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/JanKrl/ha-kospel-cmi/compare/ha-kospel-cmi-v1.3.0...ha-kospel-cmi-v1.3.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* **ha:** remove aiohttp strict constraint to fix HA core conflict ([48565c7](https://github.com/JanKrl/ha-kospel-cmi/commit/48565c70501f4858fb96be5028b0376da41f998f))
+* **ha:** remove strict aiohttp requirement ([#80](https://github.com/JanKrl/ha-kospel-cmi/issues/80)) ([223f763](https://github.com/JanKrl/ha-kospel-cmi/commit/223f7637e1237ef7c2967672f1e22efe16580423))
+
 ## [1.3.0](https://github.com/JanKrl/ha-kospel-cmi/compare/ha-kospel-cmi-v1.2.0...ha-kospel-cmi-v1.3.0) (2026-07-18)
 
 
