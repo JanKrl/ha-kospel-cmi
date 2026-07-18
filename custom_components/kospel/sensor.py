@@ -18,6 +18,7 @@ from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.controller.device import EkcoM3
+from kospel_cmi.registers.enums import HeaterMode, HeatingStatus, ValvePosition
 
 
 async def async_setup_entry(
@@ -233,7 +234,7 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["running", "idle", "disabled"]
+    _attr_options = [e.value for e in HeatingStatus]
 
     def __init__(
         self,
@@ -266,7 +267,7 @@ class KospelValvePositionSensor(KospelSensorEntity):
     """Representation of a Kospel valve position sensor."""
 
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["dhw", "ch"]
+    _attr_options = [e.value for e in ValvePosition]
 
     def __init__(
         self,
@@ -300,7 +301,12 @@ class KospelHeatingModeSensor(KospelSensorEntity):
     """
 
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["off", "idle", "ch", "dhw"]
+    _attr_options = [
+        HeaterMode.OFF.value,
+        HeatingStatus.IDLE.value,
+        ValvePosition.CH.value,
+        ValvePosition.DHW.value,
+    ]
 
     def __init__(
         self,
