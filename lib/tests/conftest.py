@@ -1,7 +1,7 @@
 """Shared pytest fixtures for kospel-cmi-lib tests."""
 
-import pytest
 import aiohttp
+import pytest
 
 
 @pytest.fixture

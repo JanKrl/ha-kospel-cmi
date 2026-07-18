@@ -1,6 +1,5 @@
 """Unit tests for kospel-discover CLI."""
 
-import pytest
 
 from kospel_cmi.kospel.discovery import DeviceDetail, KospelDeviceInfo
 from kospel_cmi.tools.discover import _format_devices

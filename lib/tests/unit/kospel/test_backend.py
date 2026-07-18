@@ -6,7 +6,11 @@ import aiohttp
 import pytest
 
 from kospel_cmi.exceptions import RegisterMissingError
-from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend, write_flag_bit
+from kospel_cmi.kospel.backend import (
+    HttpRegisterBackend,
+    YamlRegisterBackend,
+    write_flag_bit,
+)
 
 
 class TestHttpRegisterBackendAclose:

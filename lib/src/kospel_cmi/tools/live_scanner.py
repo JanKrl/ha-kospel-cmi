@@ -16,12 +16,12 @@ import aiofiles
 import yaml
 
 from ..kospel.backend import RegisterBackend
+from ..registers.utils import int_to_reg_address, reg_address_to_int
 from .cli_common import (
     add_backend_arguments,
     add_scan_arguments,
     backend_context,
 )
-from ..registers.utils import int_to_reg_address, reg_address_to_int
 from .register_scanner import (
     RegisterInterpretation,
     RegisterScanResult,

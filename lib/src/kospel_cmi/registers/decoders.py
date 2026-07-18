@@ -4,10 +4,10 @@ This module contains tools to decode human-readable values from heater registers
 A register value can represent a single value (like temperature of pressure) or be a bitmask of boolean values.
 """
 
-from typing import Optional, Protocol, TypeVar, Callable
-from .enums import HeaterMode
-from .utils import reg_to_int, get_bit
+from typing import Callable, Optional, Protocol, TypeVar
 
+from .enums import HeaterMode
+from .utils import get_bit, reg_to_int
 
 T = TypeVar("T")
 

@@ -1,9 +1,9 @@
 """Kospel HTTP API and discovery."""
 
 from .discovery import (
+    MODEL_NAMES,
     DeviceDetail,
     KospelDeviceInfo,
-    MODEL_NAMES,
     discover_devices,
     probe_device,
 )

@@ -37,7 +37,6 @@ from ..registers.enums import (
 )
 from ..registers.utils import int_to_reg_address
 
-
 logger = logging.getLogger(__name__)
 
 # Decoders for bit-flag settings (register + bit_index)
@@ -305,10 +304,10 @@ class EkcoM3:
             count = decode_raw_int(self._get_register("0b35"))
         except RegisterMissingError:
             return []
-        
+
         if not count:
             return []
-            
+
         options = []
         for i in range(count):
             reg_addr = int_to_reg_address("0b", 0x36 + i)
@@ -318,7 +317,7 @@ class EkcoM3:
                     options.append(val)
             except RegisterMissingError:
                 continue
-                
+
         return options
 
     @property
@@ -455,7 +454,7 @@ class EkcoM3:
     ) -> None:
         """Set max boiler power step index (0b62)."""
         idx = int(value)
-        
+
         available = self.available_boiler_max_power_settings
         if available and not (0 <= idx < len(available)):
             raise ValueError(

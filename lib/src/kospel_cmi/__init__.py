@@ -10,9 +10,9 @@ from .exceptions import (
     RegisterValueInvalidError,
 )
 from .kospel.discovery import (
+    MODEL_NAMES,
     DeviceDetail,
     KospelDeviceInfo,
-    MODEL_NAMES,
     discover_devices,
     probe_device,
 )

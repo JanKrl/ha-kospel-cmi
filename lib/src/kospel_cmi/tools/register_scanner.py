@@ -17,17 +17,17 @@ import aiofiles
 import yaml
 
 from ..kospel.backend import RegisterBackend
-from .cli_common import (
-    add_backend_arguments,
-    add_scan_arguments,
-    backend_context,
-)
 from ..registers.decoders import decode_scaled_x10, decode_scaled_x100
 from ..registers.utils import (
     get_bit,
     int_to_reg_address,
     reg_address_to_int,
     reg_to_int,
+)
+from .cli_common import (
+    add_backend_arguments,
+    add_scan_arguments,
+    backend_context,
 )
 
 logger = logging.getLogger(__name__)

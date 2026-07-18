@@ -47,6 +47,12 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+ignore = ["N806"]  # UPPER_CASE bit-constants inside functions are an intentional style choice
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]
+"src/**" = ["E501"]
+"read_cwu_regs.py" = ["E501"]
 
 [tool.ruff.format]
 quote-style = "double"

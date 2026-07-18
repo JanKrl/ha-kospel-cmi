@@ -5,9 +5,10 @@ Encoders convert Python values (enums, bools, floats) to hex strings that can be
 """
 
 import logging
-from typing import Optional, Protocol, Any, Callable
-from .utils import int_to_reg, reg_to_int, set_bit
+from typing import Any, Callable, Optional, Protocol
+
 from .enums import HeaterMode
+from .utils import int_to_reg, reg_to_int, set_bit
 
 logger = logging.getLogger(__name__)
 

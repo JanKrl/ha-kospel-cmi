@@ -5,9 +5,8 @@ import pytest
 from aioresponses import aioresponses
 
 from kospel_cmi.kospel.discovery import (
-    DeviceDetail,
-    KospelDeviceInfo,
     MODEL_NAMES,
+    KospelDeviceInfo,
     discover_devices,
     probe_device,
 )

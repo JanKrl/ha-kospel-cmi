@@ -1,7 +1,10 @@
 import asyncio
+
 import aiohttp
+
 from kospel_cmi.kospel.api import read_registers
 from kospel_cmi.registers.utils import reg_to_int
+
 
 async def main():
     url = 'http://192.168.101.49/api/dev/65'

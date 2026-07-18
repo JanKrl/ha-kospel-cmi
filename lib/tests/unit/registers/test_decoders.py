@@ -3,8 +3,8 @@
 import pytest
 
 from kospel_cmi.registers.decoders import (
-    decode_heater_mode,
     decode_bit_boolean,
+    decode_heater_mode,
     decode_map,
     decode_raw_int,
     decode_scaled_x10,
