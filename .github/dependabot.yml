@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Maintain GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Maintain Python dependencies for the root Home Assistant integration
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Maintain Python dependencies for the kospel-cmi-lib package
+  - package-ecosystem: "pip"
+    directory: "/lib"
+    schedule:
+      interval: "weekly"
