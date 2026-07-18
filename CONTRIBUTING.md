@@ -45,6 +45,26 @@ uv run ruff check .
 
 ---
 
+## Testing Unreleased Library Changes in Home Assistant
+
+If you make changes to `lib/` (the library) and want to test them in a real Home Assistant instance **before** they are published to PyPI, do not merge to `master` yet. Instead, update your Home Assistant instance to pull the library directly from your development branch.
+
+1. Open `custom_components/kospel/manifest.json` on your Home Assistant instance.
+2. Locate the `requirements` array.
+3. Change the `kospel-cmi-lib` entry to point to your branch using pip's git support. For example:
+
+```json
+  "requirements": [
+    "aiohttp>=3.13.3",
+    "kospel-cmi-lib @ git+https://github.com/JanKrl/ha-kospel-cmi.git@your-branch-name#subdirectory=lib"
+  ],
+```
+
+4. Restart Home Assistant. It will download the exact code from your branch.
+5. **Important:** Remember to revert this change in your `manifest.json` after testing, or let HACS overwrite it when the official release is ready.
+
+---
+
 ## Code Style
 
 - **Linter**: [Ruff](https://docs.astral.sh/ruff/) — `uv run ruff check .`
