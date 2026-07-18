@@ -17,7 +17,7 @@ jobs:
       lib--release_created: ${{ steps.release.outputs.lib--release_created }}
       lib--tag_name: ${{ steps.release.outputs.lib--tag_name }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
