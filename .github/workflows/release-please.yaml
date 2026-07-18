@@ -25,10 +25,31 @@ jobs:
           manifest-file: .release-please-manifest.json
           include-component-in-tag: true
 
+  check-lib-release:
+    name: Check if kospel-cmi-lib was released
+    runs-on: ubuntu-latest
+    outputs:
+      lib_bumped: ${{ steps.check.outputs.lib_bumped }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: check
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == *"chore: release"* ]] || [[ "${{ github.event.head_commit.message }}" == *"chore(master): release"* ]]; then
+            if git diff --name-only HEAD^ HEAD | grep -q "^lib/pyproject\.toml$"; then
+              echo "lib_bumped=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "lib_bumped=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "lib_bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
   publish-lib:
     name: Publish kospel-cmi-lib to PyPI
-    needs: release-please
-    if: ${{ needs.release-please.outputs.lib--release_created == 'true' }}
+    needs: [release-please, check-lib-release]
+    if: ${{ needs.check-lib-release.outputs.lib_bumped == 'true' }}
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

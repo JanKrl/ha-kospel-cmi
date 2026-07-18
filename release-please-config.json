@@ -23,7 +23,8 @@
       "package-name": "kospel-cmi-lib",
       "component": "lib",
       "changelog-path": "lib/CHANGELOG.md",
-      "bump-minor-pre-major": true
+      "bump-minor-pre-major": true,
+      "skip-github-release": true
     }
   }
 }
