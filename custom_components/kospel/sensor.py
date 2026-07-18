@@ -232,6 +232,8 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
     """
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["running", "idle", "disabled"]
 
     def __init__(
         self,
@@ -263,6 +265,9 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
 class KospelValvePositionSensor(KospelSensorEntity):
     """Representation of a Kospel valve position sensor."""
 
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["dhw", "ch"]
+
     def __init__(
         self,
         coordinator: KospelDataUpdateCoordinator,
@@ -293,6 +298,9 @@ class KospelHeatingModeSensor(KospelSensorEntity):
     Since CH and DHW heating can never run simultaneously by design,
     this sensor provides a single state indicating the current mode.
     """
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["off", "idle", "ch", "dhw"]
 
     def __init__(
         self,
