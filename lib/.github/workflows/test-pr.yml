@@ -1,0 +1,40 @@
+# Run tests on pull requests when ready for review or when new commits are pushed.
+# Triggers:
+# - New PR (not draft) created
+# - Draft PR marked as ready for review
+# - New commits pushed to an open PR
+name: Test PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Skip draft PRs: only run when PR is ready for review
+    # - opened: only if not draft
+    # - synchronize: only if not draft (open PR)
+    # - ready_for_review: always run (PR is no longer draft)
+    if: |
+      (github.event.action == 'opened' && github.event.pull_request.draft == false) ||
+      (github.event.action == 'synchronize' && github.event.pull_request.draft == false) ||
+      github.event.action == 'ready_for_review'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run tests
+        run: uv run pytest

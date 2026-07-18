@@ -9,12 +9,43 @@ For human-readable documentation, start with [README.md](README.md).
 ## Project Identity
 
 - **Name**: ha-kospel-cmi
-- **Type**: Home Assistant custom integration (HACS-compatible)
+- **Type**: Home Assistant custom integration (HACS-compatible) + monorepo for `kospel-cmi-lib`
 - **Purpose**: Control and monitor Kospel electric heaters via local network (HTTP API)
-- **Supported devices**: EKCO.M3 (device support is defined in the external library)
+- **Supported devices**: EKCO.M3 (device support is defined in the library)
 - **License**: Apache 2.0
 - **Owner**: @JanKrl
 - **Repository**: https://github.com/JanKrl/ha-kospel-cmi
+
+## Monorepo Structure
+
+This repository is a **uv workspace monorepo** containing two packages:
+
+| Package | Path | Distributed via |
+|---------|------|-----------------|
+| `kospel-cmi-lib` | `lib/` | [PyPI](https://pypi.org/project/kospel-cmi-lib/) |
+| `ha-kospel-cmi` (HA integration) | root (`custom_components/kospel/`) | [HACS](https://hacs.xyz/) |
+
+### Package Boundaries
+
+- **`lib/`** (`kospel-cmi-lib`): All heater communication logic — HTTP transport, register decoding/encoding, device models, simulator. Changes here affect the library PyPI package.
+- **Root** (`custom_components/kospel/`): HA integration layer only — entities, coordinator, config flow. This is a thin adapter over the library. No heater communication logic belongs here.
+- **`tests/`** (root): HA integration tests.
+- **`lib/tests/`**: Library unit tests.
+
+### Commit Message Convention (Mandatory)
+
+This repo uses **squash merges only**. The **PR title** becomes the commit on `master` — write it as a [Conventional Commit](https://www.conventionalcommits.org/):
+
+```
+feat(lib): add EkcoM4 device support       → lib minor release
+fix(ha): debounce connectivity sensor      → HA patch release
+chore(ci): update uv version              → no release
+docs: update README                        → no release
+```
+
+release-please reads file paths (not scopes) to assign commits to packages, but scopes (`lib`/`ha`) are strongly recommended for clarity. Individual branch commits do not matter — only the PR title.
+
+**Breaking changes**: add `BREAKING CHANGE: <description>` as a footer in the PR description body.
 
 ## Architecture Overview
 
@@ -210,18 +241,33 @@ Single option: `refresh_delay_after_set` (0.5–5.0 seconds, default 1.0).
 ## Development Commands
 
 ```bash
-# Install all dependencies (including dev group)
+# Install all dependencies for both packages (including dev groups)
 uv sync --all-groups
 
-# Run all tests
+# Run HA integration tests
 uv run python -m pytest tests/ -v
 
-# Run tests with coverage
+# Run HA integration tests with coverage
 uv run python -m pytest tests/ -v --cov=. --cov-report=term-missing
 
-# Lint (ruff)
+# Run library (kospel-cmi-lib) tests
+# (from repo root)
+uv run python -m pytest lib/tests/ -v
+# or equivalently, from lib/ directory:
+uv run python -m pytest tests/ -v  # (working-directory: lib)
+
+# Lint all packages from workspace root
 uv run ruff check .
 ```
+
+## Release Process
+
+Releases are driven by [release-please](https://github.com/googleapis/release-please) via `.github/workflows/release-please.yaml`.
+
+- **Library** (`lib-v*` tags): Fully automated. Merge the release-please Release PR → git tag created → PyPI publish triggered automatically via OIDC.
+- **HA integration** (`v*` tags): Semi-automated. Merge the release-please Release PR → Draft GitHub Release created → you enrich release notes and click Publish → HACS notifies users.
+
+For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Common Pitfalls
 
@@ -237,8 +283,10 @@ uv run ruff check .
 ## References
 
 - [README.md](README.md) — User-facing documentation
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Developer guide: setup, commit conventions, release process
 - [docs/architecture.md](docs/architecture.md) — Architecture diagram
 - [docs/technical.md](docs/technical.md) — Technical specification
 - [docs/advanced-usage.md](docs/advanced-usage.md) — Advanced usage notes
+- [lib/README.md](lib/README.md) — Library (kospel-cmi-lib) documentation
 - [Home Assistant Developer Docs](https://developers.home-assistant.io/docs/development_index/) — HA integration development reference
-- [kospel-cmi-lib on PyPI](https://pypi.org/project/kospel-cmi-lib/) — External heater communication library
+- [kospel-cmi-lib on PyPI](https://pypi.org/project/kospel-cmi-lib/) — Library PyPI page
