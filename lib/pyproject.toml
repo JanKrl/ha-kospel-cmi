@@ -13,7 +13,7 @@ requires-python = ">=3.10"
 dependencies = [
     "aiohttp>=3.9.0",
     "aiofiles~=23.1.0",
-    "pydantic~=2.11.0",
+    "pydantic>=2.11,<2.14",
     "pyyaml~=6.0.0",
 ]
 classifiers = [
