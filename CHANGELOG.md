@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.2...v1.3.3) (2026-07-18)
+
+
+### Bug Fixes
+
+* relax library dependency versions for HA compatibility ([#90](https://github.com/JanKrl/ha-kospel-cmi/issues/90)) ([13cd1e6](https://github.com/JanKrl/ha-kospel-cmi/commit/13cd1e6a8e2c66f5bea86af1fc370f1f31f8ff16))
+
 ## [1.3.2](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.1...v1.3.2) (2026-07-18)
 
 
