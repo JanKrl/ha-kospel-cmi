@@ -7,7 +7,7 @@
       "release-type": "python",
       "package-name": "ha-kospel-cmi",
       "changelog-path": "CHANGELOG.md",
-      "draft": true,
+      "draft": false,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "extra-files": [
