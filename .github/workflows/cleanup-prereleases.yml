@@ -1,0 +1,43 @@
+name: Cleanup Old Pre-releases
+
+on:
+  schedule:
+    # Run once a day at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to trigger it manually from the Actions tab
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to delete releases and tags
+
+    steps:
+      - name: Delete old pre-releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEEP: 5 # Number of most recent pre-releases to keep
+        run: |
+          # Fetch all pre-release tags using the GitHub API (returns newest first)
+          gh api repos/${{ github.repository }}/releases \
+            --paginate \
+            -q '.[] | select(.prerelease == true) | .tag_name' > prereleases.txt
+            
+          echo "Total pre-releases found: $(wc -l < prereleases.txt)"
+          
+          # Calculate the starting line for deletion (KEEP + 1)
+          START_LINE=$((KEEP + 1))
+          
+          # Extract the older tags that need to be deleted
+          tail -n +$START_LINE prereleases.txt > to_delete.txt
+          
+          echo "Pre-releases to delete: $(wc -l < to_delete.txt)"
+          cat to_delete.txt
+          
+          # Loop through and delete the releases and their associated tags
+          while read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Deleting release and tag: $tag..."
+              gh release delete "$tag" --cleanup-tag -y
+            fi
+          done < to_delete.txt
