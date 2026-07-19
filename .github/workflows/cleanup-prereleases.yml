@@ -13,6 +13,9 @@ jobs:
       contents: write # Required to delete releases and tags
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Delete old pre-releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
