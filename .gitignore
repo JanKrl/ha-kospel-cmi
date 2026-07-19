@@ -37,6 +37,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+logs/
 
 # Ruff
 .ruff_cache/
