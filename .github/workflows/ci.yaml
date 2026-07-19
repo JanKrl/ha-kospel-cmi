@@ -84,3 +84,19 @@ jobs:
         run: uv run python -m pytest tests/ -v
         working-directory: lib
 
+  validate-manifest-requirements:
+    name: Validate Manifest Requirements
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'release-please--branches--')
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check version match
+        run: |
+          LIB_VERSION=$(grep -oP '(?<=^version = ")[^"]+' lib/pyproject.toml)
+          MANIFEST_REQ=$(grep -oP '"kospel-cmi-lib==\K[^"]+' custom_components/kospel/manifest.json)
+          if [ "$LIB_VERSION" != "$MANIFEST_REQ" ]; then
+            echo "::error::manifest.json requires kospel-cmi-lib==$MANIFEST_REQ, but lib/pyproject.toml is at $LIB_VERSION."
+            echo "Please update custom_components/kospel/manifest.json to require kospel-cmi-lib==$LIB_VERSION."
+            exit 1
+          fi
+          echo "Versions match: $LIB_VERSION"

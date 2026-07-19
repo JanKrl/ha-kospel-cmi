@@ -53,6 +53,7 @@ jobs:
     environment: pypi
     permissions:
       id-token: write  # Required for OIDC Trusted Publisher authentication
+      contents: write  # Required to push the git tag
     steps:
       - uses: actions/checkout@v7
 
@@ -74,3 +75,11 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+
+      - name: Create and push Git tag
+        run: |
+          VERSION=$(grep -oP '(?<=^version = ")[^"]+' lib/pyproject.toml)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "lib-v$VERSION"
+          git push origin "lib-v$VERSION"

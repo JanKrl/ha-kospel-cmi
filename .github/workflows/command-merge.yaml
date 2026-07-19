@@ -1,0 +1,53 @@
+name: Command Merge
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  merge:
+    name: Auto-merge PR
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/merge')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Verify and Merge
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.issue.number }}
+          
+          # 1. Verify PR branch
+          PR_BRANCH=$(gh pr view $PR_NUMBER --json headRefName --jq .headRefName)
+          if [[ ! "$PR_BRANCH" == release-please--branches--* ]]; then
+            echo "::error::The /merge command can only be used on release-please PRs."
+            gh pr comment $PR_NUMBER --body "❌ The \`/merge\` command can only be used on release-please PRs."
+            exit 1
+          fi
+
+          # 2. Add reaction to acknowledge command
+          gh api -X POST repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions -f content=eyes > /dev/null
+
+          # Give GitHub Actions a few seconds to register newly triggered checks
+          sleep 10
+
+          # 3. Wait for CI checks
+          echo "Waiting for CI to complete..."
+          if ! gh pr checks $PR_NUMBER --watch; then
+             echo "::error::CI checks failed."
+             gh pr comment $PR_NUMBER --body "❌ Cannot merge. CI checks failed or are pending."
+             exit 1
+          fi
+
+          # 4. Merge
+          echo "Merging PR..."
+          if gh pr merge $PR_NUMBER --merge; then
+             gh pr comment $PR_NUMBER --body "✅ Successfully merged release PR using a merge commit."
+          else
+             echo "::error::Failed to merge PR."
+             gh pr comment $PR_NUMBER --body "❌ Failed to merge PR."
+             exit 1
+          fi
