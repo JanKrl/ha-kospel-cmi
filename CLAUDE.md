@@ -34,7 +34,7 @@ This repository is a **uv workspace monorepo** containing two packages:
 
 ### Commit Message Convention (Mandatory)
 
-This repo uses **squash merges only**. The **PR title** becomes the commit on `master` — write it as a [Conventional Commit](https://www.conventionalcommits.org/):
+This repo uses **squash merges** for regular PRs. The **PR title** becomes the commit on `master` — write it as a [Conventional Commit](https://www.conventionalcommits.org/):
 
 ```
 feat(lib): add EkcoM4 device support       → lib minor release
@@ -45,7 +45,14 @@ docs: update README                        → no release
 
 release-please reads file paths (not scopes) to assign commits to packages, but scopes (`lib`/`ha`) are strongly recommended for clarity. Individual branch commits do not matter — only the PR title.
 
+> **Exception:** `release-please` PRs MUST be **merge committed** (Create a merge commit). Do not squash-merge release PRs, as this breaks the automated release tracking.
+
 **Breaking changes**: add `BREAKING CHANGE: <description>` as a footer in the PR description body.
+
+### Pull Request & Issue Workflow
+
+- In feature/fix PRs, use **`Relates to #123`** instead of `Fixes #123`. This prevents GitHub from closing the issue prematurely when the PR lands on `master`.
+- An automated workflow (`link-issues-to-release.yaml`) will collect these references and append `Closes #123` to the `release-please` PR, ensuring issues are closed exactly when the release is published.
 
 ## Architecture Overview
 
@@ -264,8 +271,8 @@ uv run ruff check .
 
 Releases are driven by [release-please](https://github.com/googleapis/release-please) via `.github/workflows/release-please.yaml`.
 
-- **Library** (`lib-v*` tags): Fully automated. Merge the release-please Release PR → git tag created → PyPI publish triggered automatically via OIDC.
-- **HA integration** (`v*` tags): Semi-automated. Merge the release-please Release PR → Draft GitHub Release created → you enrich release notes and click Publish → HACS notifies users.
+- **Library** (`lib-v*` tags): Fully automated. Merge the release-please Release PR using a **merge commit** → git tag created → PyPI publish triggered automatically via OIDC.
+- **HA integration** (`v*` tags): Semi-automated. Merge the release-please Release PR using a **merge commit** → Draft GitHub Release created → you enrich release notes and click Publish → HACS notifies users.
 
 For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 

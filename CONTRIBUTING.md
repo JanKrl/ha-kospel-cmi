@@ -79,7 +79,9 @@ If you make changes to `lib/` (the library) and want to test them in a real Home
 This project uses [Conventional Commits](https://www.conventionalcommits.org/) to drive automated versioning via [release-please](https://github.com/googleapis/release-please).
 
 > [!IMPORTANT]
-> **The repository is configured for squash merges only.** This means the **PR title** is the commit message that ends up on `master`. Individual commits on your feature branch don't matter — write the PR title carefully.
+> **The repository uses squash merges for regular PRs.** This means the **PR title** is the commit message that ends up on `master`. Individual commits on your feature branch don't matter — write the PR title carefully.
+>
+> **Exception:** `release-please` PRs MUST be **merge committed** (Create a merge commit). Do not squash-merge release PRs, as this breaks the automated release tracking.
 
 ### Format
 
@@ -172,7 +174,8 @@ chore/<short-description>       # e.g. chore/update-ci-uv-version
 4. Ensure all tests and lint pass locally before submitting.
 5. Keep PRs focused — one feature or fix per PR.
 6. **Write the PR title as a conventional commit message** — this becomes the commit on `master`.
-7. Update documentation if your change affects user-facing behavior or developer patterns.
+7. **Link related issues using `Relates to #<issue>`**. Do *not* use `Fixes #<issue>` or `Closes #<issue>`, as we want issues to remain open until the actual release is published. Our automated workflows will correctly assign the `Closes #<issue>` keyword to the `release-please` PR.
+8. Update documentation if your change affects user-facing behavior or developer patterns.
 
 ---
 
@@ -184,7 +187,7 @@ Releases are managed automatically by [release-please](https://github.com/google
 
 1. You merge PRs to `master` with conventional commit titles.
 2. release-please opens/updates a **Release PR** per package, accumulating unreleased changes.
-3. You merge the Release PR when you're ready to ship.
+3. You merge the Release PR using a **merge commit** when you're ready to ship.
 4. A git tag and GitHub Release are created automatically.
    - **Library** (`lib-v1.1.0` tag): PyPI publish runs automatically (OIDC, no token needed).
    - **HA integration** (`v0.2.0` tag): A **Draft** GitHub Release is created. You enrich the release notes and click Publish — HACS then notifies users.
