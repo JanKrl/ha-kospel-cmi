@@ -47,6 +47,9 @@ release-please reads file paths (not scopes) to assign commits to packages, but 
 
 > **Exception:** `release-please` PRs MUST be **merge committed** (Create a merge commit). Do not squash-merge release PRs, as this breaks the automated release tracking.
 
+> [!WARNING]
+> **Avoid `fix(ci)` or `feat(ci)`:** Because `release-please` triggers on the `fix` and `feat` types, using them for CI changes will accidentally include internal workflows in the user-facing changelog. ALWAYS use the `ci:` or `chore:` type (e.g., `ci: update checkout step`) for pipeline updates so they are correctly ignored.
+
 **Breaking changes**: add `BREAKING CHANGE: <description>` as a footer in the PR description body.
 
 ### Pull Request & Issue Workflow
