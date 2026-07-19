@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.4](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.3...v1.3.4) (2026-07-19)
+
+
+### Bug Fixes
+
+* correct valve position mapping ([#100](https://github.com/JanKrl/ha-kospel-cmi/issues/100)) ([4ca4922](https://github.com/JanKrl/ha-kospel-cmi/commit/4ca49229f80dcbc85bfa9f52fd95025b172572b7))
+
+
+### Documentation
+
+* add commit warning ([#99](https://github.com/JanKrl/ha-kospel-cmi/issues/99)) ([95ef990](https://github.com/JanKrl/ha-kospel-cmi/commit/95ef99047a10090f31deb7f2c369df41702132bf))
+
 ## [1.3.3](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.2...v1.3.3) (2026-07-18)
 
 
