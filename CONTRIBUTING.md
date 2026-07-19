@@ -115,6 +115,10 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) t
 > The old .start()/.stop() API is removed.
 > ```
 
+> [!WARNING]
+> **Avoid `fix(ci)` or `feat(ci)`:** Because `release-please` triggers on the `fix` and `feat` types, using them for CI changes will accidentally include internal workflows in the user-facing changelog. ALWAYS use the `ci:` or `chore:` type (e.g., `ci: update checkout step`) for pipeline updates so they are correctly ignored.
+
+
 ### Scopes (Recommended)
 
 Using a scope in the PR title makes it immediately clear which package is affected:
