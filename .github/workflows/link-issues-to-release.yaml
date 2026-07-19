@@ -1,0 +1,78 @@
+name: "Link Issues to Release PR"
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+    branches:
+      - master
+
+jobs:
+  link-issues:
+    if: startsWith(github.head_ref, 'release-please--branches')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Extract and append closed issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+            
+            // Avoid infinite loops if we just edited the PR
+            if (body.includes("### Issues Closed by this Release")) {
+              console.log("PR body already contains the linked issues header.");
+              return;
+            }
+            
+            // 1. Extract all PR numbers from the release-please PR body.
+            // release-please links PRs like: ([#67](https://github.com/JanKrl/ha-kospel-cmi/issues/67))
+            const prRegex = /\[#(\d+)\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/\1\)/g;
+            const matches = [...body.matchAll(prRegex)];
+            const prNumbers = [...new Set(matches.map(m => parseInt(m[1])))];
+            
+            if (prNumbers.length === 0) {
+              console.log("No PRs found in the release PR body.");
+              return;
+            }
+            
+            let issuesToClose = new Set();
+            
+            // 2. Fetch the body of each referenced PR to find linked issues.
+            for (const prNum of prNumbers) {
+              try {
+                const fetchedPr = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNum
+                });
+                
+                const fetchedBody = fetchedPr.data.body || "";
+                
+                // Look for "Relates to #123", "Ref #123", "Refs #123", etc.
+                const issueRegex = /(?:relates to|ref|refs|fixes|closes|resolves|fixed|resolved)\s+#(\d+)/gi;
+                const issueMatches = [...fetchedBody.matchAll(issueRegex)];
+                
+                for (const match of issueMatches) {
+                  issuesToClose.add(match[1]);
+                }
+              } catch (e) {
+                console.log(`Could not fetch PR #${prNum}: ${e.message}`);
+              }
+            }
+            
+            if (issuesToClose.size > 0) {
+              const closesText = "\n\n### Issues Closed by this Release\n" + 
+                [...issuesToClose].map(num => `Closes #${num}`).join("\n");
+              
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                body: body + closesText
+              });
+              console.log("Updated PR body with linked issues.");
+            } else {
+              console.log("No linked issues found in the referenced PRs.");
+            }

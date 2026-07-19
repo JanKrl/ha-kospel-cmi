@@ -49,6 +49,11 @@ release-please reads file paths (not scopes) to assign commits to packages, but 
 
 **Breaking changes**: add `BREAKING CHANGE: <description>` as a footer in the PR description body.
 
+### Pull Request & Issue Workflow
+
+- In feature/fix PRs, use **`Relates to #123`** instead of `Fixes #123`. This prevents GitHub from closing the issue prematurely when the PR lands on `master`.
+- An automated workflow (`link-issues-to-release.yaml`) will collect these references and append `Closes #123` to the `release-please` PR, ensuring issues are closed exactly when the release is published.
+
 ## Architecture Overview
 
 This integration is a **thin Home Assistant layer** on top of the external [kospel-cmi-lib](https://pypi.org/project/kospel-cmi-lib/) library.

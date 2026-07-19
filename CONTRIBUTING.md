@@ -174,7 +174,8 @@ chore/<short-description>       # e.g. chore/update-ci-uv-version
 4. Ensure all tests and lint pass locally before submitting.
 5. Keep PRs focused — one feature or fix per PR.
 6. **Write the PR title as a conventional commit message** — this becomes the commit on `master`.
-7. Update documentation if your change affects user-facing behavior or developer patterns.
+7. **Link related issues using `Relates to #<issue>`**. Do *not* use `Fixes #<issue>` or `Closes #<issue>`, as we want issues to remain open until the actual release is published. Our automated workflows will correctly assign the `Closes #<issue>` keyword to the `release-please` PR.
+8. Update documentation if your change affects user-facing behavior or developer patterns.
 
 ---
 
