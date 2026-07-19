@@ -2,8 +2,8 @@ name: Cleanup Old Pre-releases
 
 on:
   schedule:
-    # Run once a day at midnight UTC
-    - cron: '0 0 * * *'
+    # Run once a week on Thursday at midnight UTC
+    - cron: '0 0 * * 4'
   workflow_dispatch: # Allows you to trigger it manually from the Actions tab
 
 jobs:
