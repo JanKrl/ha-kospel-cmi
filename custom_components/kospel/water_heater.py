@@ -1,4 +1,4 @@
-"""Water heater entity for Kospel integration (CWU / DHW)."""
+"""Water heater entity for Kospel integration (DHW)."""
 
 import logging
 from typing import TypedDict, Unpack
@@ -13,7 +13,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
-from kospel_cmi.registers.enums import CwuMode, WaterHeaterEnabled
+from kospel_cmi.registers.enums import DhwMode, WaterHeaterEnabled
 from kospel_cmi.controller.device import EkcoM3
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,11 +25,11 @@ STATE_OFF = "off"
 
 OPERATION_LIST = [STATE_ECO, STATE_PERFORMANCE, STATE_OFF]
 
-# CwuMode (0=economy, 1=anti-freeze, 2=comfort) to HA operation mode
-_CWU_MODE_TO_HA: dict[int, str] = {
-    CwuMode.ECONOMY: STATE_ECO,
-    CwuMode.ANTI_FREEZE: STATE_OFF,
-    CwuMode.COMFORT: STATE_PERFORMANCE,
+# DhwMode (0=economy, 1=anti-freeze, 2=comfort) to HA operation mode
+_DHW_MODE_TO_HA: dict[int, str] = {
+    DhwMode.ECONOMY: STATE_ECO,
+    DhwMode.ANTI_FREEZE: STATE_OFF,
+    DhwMode.COMFORT: STATE_PERFORMANCE,
 }
 
 
@@ -53,11 +53,11 @@ async def async_setup_entry(
 class KospelWaterHeaterEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], WaterHeaterEntity
 ):
-    """Representation of a Kospel domestic hot water (CWU/DHW) entity.
+    """Representation of a Kospel domestic hot water (DHW) entity.
 
     Read-only for writes: displays current temperature, target temperature, and
     operation mode. Target/operation controls on this entity are intentionally
-    no-ops; DHW/CWU setpoints and modes follow the device and the climate entity
+    no-ops; DHW setpoints and modes follow the device and the climate entity
     (HVAC / auto programs), not the water heater card.
     """
 
@@ -70,7 +70,7 @@ class KospelWaterHeaterEntity(
     _attr_max_temp = 65.0
     # OPERATION_MODE and TARGET_TEMPERATURE are declared so Home Assistant shows
     # current operation and temperatures in the UI. Writes are ignored here by design:
-    # DHW/CWU behaviour is driven by the device and by the climate entity (HVAC mode
+    # DHW behaviour is driven by the device and by the climate entity (HVAC mode
     # and auto presets; see climate.async_set_*).
     _attr_supported_features = (
         WaterHeaterEntityFeature.OPERATION_MODE | WaterHeaterEntityFeature.TARGET_TEMPERATURE
@@ -94,7 +94,7 @@ class KospelWaterHeaterEntity(
         _LOGGER.debug("Ignoring set_temperature on read-only DHW entity")
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
-        """Ignore operation mode writes; CWU mode is not controlled here."""
+        """Ignore operation mode writes; DHW mode is not controlled here."""
         _LOGGER.debug(
             "Ignoring set_operation_mode on read-only DHW entity (mode=%s)",
             operation_mode,
@@ -108,7 +108,7 @@ class KospelWaterHeaterEntity(
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the live CWU supply setpoint from the device (register 0b2f).
+        """Return the live DHW supply setpoint from the device (register 0b2f).
 
         Reflects firmware output including daily programs; not derived from
         static economy/comfort preset registers. ``None`` if the value is
@@ -119,12 +119,12 @@ class KospelWaterHeaterEntity(
 
     @property
     def current_operation(self) -> str:
-        """Return the current operation mode from device cwu_mode."""
+        """Return the current operation mode from device dhw_mode."""
         controller = self._get_controller()
         if controller.is_water_heater_enabled != WaterHeaterEnabled.ENABLED:
             return STATE_OFF
-        cwu_mode = controller.cwu_mode
-        return _CWU_MODE_TO_HA.get(cwu_mode or 0, STATE_ECO)
+        dhw_mode = controller.dhw_mode
+        return _DHW_MODE_TO_HA.get(dhw_mode or 0, STATE_ECO)
 
     @property
     def available(self) -> bool:

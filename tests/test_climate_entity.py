@@ -357,7 +357,7 @@ class TestClimateHvacAction:
     ) -> None:
         """hvac_action returns HEATING when CH status is RUNNING."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = HeatingStatus.RUNNING
+        mock_controller.ch_heating_status = HeatingStatus.RUNNING
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.HEATING
@@ -367,7 +367,7 @@ class TestClimateHvacAction:
     ) -> None:
         """hvac_action returns OFF when CH status is IDLE."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = HeatingStatus.IDLE
+        mock_controller.ch_heating_status = HeatingStatus.IDLE
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.OFF
@@ -377,7 +377,7 @@ class TestClimateHvacAction:
     ) -> None:
         """hvac_action returns OFF when CH status is DISABLED."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = HeatingStatus.DISABLED
+        mock_controller.ch_heating_status = HeatingStatus.DISABLED
         mock_coordinator.data = mock_controller
 
         assert climate_entity.hvac_action == HVACAction.OFF

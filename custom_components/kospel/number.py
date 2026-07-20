@@ -60,14 +60,14 @@ _PRESET_ENTITIES: list[tuple[str, str, str, float, float]] = [
     ),
     (
         "dhw_temperature_economy",
-        "cwu_temperature_economy",
+        "dhw_temperature_economy",
         "set_water_economy_temperature",
         DHW_PRESET_TEMP_MIN,
         DHW_PRESET_TEMP_MAX,
     ),
     (
         "dhw_temperature_comfort",
-        "cwu_temperature_comfort",
+        "dhw_temperature_comfort",
         "set_water_comfort_temperature",
         DHW_PRESET_TEMP_MIN,
         DHW_PRESET_TEMP_MAX,

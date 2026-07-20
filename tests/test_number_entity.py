@@ -176,7 +176,7 @@ class TestKospelPresetNumberEntity:
             mock_coordinator,
             mock_entry,
             "dhw_temperature_economy",
-            "cwu_temperature_economy",
+            "dhw_temperature_economy",
             "set_water_economy_temperature",
             DHW_PRESET_TEMP_MIN,
             DHW_PRESET_TEMP_MAX,
@@ -236,8 +236,8 @@ class TestKospelPresetNumberEntity:
             ("room_temperature_comfort", "set_room_temperature_comfort", "room_temperature_comfort"),
             ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus", "room_temperature_comfort_plus"),
             ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus", "room_temperature_comfort_minus"),
-            ("dhw_temperature_economy", "set_water_economy_temperature", "cwu_temperature_economy"),
-            ("dhw_temperature_comfort", "set_water_comfort_temperature", "cwu_temperature_comfort"),
+            ("dhw_temperature_economy", "set_water_economy_temperature", "dhw_temperature_economy"),
+            ("dhw_temperature_comfort", "set_water_comfort_temperature", "dhw_temperature_comfort"),
         ],
     )
     async def test_each_preset_uses_matching_setter(
@@ -255,8 +255,8 @@ class TestKospelPresetNumberEntity:
             ("room_temperature_comfort", "set_room_temperature_comfort", "room_temperature_comfort"),
             ("room_temperature_comfort_plus", "set_room_temperature_comfort_plus", "room_temperature_comfort_plus"),
             ("room_temperature_comfort_minus", "set_room_temperature_comfort_minus", "room_temperature_comfort_minus"),
-            ("dhw_temperature_economy", "set_water_economy_temperature", "cwu_temperature_economy"),
-            ("dhw_temperature_comfort", "set_water_comfort_temperature", "cwu_temperature_comfort"),
+            ("dhw_temperature_economy", "set_water_economy_temperature", "dhw_temperature_economy"),
+            ("dhw_temperature_comfort", "set_water_comfort_temperature", "dhw_temperature_comfort"),
         ]:
             setattr(mock_controller, _setter, AsyncMock(return_value=True))
         mock_coordinator.data = mock_controller

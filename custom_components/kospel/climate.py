@@ -130,7 +130,7 @@ class KospelClimateEntity(
     def hvac_action(self) -> HVACAction:
         """HVAC action is based on whether CH heating circuit is active."""
         controller: EkcoM3 = self.coordinator.data
-        ch_status = controller.co_heating_status
+        ch_status = controller.ch_heating_status
         return (
             HVACAction.HEATING
             if ch_status == HeatingStatus.RUNNING
