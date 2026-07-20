@@ -42,10 +42,10 @@ class TestWaterHeaterRegisters:
     async def test_cwu_temperatures_decoded(
         self, heater_controller_with_registers: EkcoM3
     ) -> None:
-        """cwu_temperature_economy and cwu_temperature_comfort are decoded."""
+        """dhw_temperature_economy and dhw_temperature_comfort are decoded."""
         controller = heater_controller_with_registers
-        assert controller.cwu_temperature_economy == 40.0
-        assert controller.cwu_temperature_comfort == 45.0
+        assert controller.dhw_temperature_economy == 40.0
+        assert controller.dhw_temperature_comfort == 45.0
 
     @pytest.mark.asyncio
     async def test_supply_setpoint_decoded(
