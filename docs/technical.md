@@ -17,7 +17,7 @@ This project provides a Home Assistant integration for Kospel electric heaters. 
 ### Naming Convention
 
 - Internal code identifiers (entity translation keys, variable names, comments, tests) use English terminology.
-- Device-library compatibility fields keep library naming where required (for example `co_heating_status`, `cwu_heating_status`) and are mapped to English integration keys.
+- Device-library compatibility fields keep library naming where required (for example `ch_heating_status`, `dhw_heating_status`) and are mapped to English integration keys.
 - User-facing labels are localized in translation files:
   - `strings.json`: English labels (`CH`, `DHW`)
   - `translations/pl.json`: Polish labels (`CO`, `CWU`)
@@ -108,4 +108,4 @@ uv run python -m pytest tests/ -v
 
 - **Architecture**: [docs/architecture.md](architecture.md)
 - **Advanced usage**: [docs/advanced-usage.md](advanced-usage.md)
-- **AI agent context**: [CLAUDE.md](../CLAUDE.md)
+- **AI agent context**: [AGENTS.md](../.agents/AGENTS.md)

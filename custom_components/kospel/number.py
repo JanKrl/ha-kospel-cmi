@@ -28,7 +28,7 @@ OUTSIDE_THRESHOLD_MIN = 0
 OUTSIDE_THRESHOLD_MAX = 30
 PRESET_TEMP_STEP = 0.1
 
-# (translation_key / controller property name / async setter name / min temp / max temp)
+# (unique_id_suffix / controller property name & translation key / async setter name / min temp / max temp)
 _PRESET_ENTITIES: list[tuple[str, str, str, float, float]] = [
     (
         "room_temperature_economy",
@@ -59,15 +59,17 @@ _PRESET_ENTITIES: list[tuple[str, str, str, float, float]] = [
         ROOM_PRESET_TEMP_MAX,
     ),
     (
-        "dhw_temperature_economy",
+        # Keep old cwu_ unique_id to preserve existing HA entity registry entries
         "cwu_temperature_economy",
+        "dhw_temperature_economy",
         "set_water_economy_temperature",
         DHW_PRESET_TEMP_MIN,
         DHW_PRESET_TEMP_MAX,
     ),
     (
-        "dhw_temperature_comfort",
+        # Keep old cwu_ unique_id to preserve existing HA entity registry entries
         "cwu_temperature_comfort",
+        "dhw_temperature_comfort",
         "set_water_comfort_temperature",
         DHW_PRESET_TEMP_MIN,
         DHW_PRESET_TEMP_MAX,
@@ -93,13 +95,13 @@ async def async_setup_entry(
         KospelPresetNumberEntity(
             coordinator,
             entry,
-            translation_key,
+            unique_id_suffix,
             value_attr,
             setter_name,
             min_temp,
             max_temp,
         )
-        for translation_key, value_attr, setter_name, min_temp, max_temp in _PRESET_ENTITIES
+        for unique_id_suffix, value_attr, setter_name, min_temp, max_temp in _PRESET_ENTITIES
     ]
     async_add_entities(entities)
 
@@ -124,7 +126,7 @@ class KospelPresetNumberEntity(
         self,
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
-        translation_key: str,
+        unique_id_suffix: str,
         value_attr: str,
         setter_name: str,
         min_temp: float,
@@ -136,8 +138,8 @@ class KospelPresetNumberEntity(
         Args:
             coordinator: Data update coordinator.
             entry: Config entry (device info and refresh delay options).
-            translation_key: Translation key used for human-friendly entity naming.
-            value_attr: EkcoM3 property name to read from the controller.
+            unique_id_suffix: Unique suffix for entity ID to maintain backward compatibility.
+            value_attr: EkcoM3 property name to read from the controller (also used as translation key).
             setter_name: Name of the async setter on EkcoM3.
             min_temp: Minimum supported temperature for this preset.
             max_temp: Maximum supported temperature for this preset.
@@ -145,8 +147,8 @@ class KospelPresetNumberEntity(
         """
         super().__init__(coordinator)
         device_id = get_device_identifier(entry)
-        self._attr_unique_id = f"{device_id}_{value_attr}"
-        self._attr_translation_key = translation_key
+        self._attr_unique_id = f"{device_id}_{unique_id_suffix}"
+        self._attr_translation_key = value_attr
         self._attr_device_info = get_device_info(entry)
         self._attr_native_min_value = min_temp
         self._attr_native_max_value = max_temp

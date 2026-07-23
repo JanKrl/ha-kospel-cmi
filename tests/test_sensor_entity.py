@@ -220,8 +220,8 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is 'ch' when CH is running."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = "running"
-        mock_controller.cwu_heating_status = "idle"
+        mock_controller.ch_heating_status = "running"
+        mock_controller.dhw_heating_status = "idle"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -232,8 +232,8 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is 'dhw' when DHW is running."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = "idle"
-        mock_controller.cwu_heating_status = "running"
+        mock_controller.ch_heating_status = "idle"
+        mock_controller.dhw_heating_status = "running"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -244,8 +244,8 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is 'idle' when both are idle."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = "idle"
-        mock_controller.cwu_heating_status = "idle"
+        mock_controller.ch_heating_status = "idle"
+        mock_controller.dhw_heating_status = "idle"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -256,8 +256,8 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is 'idle' when CH is idle and DHW disabled."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = "idle"
-        mock_controller.cwu_heating_status = "disabled"
+        mock_controller.ch_heating_status = "idle"
+        mock_controller.dhw_heating_status = "disabled"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -268,8 +268,8 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is 'off' when both are disabled."""
         mock_controller = MagicMock()
-        mock_controller.co_heating_status = "disabled"
-        mock_controller.cwu_heating_status = "disabled"
+        mock_controller.ch_heating_status = "disabled"
+        mock_controller.dhw_heating_status = "disabled"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -284,8 +284,8 @@ class TestKospelHeatingModeSensorNativeValue:
         mock_ch_status.value = "RUNNING"
         mock_dwh_status = MagicMock()
         mock_dwh_status.value = "IDLE"
-        mock_controller.co_heating_status = mock_ch_status
-        mock_controller.cwu_heating_status = mock_dwh_status
+        mock_controller.ch_heating_status = mock_ch_status
+        mock_controller.dhw_heating_status = mock_dwh_status
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -296,7 +296,7 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is None when CH status is missing."""
         mock_controller = MagicMock(spec=[])
-        mock_controller.cwu_heating_status = "idle"
+        mock_controller.dhw_heating_status = "idle"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
@@ -307,7 +307,7 @@ class TestKospelHeatingModeSensorNativeValue:
     ) -> None:
         """native_value is None when DHW status is missing."""
         mock_controller = MagicMock(spec=[])
-        mock_controller.co_heating_status = "idle"
+        mock_controller.ch_heating_status = "idle"
         mock_coordinator.data = mock_controller
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)

@@ -34,7 +34,7 @@ class ValvePosition(Enum):
 class HeatingStatus(Enum):
     """Heating circuit status matching manufacturer UI icons."""
 
-    RUNNING = "running"  # Red: circuit active, power > 0 (or cwu in summer)
+    RUNNING = "running"  # Red: circuit active, power > 0 (or dhw in summer)
     IDLE = "idle"  # Green: circuit active, not heating
     DISABLED = "disabled"  # Grey: circuit inactive
 
@@ -46,16 +46,16 @@ class HeatingCircuitActive(Enum):
     INACTIVE = "inactive"
 
 
-class CwuMode(IntEnum):
-    """CWU (domestic hot water) mode — which temperature source is active.
+class DhwMode(IntEnum):
+    """DHW (domestic hot water) mode — which temperature source is active.
 
     Stored in register 0b30. Values: 0=economy (0b66), 1=anti-freeze,
     2=comfort (0b67).
     """
 
-    ECONOMY = 0  # Uses cwu_temperature_economy (0b66)
+    ECONOMY = 0  # Uses dhw_temperature_economy (0b66)
     ANTI_FREEZE = 1  # Anti-freeze protection
-    COMFORT = 2  # Uses cwu_temperature_comfort (0b67)
+    COMFORT = 2  # Uses dhw_temperature_comfort (0b67)
 
 
 

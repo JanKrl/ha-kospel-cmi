@@ -61,12 +61,10 @@ async def async_setup_entry(
 
     # Heating status sensors: (unique_id_suffix, setting_name)
     entities.append(
-        KospelHeatingStatusSensor(coordinator, entry, "ch_heating", "co_heating_status")
+        KospelHeatingStatusSensor(coordinator, entry, "ch_heating", "ch_heating_status")
     )
     entities.append(
-        KospelHeatingStatusSensor(
-            coordinator, entry, "dhw_heating", "cwu_heating_status"
-        )
+        KospelHeatingStatusSensor(coordinator, entry, "dhw_heating", "dhw_heating_status")
     )
     entities.append(KospelValvePositionSensor(coordinator, entry))
     
@@ -328,8 +326,8 @@ class KospelHeatingModeSensor(KospelSensorEntity):
         """
         controller: EkcoM3 = self.coordinator.data
         
-        ch_status = getattr(controller, "co_heating_status", None)
-        dwh_status = getattr(controller, "cwu_heating_status", None)
+        ch_status = getattr(controller, "ch_heating_status", None)
+        dwh_status = getattr(controller, "dhw_heating_status", None)
         
         if ch_status is None or dwh_status is None:
             return None

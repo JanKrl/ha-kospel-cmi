@@ -28,7 +28,7 @@ from ..registers.encoders import (
 )
 from ..registers.enums import (
     ROOM_MODE_MANUAL,
-    CwuMode,
+    DhwMode,
     HeaterMode,
     HeatingCircuitActive,
     HeatingStatus,
@@ -43,10 +43,10 @@ logger = logging.getLogger(__name__)
 _decode_water_heater_enabled = decode_map(
     WaterHeaterEnabled.ENABLED, WaterHeaterEnabled.DISABLED
 )
-_decode_co_heating_active = decode_map(
+_decode_ch_heating_active = decode_map(
     HeatingCircuitActive.ACTIVE, HeatingCircuitActive.INACTIVE
 )
-_decode_cwu_heating_active = decode_map(
+_decode_dhw_heating_active = decode_map(
     HeatingCircuitActive.ACTIVE, HeatingCircuitActive.INACTIVE
 )
 _decode_valve_position = decode_map(ValvePosition.DHW, ValvePosition.CH)
@@ -188,8 +188,8 @@ class EkcoM3:
         return decode_raw_int(self._get_register("0b32"))
 
     @property
-    def cwu_mode(self) -> Optional[int]:
-        """CWU mode: 0=economy, 1=anti-freeze, 2=comfort."""
+    def dhw_mode(self) -> Optional[int]:
+        """DHW mode: 0=economy, 1=anti-freeze, 2=comfort."""
         return decode_raw_int(self._get_register("0b30"))
 
     @property
@@ -198,14 +198,14 @@ class EkcoM3:
         return _decode_water_heater_enabled(self._get_register("0b55"), 4)
 
     @property
-    def is_co_heating_active(self) -> Optional[HeatingCircuitActive]:
-        """CO heating circuit active (bit 7 of 0b51)."""
-        return _decode_co_heating_active(self._get_register("0b51"), 7)
+    def is_ch_heating_active(self) -> Optional[HeatingCircuitActive]:
+        """CH heating circuit active (bit 7 of 0b51)."""
+        return _decode_ch_heating_active(self._get_register("0b51"), 7)
 
     @property
-    def is_cwu_heating_active(self) -> Optional[HeatingCircuitActive]:
-        """CWU heating circuit active (bit 8 of 0b51)."""
-        return _decode_cwu_heating_active(self._get_register("0b51"), 8)
+    def is_dhw_heating_active(self) -> Optional[HeatingCircuitActive]:
+        """DHW heating circuit active (bit 8 of 0b51)."""
+        return _decode_dhw_heating_active(self._get_register("0b51"), 8)
 
     @property
     def valve_position(self) -> Optional[ValvePosition]:
@@ -238,13 +238,13 @@ class EkcoM3:
         return decode_scaled_x10(self._get_register("0b69"))
 
     @property
-    def cwu_temperature_economy(self) -> Optional[float]:
-        """CWU economy temperature (0b66), °C."""
+    def dhw_temperature_economy(self) -> Optional[float]:
+        """DHW economy temperature (0b66), °C."""
         return decode_scaled_x10(self._get_register("0b66"))
 
     @property
-    def cwu_temperature_comfort(self) -> Optional[float]:
-        """CWU comfort temperature (0b67), °C."""
+    def dhw_temperature_comfort(self) -> Optional[float]:
+        """DHW comfort temperature (0b67), °C."""
         return decode_scaled_x10(self._get_register("0b67"))
 
     @property
@@ -373,16 +373,16 @@ class EkcoM3:
     # --- Computed properties ---
 
     @property
-    def co_heating_status(self) -> HeatingStatus:
-        """CO heating status from heater_mode, is_co_heating_active, power."""
+    def ch_heating_status(self) -> HeatingStatus:
+        """CH heating status from heater_mode, is_ch_heating_active, power."""
         heater_mode = self.heater_mode
-        co_active = self.is_co_heating_active
+        ch_active = self.is_ch_heating_active
         power_val = self.power
 
         if heater_mode != HeaterMode.WINTER:
             return HeatingStatus.DISABLED
 
-        if co_active != HeatingCircuitActive.ACTIVE:
+        if ch_active != HeatingCircuitActive.ACTIVE:
             return HeatingStatus.IDLE
 
         if power_val is not None and power_val > 0:
@@ -390,17 +390,17 @@ class EkcoM3:
         return HeatingStatus.IDLE
 
     @property
-    def cwu_heating_status(self) -> HeatingStatus:
-        """CWU heating status from mode, water heater, CWU active, and power."""
+    def dhw_heating_status(self) -> HeatingStatus:
+        """DHW heating status from mode, water heater, DHW active, and power."""
         heater_mode = self.heater_mode
         water_enabled = self.is_water_heater_enabled
-        cwu_active = self.is_cwu_heating_active
+        dhw_active = self.is_dhw_heating_active
         power_val = self.power
 
         if heater_mode == HeaterMode.SUMMER:
             return (
                 HeatingStatus.RUNNING
-                if cwu_active == HeatingCircuitActive.ACTIVE
+                if dhw_active == HeatingCircuitActive.ACTIVE
                 else HeatingStatus.IDLE
             )
 
@@ -410,7 +410,7 @@ class EkcoM3:
         if water_enabled != WaterHeaterEnabled.ENABLED:
             return HeatingStatus.DISABLED
 
-        if cwu_active != HeatingCircuitActive.ACTIVE:
+        if dhw_active != HeatingCircuitActive.ACTIVE:
             return HeatingStatus.IDLE
 
         if power_val is not None and power_val > 0:
@@ -440,11 +440,11 @@ class EkcoM3:
         await self._backend.write_register("0b32", hex_val)
         self._registers["0b32"] = hex_val
 
-    async def set_cwu_mode(self, value: int) -> None:
-        """Set CWU mode (0b30). 0=economy, 1=anti-freeze, 2=comfort."""
+    async def set_dhw_mode(self, value: int) -> None:
+        """Set DHW mode (0b30). 0=economy, 1=anti-freeze, 2=comfort."""
         hex_val = encode_raw_int(value, None)
         if hex_val is None:
-            raise ValueError("Failed to encode cwu_mode")
+            raise ValueError("Failed to encode dhw_mode")
 
         await self._backend.write_register("0b30", hex_val)
         self._registers["0b30"] = hex_val
@@ -508,12 +508,12 @@ class EkcoM3:
         """Set room temperature comfort- (0b69), °C."""
         await self._set_scaled_x10("0b69", value)
 
-    async def set_cwu_temperature_economy(self, value: float) -> None:
-        """Set CWU economy temperature (0b66), °C."""
+    async def set_dhw_temperature_economy(self, value: float) -> None:
+        """Set DHW economy temperature (0b66), °C."""
         await self._set_scaled_x10("0b66", value)
 
-    async def set_cwu_temperature_comfort(self, value: float) -> None:
-        """Set CWU comfort temperature (0b67), °C."""
+    async def set_dhw_temperature_comfort(self, value: float) -> None:
+        """Set DHW comfort temperature (0b67), °C."""
         await self._set_scaled_x10("0b67", value)
 
     async def set_party_vacation_end_minute(self, value: int) -> None:
@@ -561,19 +561,19 @@ class EkcoM3:
         await self.set_heater_mode(HeaterMode.MANUAL)
         await self.set_manual_temperature(temperature)
 
-    async def set_water_mode(self, mode: CwuMode) -> None:
-        """Set CWU water mode (which temperature source is active)."""
-        if not isinstance(mode, CwuMode):
-            raise TypeError(f"mode must be CwuMode, got {type(mode).__name__}")
-        await self.set_cwu_mode(mode.value)
+    async def set_water_mode(self, mode: DhwMode) -> None:
+        """Set DHW water mode (which temperature source is active)."""
+        if not isinstance(mode, DhwMode):
+            raise TypeError(f"mode must be DhwMode, got {type(mode).__name__}")
+        await self.set_dhw_mode(mode.value)
 
     async def set_water_comfort_temperature(self, temperature: float) -> None:
-        """Set CWU comfort temperature (0b67), °C."""
-        await self.set_cwu_temperature_comfort(temperature)
+        """Set DHW comfort temperature (0b67), °C."""
+        await self.set_dhw_temperature_comfort(temperature)
 
     async def set_water_economy_temperature(self, temperature: float) -> None:
-        """Set CWU economy temperature (0b66), °C."""
-        await self.set_cwu_temperature_economy(temperature)
+        """Set DHW economy temperature (0b66), °C."""
+        await self.set_dhw_temperature_economy(temperature)
 
     # --- Convenience methods for HA integration ---
 

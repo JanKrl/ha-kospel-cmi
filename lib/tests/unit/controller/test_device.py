@@ -9,7 +9,7 @@ from kospel_cmi.exceptions import (
     RegisterMissingError,
 )
 from kospel_cmi.registers.enums import (
-    CwuMode,
+    DhwMode,
     HeaterMode,
     HeatingStatus,
 )
@@ -251,29 +251,29 @@ class TestEkcoM3:
     async def test_set_water_mode_writes_mode_only(
         self,
     ) -> None:
-        """set_water_mode sets cwu_mode only (0b30)."""
+        """set_water_mode sets dhw_mode only (0b30)."""
         backend = MockRegisterBackend({"0b30": "0100"})
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        await controller.set_water_mode(CwuMode.COMFORT)
+        await controller.set_water_mode(DhwMode.COMFORT)
         written_registers = {r for r, _ in backend.writes}
         assert written_registers == {"0b30"}
         assert backend.registers["0b30"] == "0200"  # 2 in little-endian
 
     @pytest.mark.asyncio
     async def test_set_water_mode_raises_on_invalid_type(self) -> None:
-        """set_water_mode raises TypeError when mode is not CwuMode."""
+        """set_water_mode raises TypeError when mode is not DhwMode."""
         backend = MockRegisterBackend({"0b30": "0100"})
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        with pytest.raises(TypeError, match="mode must be CwuMode"):
+        with pytest.raises(TypeError, match="mode must be DhwMode"):
             await controller.set_water_mode(2)  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_set_water_comfort_temperature_writes_temp_only(
         self,
     ) -> None:
-        """set_water_comfort_temperature sets cwu_temperature_comfort only (0b67)."""
+        """set_water_comfort_temperature sets dhw_temperature_comfort only (0b67)."""
         backend = MockRegisterBackend({"0b30": "0200", "0b67": "6801"})
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
@@ -286,7 +286,7 @@ class TestEkcoM3:
     async def test_set_water_economy_temperature_writes_temp_only(
         self,
     ) -> None:
-        """set_water_economy_temperature sets cwu_temperature_economy only (0b66)."""
+        """set_water_economy_temperature sets dhw_temperature_economy only (0b66)."""
         backend = MockRegisterBackend({"0b30": "0000", "0b66": "6801"})
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
@@ -348,82 +348,82 @@ class TestEkcoM3:
             await controller.set_boiler_max_power_index(-1)
 
     @pytest.mark.asyncio
-    async def test_co_heating_status_summer_disabled(self) -> None:
-        """In summer mode, CO is always DISABLED."""
+    async def test_ch_heating_status_summer_disabled(self) -> None:
+        """In summer mode, CH is always DISABLED."""
         backend = MockRegisterBackend(
             {"0b55": "0800", "0b51": "0000", "0b46": "0000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.co_heating_status == HeatingStatus.DISABLED
+        assert controller.ch_heating_status == HeatingStatus.DISABLED
 
     @pytest.mark.asyncio
-    async def test_co_heating_status_winter_running(self) -> None:
-        """In winter mode with co=1 and power>0, CO is RUNNING."""
+    async def test_ch_heating_status_winter_running(self) -> None:
+        """In winter mode with co=1 and power>0, CH is RUNNING."""
         backend = MockRegisterBackend(
             {"0b55": "2000", "0b51": "8000", "0b46": "5000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.co_heating_status == HeatingStatus.RUNNING
+        assert controller.ch_heating_status == HeatingStatus.RUNNING
 
     @pytest.mark.asyncio
-    async def test_co_heating_status_winter_idle(self) -> None:
-        """In winter mode with co=1 and power=0, CO is IDLE."""
+    async def test_ch_heating_status_winter_idle(self) -> None:
+        """In winter mode with co=1 and power=0, CH is IDLE."""
         backend = MockRegisterBackend(
             {"0b55": "2000", "0b51": "8000", "0b46": "0000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.co_heating_status == HeatingStatus.IDLE
+        assert controller.ch_heating_status == HeatingStatus.IDLE
 
     @pytest.mark.asyncio
-    async def test_cwu_heating_status_summer_running(self) -> None:
-        """In summer mode with cwu=1, CWU is RUNNING (no power check)."""
+    async def test_dhw_heating_status_summer_running(self) -> None:
+        """In summer mode with cwu=1, DHW is RUNNING (no power check)."""
         backend = MockRegisterBackend(
             {"0b55": "0800", "0b51": "0001", "0b46": "0000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.cwu_heating_status == HeatingStatus.RUNNING
+        assert controller.dhw_heating_status == HeatingStatus.RUNNING
 
     @pytest.mark.asyncio
-    async def test_cwu_heating_status_summer_idle(self) -> None:
-        """In summer mode with cwu=0, CWU is IDLE."""
+    async def test_dhw_heating_status_summer_idle(self) -> None:
+        """In summer mode with cwu=0, DHW is IDLE."""
         backend = MockRegisterBackend(
             {"0b55": "0800", "0b51": "0000", "0b46": "0000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.cwu_heating_status == HeatingStatus.IDLE
+        assert controller.dhw_heating_status == HeatingStatus.IDLE
 
     @pytest.mark.asyncio
-    async def test_cwu_heating_status_winter_running(self) -> None:
-        """In winter with water enabled, cwu=1, power>0, CWU is RUNNING."""
+    async def test_dhw_heating_status_winter_running(self) -> None:
+        """In winter with water enabled, cwu=1, power>0, DHW is RUNNING."""
         backend = MockRegisterBackend(
             {"0b55": "3000", "0b51": "0001", "0b46": "5000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.cwu_heating_status == HeatingStatus.RUNNING
+        assert controller.dhw_heating_status == HeatingStatus.RUNNING
 
     @pytest.mark.asyncio
-    async def test_cwu_heating_status_winter_disabled_when_water_off(self) -> None:
-        """In winter with water disabled, CWU is DISABLED."""
+    async def test_dhw_heating_status_winter_disabled_when_water_off(self) -> None:
+        """In winter with water disabled, DHW is DISABLED."""
         backend = MockRegisterBackend(
             {"0b55": "2000", "0b51": "0001", "0b46": "5000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.cwu_heating_status == HeatingStatus.DISABLED
+        assert controller.dhw_heating_status == HeatingStatus.DISABLED
 
     @pytest.mark.asyncio
-    async def test_co_cwu_heating_status_other_modes_disabled(self) -> None:
-        """In OFF/PARTY/VACATION/MANUAL, both CO and CWU are DISABLED."""
+    async def test_ch_dhw_heating_status_other_modes_disabled(self) -> None:
+        """In OFF/PARTY/VACATION/MANUAL, both CH and DHW are DISABLED."""
         backend = MockRegisterBackend(
             {"0b55": "0000", "0b51": "8001", "0b46": "5000"}
         )
         controller = EkcoM3(backend=backend)
         controller.from_registers(await backend.read_registers("0b00", 256))
-        assert controller.co_heating_status == HeatingStatus.DISABLED
-        assert controller.cwu_heating_status == HeatingStatus.DISABLED
+        assert controller.ch_heating_status == HeatingStatus.DISABLED
+        assert controller.dhw_heating_status == HeatingStatus.DISABLED

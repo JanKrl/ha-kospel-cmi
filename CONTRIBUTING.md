@@ -223,7 +223,7 @@ After merging the HA Release PR:
 ## Adding a New HA Entity
 
 1. Create a new entity module in `custom_components/kospel/` (e.g., `switch.py`).
-2. Follow the entity pattern documented in [CLAUDE.md](CLAUDE.md#entity-patterns).
+2. Follow the entity pattern documented in [AGENTS.md](.agents/AGENTS.md#entity-patterns).
 3. Register the platform in `PLATFORMS` list in `__init__.py`.
 4. Add translation keys in `strings.json` and `translations/pl.json`.
 5. Write tests covering the entity's read properties and write operations.

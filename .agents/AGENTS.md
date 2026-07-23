@@ -1,6 +1,6 @@
-# CLAUDE.md — AI Agent Context for ha-kospel-cmi
+# AGENTS.md — AI Agent Context for ha-kospel-cmi
 
-This file provides structured context for Claude, Antigravity, and similar AI coding agents working on this repository.
+This file provides structured context for Antigravity and similar AI coding agents working on this repository.
 
 For human-readable documentation, start with [README.md](README.md).
 
@@ -158,7 +158,7 @@ from .coordinator import KospelDataUpdateCoordinator
   - Use `CH` (central heating) not `CO` in code
   - Use `DHW` (domestic hot water) not `CWU` in code
 - **Library compatibility fields**: Keep library naming where required
-  - `co_heating_status`, `cwu_heating_status`, `cwu_mode` — these are `kospel-cmi-lib` property names
+  - `ch_heating_status`, `dhw_heating_status`, `cwu_mode` — these are `kospel-cmi-lib` property names
   - Map them to English translation keys in integration code
 - **User-facing labels**: Localized in `strings.json` (English) and `translations/pl.json` (Polish)
 
@@ -286,9 +286,10 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
 3. **Don't forget the refresh delay** after write operations — the heater needs time to persist register changes.
 4. **Don't remove DHCP discovery code** — it's intentionally kept for future use even though it's hidden from the UI.
 5. **Don't use `_attr_name` for entity naming** — use `_attr_translation_key` and `strings.json` for all user-facing names.
-6. **Don't use `CO`/`CWU` in new code identifiers** — use `CH`/`DHW` in English. Library property names like `co_heating_status` are exceptions (they match the library API).
+6. **Don't use `CO`/`CWU` in new code identifiers** — use `CH`/`DHW` in English. The library API now uses English names (`ch_heating_status`, `dhw_heating_status`, `is_ch_heating_active`, `is_dhw_heating_active`).
 7. **Power values**: The library reports kW but HA expects W. Always multiply by 1000 when creating power sensors.
 8. **Config flow VERSION is 2** — any structural changes to config entry data require a new migration step.
+9. **Entity unique_ids**: Changing a setting name in the controller or integration is a breaking change for existing Home Assistant installations because entities will get recreated with new `unique_id`s. When refactoring or renaming settings, you MUST use or add an optional `unique_id_suffix` override (or similar mechanism) in the entity setup to ensure that the entity's `unique_id` remains the same as it was historically. This preserves the existing HA entity registry entries.
 
 ## AI Agent Behavioral Guidelines
 

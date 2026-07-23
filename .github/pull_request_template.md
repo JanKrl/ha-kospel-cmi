@@ -22,7 +22,7 @@
 
 ## Checklist
 
-- [ ] Code follows project conventions (see [CLAUDE.md](CLAUDE.md#key-conventions))
+- [ ] Code follows project conventions (see [.agents/AGENTS.md](.agents/AGENTS.md#key-conventions))
 - [ ] Type hints added for new/modified public methods
 - [ ] Translation keys added to `strings.json` (if new entities/UI strings)
 - [ ] Documentation updated (if user-facing behavior changed)

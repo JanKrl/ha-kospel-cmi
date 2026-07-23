@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from kospel_cmi.registers.enums import CwuMode
+from kospel_cmi.registers.enums import DhwMode
 
 
 # Mock homeassistant before importing integration modules.
@@ -98,12 +98,12 @@ class TestWaterHeaterTargetTemperature:
     def test_target_temperature_returns_supply_setpoint(
         self, water_heater_entity, mock_coordinator
     ) -> None:
-        """target_temperature returns supply_setpoint regardless of cwu_mode."""
+        """target_temperature returns supply_setpoint regardless of dhw_mode."""
         mock_controller = MagicMock()
         mock_controller.supply_setpoint = 15.0
-        mock_controller.cwu_mode = CwuMode.ANTI_FREEZE
-        mock_controller.cwu_temperature_economy = 40.0
-        mock_controller.cwu_temperature_comfort = 45.0
+        mock_controller.dhw_mode = DhwMode.ANTI_FREEZE
+        mock_controller.dhw_temperature_economy = 40.0
+        mock_controller.dhw_temperature_comfort = 45.0
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.target_temperature == 15.0
@@ -114,26 +114,26 @@ class TestWaterHeaterTargetTemperature:
         """target_temperature returns None when supply_setpoint is unavailable."""
         mock_controller = MagicMock()
         mock_controller.supply_setpoint = None
-        mock_controller.cwu_mode = CwuMode.ECONOMY
-        mock_controller.cwu_temperature_economy = 40.0
-        mock_controller.cwu_temperature_comfort = 45.0
+        mock_controller.dhw_mode = DhwMode.ECONOMY
+        mock_controller.dhw_temperature_economy = 40.0
+        mock_controller.dhw_temperature_comfort = 45.0
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.target_temperature is None
 
 
 class TestWaterHeaterCurrentOperation:
-    """Tests for current_operation (from cwu_mode)."""
+    """Tests for current_operation (from dhw_mode)."""
 
-    def test_current_operation_eco_when_cwu_mode_economy(
+    def test_current_operation_eco_when_dhw_mode_economy(
         self, water_heater_entity, mock_coordinator
     ) -> None:
-        """current_operation returns eco when cwu_mode is economy."""
+        """current_operation returns eco when dhw_mode is economy."""
         from kospel_cmi.registers.enums import WaterHeaterEnabled
 
         mock_controller = MagicMock()
         mock_controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
-        mock_controller.cwu_mode = CwuMode.ECONOMY
+        mock_controller.dhw_mode = DhwMode.ECONOMY
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.current_operation == STATE_ECO
@@ -146,20 +146,20 @@ class TestWaterHeaterCurrentOperation:
 
         mock_controller = MagicMock()
         mock_controller.is_water_heater_enabled = WaterHeaterEnabled.DISABLED
-        mock_controller.cwu_mode = CwuMode.ECONOMY
+        mock_controller.dhw_mode = DhwMode.ECONOMY
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.current_operation == STATE_OFF
 
-    def test_current_operation_performance_when_cwu_mode_comfort(
+    def test_current_operation_performance_when_dhw_mode_comfort(
         self, water_heater_entity, mock_coordinator
     ) -> None:
-        """current_operation returns performance when cwu_mode is comfort."""
+        """current_operation returns performance when dhw_mode is comfort."""
         from kospel_cmi.registers.enums import WaterHeaterEnabled
 
         mock_controller = MagicMock()
         mock_controller.is_water_heater_enabled = WaterHeaterEnabled.ENABLED
-        mock_controller.cwu_mode = CwuMode.COMFORT
+        mock_controller.dhw_mode = DhwMode.COMFORT
         mock_coordinator.data = mock_controller
 
         assert water_heater_entity.current_operation == STATE_PERFORMANCE
