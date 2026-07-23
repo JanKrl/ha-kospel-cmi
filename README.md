@@ -127,7 +127,7 @@ See [Advanced usage and technical notes](docs/advanced-usage.md) for:
 - architecture references.
 
 For contributors, see [CONTRIBUTING.md](CONTRIBUTING.md).
-For AI coding agents (Claude, Antigravity, etc.), see [CLAUDE.md](CLAUDE.md).
+For AI coding agents (Claude, Antigravity, etc.), see [AGENTS.md](.agents/AGENTS.md).
 
 ## Feedback and Issues
 

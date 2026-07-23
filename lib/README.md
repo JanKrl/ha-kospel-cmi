@@ -160,7 +160,7 @@ Module-specific documentation is co-located with the code (GitHub automatically 
 - **[Development Guide](docs/development.md)** - Contributing and extending the library
 - **[Architecture](docs/architecture.md)** - System design, layers, components, and data flow
 - **[Technical Specs](docs/technical.md)** - Implementation details, data formats, protocols, testing, and coding standards
-- **[AI Context (CLAUDE.md)](CLAUDE.md)** - Entry point and cheat-sheet for AI coding assistants (Copilot, Claude, Antigravity)
+- **[AI Context (AGENTS.md)](../.agents/AGENTS.md)** - Entry point and cheat-sheet for AI coding assistants (Copilot, Claude, Antigravity)
 
 
 ## Known Limitations

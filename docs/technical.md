@@ -108,4 +108,4 @@ uv run python -m pytest tests/ -v
 
 - **Architecture**: [docs/architecture.md](architecture.md)
 - **Advanced usage**: [docs/advanced-usage.md](advanced-usage.md)
-- **AI agent context**: [CLAUDE.md](../CLAUDE.md)
+- **AI agent context**: [AGENTS.md](../.agents/AGENTS.md)
