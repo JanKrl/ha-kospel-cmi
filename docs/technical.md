@@ -107,5 +107,6 @@ uv run python -m pytest tests/ -v
 ## References
 
 - **Architecture**: [docs/architecture.md](architecture.md)
+- **Schedules (Programator)**: [docs/schedules.md](schedules.md)
 - **Advanced usage**: [docs/advanced-usage.md](advanced-usage.md)
 - **AI agent context**: [AGENTS.md](../.agents/AGENTS.md)

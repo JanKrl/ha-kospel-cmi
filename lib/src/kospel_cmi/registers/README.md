@@ -111,6 +111,17 @@ Register values may vary per device type / version. Currently the project includ
 - `0b6f`: End time — month (1–12)
 - `0b70`: End time — year (2 digits, e.g. 26 = 2026)
 
+### Schedule Registers
+
+The device uses a day-to-program mapping architecture for schedules, with 8 possible daily programs per schedule type. See `docs/schedules.md` in the integration repository for full documentation.
+
+- `0c94` to `0c9a`: CH (CO) Day-to-Program mappings (Monday-Sunday, values 1-8)
+- `0d16` to `0d1c`: DHW (CWU) Day-to-Program mappings (Monday-Sunday, values 1-8)
+- `0d98` to `0d9e`: Circulation Day-to-Program mappings (Monday-Sunday, values 1-8)
+- `0c1c`: Start of CH (CO) Program Definitions (15 registers per program)
+- `0c9e`: Start of DHW (CWU) Program Definitions (15 registers per program)
+- `0d20`: Start of Circulation Program Definitions (15 registers per program)
+
 ## Implementation
 
 Register encoding/decoding is implemented in:
