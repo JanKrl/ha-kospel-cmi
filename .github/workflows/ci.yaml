@@ -37,7 +37,7 @@ jobs:
           version: "latest"
           enable-cache: true
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - name: Install dependencies
@@ -56,7 +56,7 @@ jobs:
           version: "latest"
           enable-cache: true
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - name: Install dependencies
@@ -75,7 +75,7 @@ jobs:
           version: "latest"
           enable-cache: true
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version-file: ".python-version"
       - name: Install dependencies
