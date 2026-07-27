@@ -5,6 +5,7 @@ Explicit API: each setting is a property (read) or async setter method (write).
 Writes happen immediately; no save() or batching.
 """
 
+import asyncio
 import logging
 from typing import Any, ClassVar, Optional
 
@@ -659,12 +660,15 @@ class EkcoM3:
 
             await self._backend.write_register(start_addr, start_hex)
             self._registers[start_addr] = start_hex
+            await asyncio.sleep(0.1)
 
             await self._backend.write_register(stop_addr, stop_hex)
             self._registers[stop_addr] = stop_hex
+            await asyncio.sleep(0.1)
 
             await self._backend.write_register(preset_addr, preset_hex)
             self._registers[preset_addr] = preset_hex
+            await asyncio.sleep(0.1)
 
     async def get_weekday_schedule(self, schedule_type: ScheduleType) -> WeekdaySchedule:
         """Fetch weekday-to-program mapping from the heater."""
@@ -698,6 +702,7 @@ class EkcoM3:
             hex_val = encode_raw_int(val, None) or "0100"
             await self._backend.write_register(addr, hex_val)
             self._registers[addr] = hex_val
+            await asyncio.sleep(0.1)
 
 
     # --- Convenience methods for HA integration ---
