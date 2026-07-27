@@ -427,3 +427,90 @@ class TestEkcoM3:
         controller.from_registers(await backend.read_registers("0b00", 256))
         assert controller.ch_heating_status == HeatingStatus.DISABLED
         assert controller.dhw_heating_status == HeatingStatus.DISABLED
+
+    @pytest.mark.asyncio
+    async def test_get_program_loads_from_backend(self) -> None:
+        """get_program fetches 15 registers and parses them into a DailyProgram."""
+        # 0c1c is CH Program 1 base. Registers 0-9 are times, 10-14 are presets
+        mock_regs = {
+            "0c1c": "e001", # start 480
+            "0c1d": "5802", # stop 600
+            "0c1e": "ffff", # empty start
+            "0c1f": "ffff", # empty stop
+            "0c20": "ffff",
+            "0c21": "ffff",
+            "0c22": "ffff",
+            "0c23": "ffff",
+            "0c24": "ffff",
+            "0c25": "ffff",
+            "0c26": "0200", # preset COMFORT (2)
+            "0c27": "ffff",
+            "0c28": "ffff",
+            "0c29": "ffff",
+            "0c2a": "ffff",
+        }
+        from kospel_cmi.registers.enums import ChPreset, ScheduleType
+        backend = MockRegisterBackend(mock_regs)
+        controller = EkcoM3(backend=backend)
+        program = await controller.get_program(ScheduleType.CH, 1)
+        assert len(program.slots) == 5
+        assert program.slots[0].start_minute == 480
+        assert program.slots[0].stop_minute == 600
+        assert program.slots[0].preset_id == ChPreset.COMFORT
+        assert program.slots[1].is_empty
+
+    @pytest.mark.asyncio
+    async def test_set_program_writes_to_backend(self) -> None:
+        """set_program encodes a DailyProgram and writes 15 registers."""
+        from kospel_cmi.controller.schedules import DailyProgram, ScheduleTimeSlot
+        from kospel_cmi.registers.enums import ChPreset, ScheduleType
+        backend = MockRegisterBackend()
+        controller = EkcoM3(backend=backend)
+
+        program = DailyProgram(slots=[
+            ScheduleTimeSlot(480, 600, ChPreset.COMFORT)
+        ])
+        await controller.set_program(ScheduleType.CH, 1, program)
+        written_registers = {r for r, _ in backend.writes}
+        assert "0c1c" in written_registers
+        assert "0c2a" in written_registers
+        assert backend.registers["0c1c"] == "e001" # 480
+        assert backend.registers["0c1d"] == "5802" # 600
+        assert backend.registers["0c26"] == "0200" # 2
+
+    @pytest.mark.asyncio
+    async def test_get_weekday_schedule_loads_from_backend(self) -> None:
+        """get_weekday_schedule fetches 7 registers and parses them."""
+        # CH weekday schedule: 0c94 to 0c9a
+        mock_regs = {
+            "0c94": "0100", # Mon = 1
+            "0c95": "0200", # Tue = 2
+            "0c96": "0300", # Wed = 3
+            "0c97": "0400", # Thu = 4
+            "0c98": "0500", # Fri = 5
+            "0c99": "0600", # Sat = 6
+            "0c9a": "0700", # Sun = 7
+        }
+        from kospel_cmi.registers.enums import ScheduleType
+        backend = MockRegisterBackend(mock_regs)
+        controller = EkcoM3(backend=backend)
+        schedule = await controller.get_weekday_schedule(ScheduleType.CH)
+        assert schedule.monday == 1
+        assert schedule.sunday == 7
+
+    @pytest.mark.asyncio
+    async def test_set_weekday_schedule_writes_to_backend(self) -> None:
+        """set_weekday_schedule encodes a WeekdaySchedule and writes 7 registers."""
+        from kospel_cmi.controller.schedules import WeekdaySchedule
+        from kospel_cmi.registers.enums import ScheduleType
+        backend = MockRegisterBackend()
+        controller = EkcoM3(backend=backend)
+
+        schedule = WeekdaySchedule(1, 1, 1, 1, 1, 2, 2)
+        await controller.set_weekday_schedule(ScheduleType.CH, schedule)
+        written_registers = {r for r, _ in backend.writes}
+        assert "0c94" in written_registers
+        assert "0c9a" in written_registers
+        assert backend.registers["0c94"] == "0100" # Mon
+        assert backend.registers["0c9a"] == "0200" # Sun
+

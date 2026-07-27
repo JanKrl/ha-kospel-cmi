@@ -13,6 +13,7 @@ to build closures for session/state_file. Protocol keeps "connection" state
 inside the backend object and the interface explicit.
 """
 
+import asyncio
 import logging
 from typing import Dict, Optional, Protocol, runtime_checkable
 
@@ -169,3 +170,25 @@ async def write_flag_bit(
         return
 
     await backend.write_register(register, new_hex_val)
+
+
+async def write_registers_sequential(
+    backend: RegisterBackend,
+    registers: Dict[str, str],
+    delay: float = 0.1,
+) -> None:
+    """
+    Write multiple registers sequentially with a delay between writes.
+
+    Prevents overwhelming the device's internal HTTP server buffer when
+    saving large chunks of data (like schedules).
+
+    Args:
+        backend: Any RegisterBackend (HTTP or YAML).
+        registers: Dictionary mapping register addresses to hex values.
+        delay: Delay in seconds between writes.
+    """
+    for addr, hex_val in registers.items():
+        await backend.write_register(addr, hex_val)
+        if delay > 0:
+            await asyncio.sleep(delay)

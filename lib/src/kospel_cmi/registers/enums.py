@@ -58,6 +58,30 @@ class DhwMode(IntEnum):
     COMFORT = 2  # Uses dhw_temperature_comfort (0b67)
 
 
+class ChPreset(IntEnum):
+    """Central Heating (CH) temperature preset."""
+
+    ANTIFREEZE = 1
+    COMFORT = 2
+    COMFORT_MINUS = 3
+    COMFORT_PLUS = 4
+
+
+class DhwPreset(IntEnum):
+    """Domestic Hot Water (DHW) temperature preset."""
+
+    ECONOMY = 1
+    COMFORT = 2
+
+
+class ScheduleType(Enum):
+    """Schedule type for daily programs."""
+
+    CH = "ch"
+    DHW = "dhw"
+    CIRCULATION = "circulation"
+
+
 
 # Firmware value for room_mode (0b32) when heater_mode=MANUAL.
 # Tells firmware to use manual_temperature (0b8d) as the target.

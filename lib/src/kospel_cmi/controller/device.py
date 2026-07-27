@@ -12,7 +12,7 @@ from ..exceptions import (
     IncompleteRegisterRefreshError,
     RegisterMissingError,
 )
-from ..kospel.backend import RegisterBackend
+from ..kospel.backend import RegisterBackend, write_registers_sequential
 from ..registers.decoders import (
     decode_heater_mode,
     decode_map,
@@ -32,10 +32,17 @@ from ..registers.enums import (
     HeaterMode,
     HeatingCircuitActive,
     HeatingStatus,
+    ScheduleType,
     ValvePosition,
     WaterHeaterEnabled,
 )
 from ..registers.utils import int_to_reg_address
+from .schedules import (
+    DailyProgram,
+    ScheduleTimeSlot,
+    WeekdaySchedule,
+    validate_program,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -574,6 +581,126 @@ class EkcoM3:
     async def set_water_economy_temperature(self, temperature: float) -> None:
         """Set DHW economy temperature (0b66), °C."""
         await self.set_dhw_temperature_economy(temperature)
+
+    # --- Schedules ---
+
+    def _get_program_base_address(self, schedule_type: ScheduleType, program_id: int) -> int:
+        if not 1 <= program_id <= 8:
+            raise ValueError("program_id must be between 1 and 8")
+        if schedule_type == ScheduleType.CH:
+            base = 3100
+        elif schedule_type == ScheduleType.DHW:
+            base = 3230
+        elif schedule_type == ScheduleType.CIRCULATION:
+            base = 3360
+        else:
+            raise ValueError(f"Unknown schedule type {schedule_type}")
+        return base + 15 * (program_id - 1)
+
+    def _get_weekday_schedule_base_address(self, schedule_type: ScheduleType) -> int:
+        if schedule_type == ScheduleType.CH:
+            return 3220  # 0c94
+        elif schedule_type == ScheduleType.DHW:
+            return 3350  # 0d16
+        elif schedule_type == ScheduleType.CIRCULATION:
+            return 3480  # 0d98
+        else:
+            raise ValueError(f"Unknown schedule type {schedule_type}")
+
+    async def get_program(self, schedule_type: ScheduleType, program_id: int) -> DailyProgram:
+        """Fetch a daily program from the heater."""
+        base_int = self._get_program_base_address(schedule_type, program_id)
+        start_hex = f"{base_int:04x}"
+
+        regs = await self._backend.read_registers(start_hex, 15)
+        self._registers.update(regs)
+
+        slots = []
+        for i in range(5):
+            start_addr = f"{base_int + i * 2:04x}"
+            stop_addr = f"{base_int + i * 2 + 1:04x}"
+            preset_addr = f"{base_int + 10 + i:04x}"
+
+            start_val = decode_raw_int(regs.get(start_addr, "ffff"))
+            stop_val = decode_raw_int(regs.get(stop_addr, "ffff"))
+            preset_val = decode_raw_int(regs.get(preset_addr, "ffff"))
+
+            if start_val is None:
+                start_val = -1
+            if stop_val is None:
+                stop_val = -1
+            if preset_val is None:
+                preset_val = -1
+
+            slots.append(ScheduleTimeSlot(start_val, stop_val, preset_val))
+
+        return DailyProgram(slots=slots)
+
+    async def set_program(self, schedule_type: ScheduleType, program_id: int, program: DailyProgram) -> None:
+        """Validate and write a daily program to the heater."""
+        validate_program(program)
+        base_int = self._get_program_base_address(schedule_type, program_id)
+
+        # Ensure we write exactly 15 registers
+        slots = program.slots.copy()
+        while len(slots) < 5:
+            slots.append(ScheduleTimeSlot(-1, -1, -1))
+
+        regs_to_write = {}
+        for i, slot in enumerate(slots):
+            start_addr = f"{base_int + i * 2:04x}"
+            stop_addr = f"{base_int + i * 2 + 1:04x}"
+            preset_addr = f"{base_int + 10 + i:04x}"
+
+            start_hex = encode_raw_int(slot.start_minute, None) or "ffff"
+            stop_hex = encode_raw_int(slot.stop_minute, None) or "ffff"
+
+            preset_val = slot.preset_id if slot.preset_id is not None else -1
+            preset_hex = encode_raw_int(preset_val, None) or "ffff"
+
+            regs_to_write[start_addr] = start_hex
+            regs_to_write[stop_addr] = stop_hex
+            regs_to_write[preset_addr] = preset_hex
+
+        await write_registers_sequential(self._backend, regs_to_write)
+        self._registers.update(regs_to_write)
+
+    async def get_weekday_schedule(self, schedule_type: ScheduleType) -> WeekdaySchedule:
+        """Fetch weekday-to-program mapping from the heater."""
+        base_int = self._get_weekday_schedule_base_address(schedule_type)
+        start_hex = f"{base_int:04x}"
+
+        regs = await self._backend.read_registers(start_hex, 7)
+        self._registers.update(regs)
+
+        days = []
+        for i in range(7):
+            addr = f"{base_int + i:04x}"
+            val = decode_raw_int(regs.get(addr, "0100"))
+            days.append(val if val is not None else 1)
+
+        return WeekdaySchedule(*days)
+
+    async def set_weekday_schedule(self, schedule_type: ScheduleType, schedule: WeekdaySchedule) -> None:
+        """Write weekday-to-program mapping to the heater."""
+        base_int = self._get_weekday_schedule_base_address(schedule_type)
+
+        days = [
+            schedule.monday, schedule.tuesday, schedule.wednesday,
+            schedule.thursday, schedule.friday, schedule.saturday, schedule.sunday
+        ]
+
+        regs_to_write = {}
+        for i, val in enumerate(days):
+            if not 1 <= val <= 8:
+                raise ValueError("Program IDs must be between 1 and 8")
+            addr = f"{base_int + i:04x}"
+            hex_val = encode_raw_int(val, None) or "0100"
+            regs_to_write[addr] = hex_val
+
+        await write_registers_sequential(self._backend, regs_to_write)
+        self._registers.update(regs_to_write)
+
 
     # --- Convenience methods for HA integration ---
 
