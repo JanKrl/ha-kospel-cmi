@@ -5,7 +5,6 @@ Explicit API: each setting is a property (read) or async setter method (write).
 Writes happen immediately; no save() or batching.
 """
 
-import asyncio
 import logging
 from typing import Any, ClassVar, Optional
 
@@ -13,7 +12,7 @@ from ..exceptions import (
     IncompleteRegisterRefreshError,
     RegisterMissingError,
 )
-from ..kospel.backend import RegisterBackend
+from ..kospel.backend import RegisterBackend, write_registers_sequential
 from ..registers.decoders import (
     decode_heater_mode,
     decode_map,
@@ -647,6 +646,7 @@ class EkcoM3:
         while len(slots) < 5:
             slots.append(ScheduleTimeSlot(-1, -1, -1))
 
+        regs_to_write = {}
         for i, slot in enumerate(slots):
             start_addr = f"{base_int + i * 2:04x}"
             stop_addr = f"{base_int + i * 2 + 1:04x}"
@@ -658,17 +658,12 @@ class EkcoM3:
             preset_val = slot.preset_id if slot.preset_id is not None else -1
             preset_hex = encode_raw_int(preset_val, None) or "ffff"
 
-            await self._backend.write_register(start_addr, start_hex)
-            self._registers[start_addr] = start_hex
-            await asyncio.sleep(0.1)
+            regs_to_write[start_addr] = start_hex
+            regs_to_write[stop_addr] = stop_hex
+            regs_to_write[preset_addr] = preset_hex
 
-            await self._backend.write_register(stop_addr, stop_hex)
-            self._registers[stop_addr] = stop_hex
-            await asyncio.sleep(0.1)
-
-            await self._backend.write_register(preset_addr, preset_hex)
-            self._registers[preset_addr] = preset_hex
-            await asyncio.sleep(0.1)
+        await write_registers_sequential(self._backend, regs_to_write)
+        self._registers.update(regs_to_write)
 
     async def get_weekday_schedule(self, schedule_type: ScheduleType) -> WeekdaySchedule:
         """Fetch weekday-to-program mapping from the heater."""
@@ -695,14 +690,16 @@ class EkcoM3:
             schedule.thursday, schedule.friday, schedule.saturday, schedule.sunday
         ]
 
+        regs_to_write = {}
         for i, val in enumerate(days):
             if not 1 <= val <= 8:
                 raise ValueError("Program IDs must be between 1 and 8")
             addr = f"{base_int + i:04x}"
             hex_val = encode_raw_int(val, None) or "0100"
-            await self._backend.write_register(addr, hex_val)
-            self._registers[addr] = hex_val
-            await asyncio.sleep(0.1)
+            regs_to_write[addr] = hex_val
+
+        await write_registers_sequential(self._backend, regs_to_write)
+        self._registers.update(regs_to_write)
 
 
     # --- Convenience methods for HA integration ---
