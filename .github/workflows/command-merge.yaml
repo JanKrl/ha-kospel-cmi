@@ -20,12 +20,11 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.issue.number }}
           
-          # 1. Verify PR branch
+          # 1. Determine PR type
           PR_BRANCH=$(gh pr view $PR_NUMBER --json headRefName --jq .headRefName)
-          if [[ ! "$PR_BRANCH" == release-please--branches--* ]]; then
-            echo "::error::The /merge command can only be used on release-please PRs."
-            gh pr comment $PR_NUMBER --body "❌ The \`/merge\` command can only be used on release-please PRs."
-            exit 1
+          IS_RELEASE_PR=false
+          if [[ "$PR_BRANCH" == release-please--branches--* ]]; then
+            IS_RELEASE_PR=true
           fi
 
           # 2. Add reaction to acknowledge command
@@ -44,8 +43,16 @@ jobs:
 
           # 4. Merge
           echo "Merging PR..."
-          if gh pr merge $PR_NUMBER --merge; then
-             gh pr comment $PR_NUMBER --body "✅ Successfully merged release PR using a merge commit."
+          if [ "$IS_RELEASE_PR" = true ]; then
+            MERGE_FLAGS="--merge"
+            SUCCESS_MSG="✅ Successfully merged release PR using a merge commit."
+          else
+            MERGE_FLAGS="--squash"
+            SUCCESS_MSG="✅ Successfully merged PR using a squash commit."
+          fi
+          
+          if gh pr merge $PR_NUMBER $MERGE_FLAGS; then
+             gh pr comment $PR_NUMBER --body "$SUCCESS_MSG"
           else
              echo "::error::Failed to merge PR."
              gh pr comment $PR_NUMBER --body "❌ Failed to merge PR."
