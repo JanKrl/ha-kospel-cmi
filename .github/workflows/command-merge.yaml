@@ -16,7 +16,7 @@ jobs:
       
       - name: Verify and Merge
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           PR_NUMBER=${{ github.event.issue.number }}
           
