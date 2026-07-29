@@ -193,6 +193,7 @@ async def test_get_program_service(hass):
     # Mock coordinator and controller
     coordinator = MagicMock()
     coordinator.entry = MagicMock()
+    from unittest.mock import AsyncMock
     controller = MagicMock()
     
     from kospel_cmi.controller.schedules import DailyProgram, ScheduleTimeSlot
@@ -202,7 +203,7 @@ async def test_get_program_service(hass):
         ScheduleTimeSlot(start_minute=100, stop_minute=200, preset_id=1),
         ScheduleTimeSlot(start_minute=300, stop_minute=400, preset_id=None),
     ])
-    controller.get_program.return_value = mock_program
+    controller.get_program = AsyncMock(return_value=mock_program)
     coordinator.heater_controller = controller
     hass.data[DOMAIN]["test-entry-id"] = coordinator
 
@@ -240,6 +241,7 @@ async def test_get_weekday_schedule_service(hass):
     # Mock coordinator and controller
     coordinator = MagicMock()
     coordinator.entry = MagicMock()
+    from unittest.mock import AsyncMock
     controller = MagicMock()
     
     from kospel_cmi.controller.schedules import WeekdaySchedule
@@ -248,7 +250,7 @@ async def test_get_weekday_schedule_service(hass):
     mock_schedule = WeekdaySchedule(
         monday=1, tuesday=2, wednesday=3, thursday=4, friday=5, saturday=6, sunday=7
     )
-    controller.get_weekday_schedule.return_value = mock_schedule
+    controller.get_weekday_schedule = AsyncMock(return_value=mock_schedule)
     coordinator.heater_controller = controller
     hass.data[DOMAIN]["test-entry-id"] = coordinator
 

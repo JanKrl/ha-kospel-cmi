@@ -230,9 +230,6 @@
       "max_power_limit": {
         "name": "Boiler max power limit"
       },
-      "schedules": {
-        "name": "Schedules"
-      }
     },
     "number": {
       "room_temperature_economy": {

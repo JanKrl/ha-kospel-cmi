@@ -175,7 +175,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
         coordinator = _get_coordinator_from_device_id(device_id)
         controller = coordinator.heater_controller
 
-        program = controller.get_program(schedule_type, program_id)
+        try:
+            program = await controller.get_program(schedule_type, program_id)
+        except KospelError as err:
+            _LOGGER.error("Failed to get program: %s", err)
+            raise HomeAssistantError(f"Failed to get program: {err}") from err
+
         slots = []
         for slot in program.slots:
             slot_data = {
@@ -201,7 +206,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
         coordinator = _get_coordinator_from_device_id(device_id)
         controller = coordinator.heater_controller
 
-        schedule = controller.get_weekday_schedule(schedule_type)
+        try:
+            schedule = await controller.get_weekday_schedule(schedule_type)
+        except KospelError as err:
+            _LOGGER.error("Failed to get weekday schedule: %s", err)
+            raise HomeAssistantError(f"Failed to get weekday schedule: {err}") from err
+
         return {
             "monday": schedule.monday,
             "tuesday": schedule.tuesday,

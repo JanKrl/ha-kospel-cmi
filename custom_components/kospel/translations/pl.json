@@ -242,9 +242,6 @@
           "dhw": "CWU"
         }
       },
-      "schedules": {
-        "name": "Harmonogramy"
-      }
     },
     "number": {
       "room_temperature_economy": {

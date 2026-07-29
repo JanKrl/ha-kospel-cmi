@@ -18,7 +18,7 @@ from .const import DOMAIN, get_device_info, get_device_identifier
 from .coordinator import KospelDataUpdateCoordinator
 
 from kospel_cmi.controller.device import EkcoM3
-from kospel_cmi.registers.enums import HeaterMode, HeatingStatus, ValvePosition, ScheduleType
+from kospel_cmi.registers.enums import HeaterMode, HeatingStatus, ValvePosition
 
 
 async def async_setup_entry(
@@ -70,10 +70,6 @@ async def async_setup_entry(
     
     # Combined heating mode sensor
     entities.append(KospelHeatingModeSensor(coordinator, entry))
-
-    # Schedules diagnostic sensor
-    entities.append(KospelSchedulesSensor(coordinator, entry))
-
     async_add_entities(entities)
 
 
@@ -354,71 +350,6 @@ class KospelHeatingModeSensor(KospelSensorEntity):
         
         # Both must be disabled
         return "off"
-
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self.async_write_ha_state()
-
-
-class KospelSchedulesSensor(KospelSensorEntity):
-    """Sensor that exposes all schedules in its attributes."""
-
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    def __init__(
-        self,
-        coordinator: KospelDataUpdateCoordinator,
-        entry: ConfigEntry,
-    ) -> None:
-        """Initialize the schedules sensor."""
-        super().__init__(coordinator, entry, "schedules", "schedules")
-
-    @property
-    def native_value(self) -> str | None:
-        """Return the state (OK if available)."""
-        return "OK" if self.coordinator.communication_ok else None
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        """Return the schedules as attributes."""
-        controller: EkcoM3 = self.coordinator.data
-        attrs = {}
-
-        for schedule_type in [ScheduleType.CH, ScheduleType.DHW, ScheduleType.CIRCULATION]:
-            st_name = schedule_type.value
-            try:
-                weekday_schedule = controller.get_weekday_schedule(schedule_type)
-                attrs[f"{st_name}_weekday_schedule"] = {
-                    "monday": weekday_schedule.monday,
-                    "tuesday": weekday_schedule.tuesday,
-                    "wednesday": weekday_schedule.wednesday,
-                    "thursday": weekday_schedule.thursday,
-                    "friday": weekday_schedule.friday,
-                    "saturday": weekday_schedule.saturday,
-                    "sunday": weekday_schedule.sunday,
-                }
-            except Exception:
-                pass
-
-            programs_dict = {}
-            for program_id in range(1, 9):
-                try:
-                    program = controller.get_program(schedule_type, program_id)
-                    slots = []
-                    for slot in program.slots:
-                        slot_data = {
-                            "start_minute": slot.start_minute,
-                            "stop_minute": slot.stop_minute,
-                        }
-                        if slot.preset_id is not None:
-                            slot_data["preset_id"] = slot.preset_id
-                        slots.append(slot_data)
-                    programs_dict[str(program_id)] = slots
-                except Exception:
-                    pass
-            attrs[f"{st_name}_programs"] = programs_dict
-
-        return attrs
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
