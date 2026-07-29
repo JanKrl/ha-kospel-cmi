@@ -4,6 +4,10 @@
       "name": "Ustaw program dobowy",
       "description": "Ustawia harmonogram programu dobowego na grzejniku Kospel.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
         "schedule_type": {
           "name": "Typ harmonogramu",
           "description": "Typ harmonogramu do ustawienia."
@@ -22,6 +26,10 @@
       "name": "Ustaw harmonogram tygodniowy",
       "description": "Przypisuje programy dobowe do poszczególnych dni tygodnia.",
       "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
         "schedule_type": {
           "name": "Typ harmonogramu",
           "description": "Typ harmonogramu do ustawienia."

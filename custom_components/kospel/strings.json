@@ -4,6 +4,10 @@
       "name": "Set daily program",
       "description": "Sets a daily program schedule on the Kospel heater.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
         "schedule_type": {
           "name": "Schedule type",
           "description": "The type of schedule to set."
@@ -22,6 +26,10 @@
       "name": "Set weekday schedule",
       "description": "Assigns daily programs to each day of the week.",
       "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
         "schedule_type": {
           "name": "Schedule type",
           "description": "The type of schedule to set."

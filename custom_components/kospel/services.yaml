@@ -1,8 +1,10 @@
 set_program:
-  target:
-    device:
-      integration: kospel
   fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: kospel
     schedule_type:
       required: true
       selector:
@@ -24,10 +26,12 @@ set_program:
         object: {}
 
 set_weekday_schedule:
-  target:
-    device:
-      integration: kospel
   fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: kospel
     schedule_type:
       required: true
       selector:
