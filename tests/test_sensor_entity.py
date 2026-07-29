@@ -73,9 +73,10 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
     _CoordinatorEntityBase
 )
 
-from custom_components.kospel.sensor import (  # noqa: E402
+from custom_components.kospel.sensor import (
     KospelHeatingModeSensor,
     KospelMaxPowerLimitSensor,
+    KospelSchedulesSensor,
     KospelTemperatureSensor,
 )
 
@@ -312,3 +313,43 @@ class TestKospelHeatingModeSensorNativeValue:
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
         assert entity.native_value is None
+
+def test_schedules_sensor(
+    mock_entry,
+    mock_coordinator,
+) -> None:
+    """Test the schedules diagnostic sensor."""
+    from kospel_cmi.controller.schedules import DailyProgram, ScheduleTimeSlot, WeekdaySchedule
+    from kospel_cmi.registers.enums import ScheduleType
+    
+    mock_controller = MagicMock()
+    
+    def mock_get_program(st, pid):
+        if st == ScheduleType.CH and pid == 1:
+            return DailyProgram(slots=[ScheduleTimeSlot(100, 200, 1)])
+        return DailyProgram(slots=[])
+        
+    def mock_get_weekday_schedule(st):
+        if st == ScheduleType.CH:
+            return WeekdaySchedule(1, 1, 1, 1, 1, 1, 1)
+        return WeekdaySchedule(2, 2, 2, 2, 2, 2, 2)
+        
+    mock_controller.get_program.side_effect = mock_get_program
+    mock_controller.get_weekday_schedule.side_effect = mock_get_weekday_schedule
+    mock_coordinator.data = mock_controller
+    mock_coordinator.communication_ok = True
+
+    sensor = KospelSchedulesSensor(mock_coordinator, mock_entry)
+
+    assert sensor._attr_translation_key == "schedules"
+    assert sensor.native_value == "OK"
+    
+    attrs = sensor.extra_state_attributes
+    assert attrs["ch_weekday_schedule"]["monday"] == 1
+    assert attrs["dhw_weekday_schedule"]["monday"] == 2
+    
+    # Check CH program 1
+    ch_programs = attrs["ch_programs"]
+    assert "1" in ch_programs
+    assert ch_programs["1"][0]["start_minute"] == 100
+    assert ch_programs["1"][0]["preset_id"] == 1

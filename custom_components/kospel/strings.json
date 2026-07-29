@@ -63,6 +63,38 @@
           "description": "Program ID for Sunday (1-8)."
         }
       }
+    },
+    "get_program": {
+      "name": "Get daily program",
+      "description": "Reads a daily program schedule from the Kospel heater.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
+        "schedule_type": {
+          "name": "Schedule type",
+          "description": "The type of schedule to read."
+        },
+        "program_id": {
+          "name": "Program ID",
+          "description": "The ID of the program (1-8)."
+        }
+      }
+    },
+    "get_weekday_schedule": {
+      "name": "Get weekday schedule",
+      "description": "Reads the assigned daily programs for each day of the week.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
+        "schedule_type": {
+          "name": "Schedule type",
+          "description": "The type of schedule to read."
+        }
+      }
     }
   },
   "device": {
@@ -157,9 +189,6 @@
       "water_temperature": {
         "name": "DHW temperature"
       },
-      "outside_temperature": {
-        "name": "Outside temperature"
-      },
       "pressure": {
         "name": "Pressure"
       },
@@ -200,6 +229,9 @@
       },
       "max_power_limit": {
         "name": "Boiler max power limit"
+      },
+      "schedules": {
+        "name": "Schedules"
       }
     },
     "number": {

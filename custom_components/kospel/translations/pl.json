@@ -63,6 +63,38 @@
           "description": "ID programu na niedzielę (1-8)."
         }
       }
+    },
+    "get_program": {
+      "name": "Pobierz program dobowy",
+      "description": "Pobiera harmonogram programu dobowego z grzejnika Kospel.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
+        "schedule_type": {
+          "name": "Typ harmonogramu",
+          "description": "Typ harmonogramu do pobrania."
+        },
+        "program_id": {
+          "name": "ID Programu",
+          "description": "ID programu (1-8)."
+        }
+      }
+    },
+    "get_weekday_schedule": {
+      "name": "Pobierz harmonogram tygodniowy",
+      "description": "Pobiera przypisane programy dobowe dla poszczególnych dni tygodnia.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
+        "schedule_type": {
+          "name": "Typ harmonogramu",
+          "description": "Typ harmonogramu do pobrania."
+        }
+      }
     }
   },
   "device": {
@@ -169,9 +201,6 @@
       "water_temperature": {
         "name": "Temperatura CWU"
       },
-      "outside_temperature": {
-        "name": "Temperatura zewnętrzna"
-      },
       "pressure": {
         "name": "Ciśnienie"
       },
@@ -212,6 +241,9 @@
           "ch": "CO",
           "dhw": "CWU"
         }
+      },
+      "schedules": {
+        "name": "Harmonogramy"
       }
     },
     "number": {

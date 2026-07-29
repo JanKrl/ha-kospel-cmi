@@ -89,3 +89,42 @@ set_weekday_schedule:
           min: 1
           max: 8
           mode: box
+
+get_program:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: kospel
+    schedule_type:
+      required: true
+      selector:
+        select:
+          options:
+            - ch
+            - dhw
+            - circulation
+    program_id:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box
+
+get_weekday_schedule:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: kospel
+    schedule_type:
+      required: true
+      selector:
+        select:
+          options:
+            - ch
+            - dhw
+            - circulation

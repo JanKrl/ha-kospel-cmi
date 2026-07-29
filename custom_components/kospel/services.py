@@ -2,7 +2,7 @@ import asyncio
 import logging
 import voluptuous as vol
 
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.exceptions import HomeAssistantError
@@ -23,6 +23,8 @@ _LOGGER = logging.getLogger(__name__)
 
 SERVICE_SET_PROGRAM = "set_program"
 SERVICE_SET_WEEKDAY_SCHEDULE = "set_weekday_schedule"
+SERVICE_GET_PROGRAM = "get_program"
+SERVICE_GET_WEEKDAY_SCHEDULE = "get_weekday_schedule"
 
 # Schema definitions
 SLOT_SCHEMA = vol.Schema(
@@ -53,6 +55,21 @@ SET_WEEKDAY_SCHEDULE_SCHEMA = vol.Schema(
         vol.Required("friday"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
         vol.Required("saturday"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
         vol.Required("sunday"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
+    }
+)
+
+GET_PROGRAM_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+        vol.Required("schedule_type"): vol.In(["ch", "dhw", "circulation"]),
+        vol.Required("program_id"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
+    }
+)
+
+GET_WEEKDAY_SCHEDULE_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+        vol.Required("schedule_type"): vol.In(["ch", "dhw", "circulation"]),
     }
 )
 
@@ -144,6 +161,57 @@ def async_setup_services(hass: HomeAssistant) -> None:
         await asyncio.sleep(get_refresh_delay_after_set(coordinator.entry))
         await coordinator.async_request_refresh()
 
+    async def async_handle_get_program(call: ServiceCall) -> ServiceResponse:
+        """Handle get_program service call."""
+        device_id = call.data["device_id"]
+        schedule_type_str = call.data["schedule_type"]
+        program_id = call.data["program_id"]
+
+        try:
+            schedule_type = ScheduleType(schedule_type_str)
+        except ValueError as err:
+            raise HomeAssistantError(f"Invalid schedule_type: {schedule_type_str}") from err
+
+        coordinator = _get_coordinator_from_device_id(device_id)
+        controller = coordinator.heater_controller
+
+        program = controller.get_program(schedule_type, program_id)
+        slots = []
+        for slot in program.slots:
+            slot_data = {
+                "start_minute": slot.start_minute,
+                "stop_minute": slot.stop_minute,
+            }
+            if slot.preset_id is not None:
+                slot_data["preset_id"] = slot.preset_id
+            slots.append(slot_data)
+
+        return {"slots": slots}
+
+    async def async_handle_get_weekday_schedule(call: ServiceCall) -> ServiceResponse:
+        """Handle get_weekday_schedule service call."""
+        device_id = call.data["device_id"]
+        schedule_type_str = call.data["schedule_type"]
+
+        try:
+            schedule_type = ScheduleType(schedule_type_str)
+        except ValueError as err:
+            raise HomeAssistantError(f"Invalid schedule_type: {schedule_type_str}") from err
+
+        coordinator = _get_coordinator_from_device_id(device_id)
+        controller = coordinator.heater_controller
+
+        schedule = controller.get_weekday_schedule(schedule_type)
+        return {
+            "monday": schedule.monday,
+            "tuesday": schedule.tuesday,
+            "wednesday": schedule.wednesday,
+            "thursday": schedule.thursday,
+            "friday": schedule.friday,
+            "saturday": schedule.saturday,
+            "sunday": schedule.sunday,
+        }
+
     # Avoid registering multiple times if multiple config entries are added
     if hass.services.has_service(DOMAIN, SERVICE_SET_PROGRAM):
         return
@@ -159,4 +227,18 @@ def async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_SET_WEEKDAY_SCHEDULE,
         async_handle_set_weekday_schedule,
         schema=SET_WEEKDAY_SCHEDULE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_PROGRAM,
+        async_handle_get_program,
+        schema=GET_PROGRAM_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_WEEKDAY_SCHEDULE,
+        async_handle_get_weekday_schedule,
+        schema=GET_WEEKDAY_SCHEDULE_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
     )

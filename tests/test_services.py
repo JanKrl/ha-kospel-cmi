@@ -61,7 +61,7 @@ def hass():
 def test_async_setup_services_registers_services(hass):
     """Test that services are registered."""
     async_setup_services(hass)
-    assert hass.services.async_register.call_count == 2
+    assert hass.services.async_register.call_count == 4
     calls = hass.services.async_register.call_args_list
     assert calls[0][0][1] == SERVICE_SET_PROGRAM
     assert calls[1][0][1] == SERVICE_SET_WEEKDAY_SCHEDULE
@@ -177,3 +177,97 @@ async def test_set_weekday_schedule_service(hass):
         assert schedule.monday == 1
         assert schedule.tuesday == 2
         assert schedule.sunday == 7
+
+@pytest.mark.asyncio
+async def test_get_program_service(hass):
+    """Test getting a program schedule."""
+    async_setup_services(hass)
+    handle_get_program = hass.services.async_register.call_args_list[2][0][2]
+
+    # Mock device registry
+    device_registry = MagicMock()
+    device = MagicMock()
+    device.config_entries = ["test-entry-id"]
+    device_registry.async_get.return_value = device
+    
+    # Mock coordinator and controller
+    coordinator = MagicMock()
+    coordinator.entry = MagicMock()
+    controller = MagicMock()
+    
+    from kospel_cmi.controller.schedules import DailyProgram, ScheduleTimeSlot
+    from kospel_cmi.registers.enums import ScheduleType
+    
+    mock_program = DailyProgram(slots=[
+        ScheduleTimeSlot(start_minute=100, stop_minute=200, preset_id=1),
+        ScheduleTimeSlot(start_minute=300, stop_minute=400, preset_id=None),
+    ])
+    controller.get_program.return_value = mock_program
+    coordinator.heater_controller = controller
+    hass.data[DOMAIN]["test-entry-id"] = coordinator
+
+    with patch("custom_components.kospel.services.dr.async_get", return_value=device_registry):
+        call = MagicMock()
+        call.data = {
+            "device_id": "test_device_id",
+            "schedule_type": "ch",
+            "program_id": 2,
+        }
+        
+        response = await handle_get_program(call)
+        
+        controller.get_program.assert_called_once_with(ScheduleType.CH, 2)
+        assert response == {
+            "slots": [
+                {"start_minute": 100, "stop_minute": 200, "preset_id": 1},
+                {"start_minute": 300, "stop_minute": 400},
+            ]
+        }
+
+
+@pytest.mark.asyncio
+async def test_get_weekday_schedule_service(hass):
+    """Test getting a weekday schedule."""
+    async_setup_services(hass)
+    handle_get_weekday_schedule = hass.services.async_register.call_args_list[3][0][2]
+
+    # Mock device registry
+    device_registry = MagicMock()
+    device = MagicMock()
+    device.config_entries = ["test-entry-id"]
+    device_registry.async_get.return_value = device
+    
+    # Mock coordinator and controller
+    coordinator = MagicMock()
+    coordinator.entry = MagicMock()
+    controller = MagicMock()
+    
+    from kospel_cmi.controller.schedules import WeekdaySchedule
+    from kospel_cmi.registers.enums import ScheduleType
+    
+    mock_schedule = WeekdaySchedule(
+        monday=1, tuesday=2, wednesday=3, thursday=4, friday=5, saturday=6, sunday=7
+    )
+    controller.get_weekday_schedule.return_value = mock_schedule
+    coordinator.heater_controller = controller
+    hass.data[DOMAIN]["test-entry-id"] = coordinator
+
+    with patch("custom_components.kospel.services.dr.async_get", return_value=device_registry):
+        call = MagicMock()
+        call.data = {
+            "device_id": "test_device_id",
+            "schedule_type": "dhw",
+        }
+        
+        response = await handle_get_weekday_schedule(call)
+        
+        controller.get_weekday_schedule.assert_called_once_with(ScheduleType.DHW)
+        assert response == {
+            "monday": 1,
+            "tuesday": 2,
+            "wednesday": 3,
+            "thursday": 4,
+            "friday": 5,
+            "saturday": 6,
+            "sunday": 7,
+        }
