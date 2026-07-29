@@ -1,13 +1,9 @@
 set_program:
-  name: Set Daily Program
-  description: Sets a daily program schedule on the Kospel heater.
   target:
     device:
       integration: kospel
   fields:
     schedule_type:
-      name: Schedule Type
-      description: The type of schedule to set.
       required: true
       selector:
         select:
@@ -16,8 +12,6 @@ set_program:
             - dhw
             - circulation
     program_id:
-      name: Program ID
-      description: The ID of the program (1-8).
       required: true
       selector:
         number:
@@ -25,22 +19,16 @@ set_program:
           max: 8
           mode: box
     slots:
-      name: Time Slots
-      description: List of time slots for the program. Each slot must be a dictionary with start_minute, stop_minute, and an optional preset_id. Max 5 slots. Example - [{"start_minute": 360, "stop_minute": 1320, "preset_id": 2}]
       required: true
       selector:
         object: {}
 
 set_weekday_schedule:
-  name: Set Weekday Schedule
-  description: Assigns daily programs to each day of the week.
   target:
     device:
       integration: kospel
   fields:
     schedule_type:
-      name: Schedule Type
-      description: The type of schedule to set.
       required: true
       selector:
         select:
@@ -49,8 +37,6 @@ set_weekday_schedule:
             - dhw
             - circulation
     monday:
-      name: Monday
-      description: Program ID for Monday (1-8).
       required: true
       selector:
         number:
@@ -58,8 +44,6 @@ set_weekday_schedule:
           max: 8
           mode: box
     tuesday:
-      name: Tuesday
-      description: Program ID for Tuesday (1-8).
       required: true
       selector:
         number:
@@ -67,8 +51,6 @@ set_weekday_schedule:
           max: 8
           mode: box
     wednesday:
-      name: Wednesday
-      description: Program ID for Wednesday (1-8).
       required: true
       selector:
         number:
@@ -76,8 +58,6 @@ set_weekday_schedule:
           max: 8
           mode: box
     thursday:
-      name: Thursday
-      description: Program ID for Thursday (1-8).
       required: true
       selector:
         number:
@@ -85,8 +65,6 @@ set_weekday_schedule:
           max: 8
           mode: box
     friday:
-      name: Friday
-      description: Program ID for Friday (1-8).
       required: true
       selector:
         number:
@@ -94,8 +72,6 @@ set_weekday_schedule:
           max: 8
           mode: box
     saturday:
-      name: Saturday
-      description: Program ID for Saturday (1-8).
       required: true
       selector:
         number:
@@ -103,8 +79,6 @@ set_weekday_schedule:
           max: 8
           mode: box
     sunday:
-      name: Sunday
-      description: Program ID for Sunday (1-8).
       required: true
       selector:
         number:
