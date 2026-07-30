@@ -229,7 +229,7 @@
       },
       "max_power_limit": {
         "name": "Boiler max power limit"
-      },
+      }
     },
     "number": {
       "room_temperature_economy": {
