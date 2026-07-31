@@ -70,7 +70,6 @@ async def async_setup_entry(
     
     # Combined heating mode sensor
     entities.append(KospelHeatingModeSensor(coordinator, entry))
-
     async_add_entities(entities)
 
 

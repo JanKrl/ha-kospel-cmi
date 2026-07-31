@@ -19,6 +19,7 @@ from .const import (
     get_yaml_state_file_path,
 )
 from .coordinator import KospelDataUpdateCoordinator
+from .services import async_setup_services
 from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.kospel.backend import HttpRegisterBackend, YamlRegisterBackend
 
@@ -70,6 +71,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         raise ConfigEntryNotReady from err
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    
+    async_setup_services(hass)
+
     return True
 
 

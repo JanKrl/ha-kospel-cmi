@@ -73,7 +73,7 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
     _CoordinatorEntityBase
 )
 
-from custom_components.kospel.sensor import (  # noqa: E402
+from custom_components.kospel.sensor import (
     KospelHeatingModeSensor,
     KospelMaxPowerLimitSensor,
     KospelTemperatureSensor,

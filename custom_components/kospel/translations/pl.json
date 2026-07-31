@@ -1,4 +1,102 @@
 {
+  "services": {
+    "set_program": {
+      "name": "Ustaw program dobowy",
+      "description": "Ustawia harmonogram programu dobowego na grzejniku Kospel.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
+        "schedule_type": {
+          "name": "Typ harmonogramu",
+          "description": "Typ harmonogramu do ustawienia."
+        },
+        "program_id": {
+          "name": "ID programu",
+          "description": "Identyfikator programu (1-8)."
+        },
+        "slots": {
+          "name": "Przedziały czasowe",
+          "description": "Lista przedziałów czasowych dla programu. Każdy przedział to słownik zawierający start_minute, stop_minute i opcjonalny preset_id. Maksymalnie 5 przedziałów."
+        }
+      }
+    },
+    "set_weekday_schedule": {
+      "name": "Ustaw harmonogram tygodniowy",
+      "description": "Przypisuje programy dobowe do poszczególnych dni tygodnia.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
+        "schedule_type": {
+          "name": "Typ harmonogramu",
+          "description": "Typ harmonogramu do ustawienia."
+        },
+        "monday": {
+          "name": "Poniedziałek",
+          "description": "ID programu na poniedziałek (1-8)."
+        },
+        "tuesday": {
+          "name": "Wtorek",
+          "description": "ID programu na wtorek (1-8)."
+        },
+        "wednesday": {
+          "name": "Środa",
+          "description": "ID programu na środę (1-8)."
+        },
+        "thursday": {
+          "name": "Czwartek",
+          "description": "ID programu na czwartek (1-8)."
+        },
+        "friday": {
+          "name": "Piątek",
+          "description": "ID programu na piątek (1-8)."
+        },
+        "saturday": {
+          "name": "Sobota",
+          "description": "ID programu na sobotę (1-8)."
+        },
+        "sunday": {
+          "name": "Niedziela",
+          "description": "ID programu na niedzielę (1-8)."
+        }
+      }
+    },
+    "get_program": {
+      "name": "Pobierz program dobowy",
+      "description": "Pobiera harmonogram programu dobowego z grzejnika Kospel.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
+        "schedule_type": {
+          "name": "Typ harmonogramu",
+          "description": "Typ harmonogramu do pobrania."
+        },
+        "program_id": {
+          "name": "ID Programu",
+          "description": "ID programu (1-8)."
+        }
+      }
+    },
+    "get_weekday_schedule": {
+      "name": "Pobierz harmonogram tygodniowy",
+      "description": "Pobiera przypisane programy dobowe dla poszczególnych dni tygodnia.",
+      "fields": {
+        "device_id": {
+          "name": "Urządzenie",
+          "description": "Grzejnik Kospel."
+        },
+        "schedule_type": {
+          "name": "Typ harmonogramu",
+          "description": "Typ harmonogramu do pobrania."
+        }
+      }
+    }
+  },
   "device": {
     "heater": {
       "name": "Grzejnik Kospel"
@@ -102,9 +200,6 @@
       },
       "water_temperature": {
         "name": "Temperatura CWU"
-      },
-      "outside_temperature": {
-        "name": "Temperatura zewnętrzna"
       },
       "pressure": {
         "name": "Ciśnienie"

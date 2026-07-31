@@ -1,4 +1,102 @@
 {
+  "services": {
+    "set_program": {
+      "name": "Set daily program",
+      "description": "Sets a daily program schedule on the Kospel heater.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
+        "schedule_type": {
+          "name": "Schedule type",
+          "description": "The type of schedule to set."
+        },
+        "program_id": {
+          "name": "Program ID",
+          "description": "The ID of the program (1-8)."
+        },
+        "slots": {
+          "name": "Time slots",
+          "description": "List of time slots for the program. Each slot must be a dictionary with start_minute, stop_minute, and an optional preset_id. Max 5 slots."
+        }
+      }
+    },
+    "set_weekday_schedule": {
+      "name": "Set weekday schedule",
+      "description": "Assigns daily programs to each day of the week.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
+        "schedule_type": {
+          "name": "Schedule type",
+          "description": "The type of schedule to set."
+        },
+        "monday": {
+          "name": "Monday",
+          "description": "Program ID for Monday (1-8)."
+        },
+        "tuesday": {
+          "name": "Tuesday",
+          "description": "Program ID for Tuesday (1-8)."
+        },
+        "wednesday": {
+          "name": "Wednesday",
+          "description": "Program ID for Wednesday (1-8)."
+        },
+        "thursday": {
+          "name": "Thursday",
+          "description": "Program ID for Thursday (1-8)."
+        },
+        "friday": {
+          "name": "Friday",
+          "description": "Program ID for Friday (1-8)."
+        },
+        "saturday": {
+          "name": "Saturday",
+          "description": "Program ID for Saturday (1-8)."
+        },
+        "sunday": {
+          "name": "Sunday",
+          "description": "Program ID for Sunday (1-8)."
+        }
+      }
+    },
+    "get_program": {
+      "name": "Get daily program",
+      "description": "Reads a daily program schedule from the Kospel heater.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
+        "schedule_type": {
+          "name": "Schedule type",
+          "description": "The type of schedule to read."
+        },
+        "program_id": {
+          "name": "Program ID",
+          "description": "The ID of the program (1-8)."
+        }
+      }
+    },
+    "get_weekday_schedule": {
+      "name": "Get weekday schedule",
+      "description": "Reads the assigned daily programs for each day of the week.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Kospel heater device."
+        },
+        "schedule_type": {
+          "name": "Schedule type",
+          "description": "The type of schedule to read."
+        }
+      }
+    }
+  },
   "device": {
     "heater": {
       "name": "Kospel Heater"
@@ -90,9 +188,6 @@
       },
       "water_temperature": {
         "name": "DHW temperature"
-      },
-      "outside_temperature": {
-        "name": "Outside temperature"
       },
       "pressure": {
         "name": "Pressure"
