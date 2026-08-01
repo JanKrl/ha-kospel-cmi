@@ -50,6 +50,9 @@ release-please reads file paths (not scopes) to assign commits to packages, but 
 > [!WARNING]
 > **Avoid `fix(ci)` or `feat(ci)`:** Because `release-please` triggers on the `fix` and `feat` types, using them for CI changes will accidentally include internal workflows in the user-facing changelog. ALWAYS use the `ci:` or `chore:` type (e.g., `ci: update checkout step`) for pipeline updates so they are correctly ignored.
 
+> [!CAUTION]
+> **Monorepo Breaking Changes**: If a PR contains a breaking change that only applies to one package (e.g., `lib/` or the root integration), DO NOT modify files in both packages in the same PR. `release-please` applies the `BREAKING CHANGE` footer to **all components** whose files were touched by the commit. Separate the changes into two distinct PRs to avoid accidentally bumping the major version of the unaffected package.
+
 **Breaking changes**: add `BREAKING CHANGE: <description>` as a footer in the PR description body.
 
 ### Pull Request & Issue Workflow
