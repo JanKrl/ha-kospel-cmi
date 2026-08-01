@@ -196,4 +196,3 @@ This library was reverse-engineered from JavaScript code used in the heater's we
 
 Apache License 2.0
 
-<!-- Dummy change to trigger release-please scoped to lib -->
