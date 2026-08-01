@@ -14,7 +14,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/JanKrl/ha-kospel-cmi/issues",
   "requirements": [
-    "kospel-cmi-lib==1.1.6"
+    "kospel-cmi-lib==2.0.0"
   ],
   "version": "1.3.4"
 }
