@@ -303,6 +303,18 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
 5. **Self-Healing Local Validation**: Before proposing a PR or asking for commit approval, you MUST run tests (`uv run python -m pytest tests/ -v` and `uv run python -m pytest lib/tests/ -v`) and linting (`uv run ruff check . --fix`) locally. If they fail, fix the issues yourself. Do not rely on CI to catch basic errors.
 6. **Proactive YAML Mocking**: Whenever you add a new entity or feature, you MUST update `custom_components/kospel/data/state.yaml` with the corresponding mock data. This allows the user to immediately test UI changes in YAML development mode without connecting to a physical heater.
 
+## Ponytail (Lazy Senior Dev Mode)
+
+This repository includes the [Ponytail](https://github.com/DietrichGebert/ponytail) restraint rules in [`.agents/rules/ponytail.md`](file:///home/jan/code/ha-kospel-cmi/.agents/rules/ponytail.md) and skills in [`.agents/skills/ponytail/`](file:///home/jan/code/ha-kospel-cmi/.agents/skills/ponytail/).
+Antigravity automatically enforces the Ponytail decision ladder:
+1. **YAGNI** (Does this need to exist at all?)
+2. **Reuse** (Already in this codebase?)
+3. **Stdlib** (Standard library does it?)
+4. **Native platform** (Home Assistant native entity / feature handles it?)
+5. **Installed dependency** (Existing library covers it?)
+6. **One line** (Can it be written in one line?)
+7. **Minimum working code**
+
 ## References
 
 - [README.md](README.md) — User-facing documentation
