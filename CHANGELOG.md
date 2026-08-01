@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.0](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.4...v1.4.0) (2026-08-01)
+
+
+### Features
+
+* **ha:** implement reading and writing of daily schedules via services ([#120](https://github.com/JanKrl/ha-kospel-cmi/issues/120)) ([9042317](https://github.com/JanKrl/ha-kospel-cmi/commit/904231703ca174a6460bfb88809d7b4915bc5e6e))
+
+
+### Bug Fixes
+
+* rename cwu/co identifiers to dhw/ch across codebase ([033d382](https://github.com/JanKrl/ha-kospel-cmi/commit/033d382c8e46a52332ca9733b8523be4987f2682))
+
+
+### Documentation
+
+* document schedule register mapping ([#109](https://github.com/JanKrl/ha-kospel-cmi/issues/109)) ([aa1dbfe](https://github.com/JanKrl/ha-kospel-cmi/commit/aa1dbfe580db40408b683d92f87b9fed6ab2e106))
+* update agent instructions for release-please ([#124](https://github.com/JanKrl/ha-kospel-cmi/issues/124)) ([810cbf4](https://github.com/JanKrl/ha-kospel-cmi/commit/810cbf4c158b88579fc90a29a2be751e5f34a08a))
+
 ## [1.3.4](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.3.3...v1.3.4) (2026-07-19)
 
 
