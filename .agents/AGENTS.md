@@ -298,6 +298,10 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
 
 1. **Commit and Push Approval**: NEVER push commits to an upstream remote branch (e.g. `origin`) without explicit prior approval from the user.
 2. **Force Pushing**: NEVER use force pushes (`--force` or `-f`) without explicit prior approval from the user. When asking for approval, you MUST provide a clear and detailed explanation of exactly why a force push is necessary (e.g., rewriting history, fixing a broken rebase) and what it will overwrite.
+3. **Strict Task Separation (Monorepo)**: The `release-please` workflow relies on a clean separation between the library (`lib/`) and the HA integration (`custom_components/kospel/`). You MUST NEVER mix changes for both in a single PR, task, or commit. Always split tasks into two distinct phases/PRs if changes in both components are required.
+4. **Proactive Documentation Updates**: After making any functional changes, adding features, or modifying configuration options, you MUST automatically update the main `README.md` (and `lib/README.md` if the library changed) to accurately reflect the current state of the project. Do not wait for the user to ask you to update the documentation.
+5. **Self-Healing Local Validation**: Before proposing a PR or asking for commit approval, you MUST run tests (`uv run python -m pytest tests/ -v` and `uv run python -m pytest lib/tests/ -v`) and linting (`uv run ruff check . --fix`) locally. If they fail, fix the issues yourself. Do not rely on CI to catch basic errors.
+6. **Proactive YAML Mocking**: Whenever you add a new entity or feature, you MUST update `custom_components/kospel/data/state.yaml` with the corresponding mock data. This allows the user to immediately test UI changes in YAML development mode without connecting to a physical heater.
 
 ## References
 

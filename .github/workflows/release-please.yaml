@@ -1,3 +1,19 @@
+# ==============================================================================
+# Workflow: Release Please
+# 
+# WHEN IT TRIGGERS: Every time code is pushed or merged into the `master` branch.
+# 
+# WHAT IT DOES: 
+#   - Scans commit messages (Conventional Commits) to determine version bumps.
+#   - Automatically opens/updates a "Release PR" containing changelogs.
+#   - If a Release PR is merged, it publishes the GitHub Release (for HACS) and 
+#     publishes `kospel-cmi-lib` to PyPI.
+# 
+# WHY IT EXISTS: It completely automates semantic versioning, changelog generation, 
+# and package deployment for the monorepo.
+# 
+# WHERE IT SITS IN WORKFLOW: Final Deployment / Release Publishing phase.
+# ==============================================================================
 name: Release Please
 
 on:

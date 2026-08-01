@@ -1,28 +1,18 @@
-## Description
+## 🎯 Product Value & Goal
+<!-- What user problem does this solve or what feature does it add? Keep it high-level. -->
 
-<!-- What does this PR do? Provide a brief summary of the change. -->
+## 🔗 Related Issues
+<!-- Link related issues with "Relates to #123" (NOT Fixes) so they stay open until release. -->
 
-## Motivation
+## 🛠️ Technical Summary
+<!-- Briefly describe the architectural approach. What trade-offs or compromises were made? Any tech debt introduced? -->
 
-<!-- Why is this change needed? Link related issues with "Closes #123" or "Fixes #123". -->
+## 🧪 How to Verify
+<!-- As a PO, how can I manually test this in Home Assistant or using the CLI? Provide clear steps. -->
 
-## Changes
-
-<!-- List the key changes made. Use bullet points. -->
-
--
-
-## Testing
-
-<!-- How was this tested? Describe test commands run, manual verification steps, etc. -->
-
-- [ ] All existing tests pass (`uv run python -m pytest tests/ -v`)
-- [ ] New tests added (if applicable)
-- [ ] Manually tested with Home Assistant (if applicable)
-
-## Checklist
-
-- [ ] Code follows project conventions (see [.agents/AGENTS.md](.agents/AGENTS.md#key-conventions))
-- [ ] Type hints added for new/modified public methods
-- [ ] Translation keys added to `strings.json` (if new entities/UI strings)
-- [ ] Documentation updated (if user-facing behavior changed)
+## ✅ Release Checklist
+- [ ] **Package boundary respected**: Changes are isolated to ONLY `lib/` OR `custom_components/kospel/` (never both).
+- [ ] **Documentation**: `README.md` (and `lib/README.md` if applicable) is updated to reflect new features/changes.
+- [ ] **Translation keys**: Added to `strings.json` and `translations/pl.json` (if new entities/UI strings).
+- [ ] **Tests pass**: Automated tests pass (`uv run python -m pytest tests/ -v`).
+- [ ] **Code conventions**: Follows guidelines in `.agents/AGENTS.md` (e.g. type hints, English code identifiers).

@@ -1,3 +1,19 @@
+# ==============================================================================
+# Workflow: Command Merge
+# 
+# WHEN IT TRIGGERS: When a user comments `/merge` on any Pull Request.
+# 
+# WHAT IT DOES: Waits for the CI pipeline to complete successfully, then automatically 
+# merges the PR. It intelligently uses a "squash" merge for standard feature PRs, 
+# and a "merge commit" for release-please PRs.
+# 
+# WHY IT EXISTS: `release-please` breaks if its PRs are squash-merged, and conversely, 
+# normal feature PRs MUST be squash-merged for `release-please` to parse commits 
+# correctly. This automation guarantees the correct merge strategy is applied every 
+# time, bypassing human error.
+# 
+# WHERE IT SITS IN WORKFLOW: PR Finalization / Code Merge phase.
+# ==============================================================================
 name: Command Merge
 on:
   issue_comment:

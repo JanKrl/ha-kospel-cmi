@@ -1,3 +1,17 @@
+# ==============================================================================
+# Workflow: Link Issues to Release PR
+# 
+# WHEN IT TRIGGERS: When a `release-please` Pull Request is opened or updated.
+# 
+# WHAT IT DOES: Scans the bodies of all the feature PRs included in the upcoming release. 
+# If it finds "Relates to #123", it appends "Closes #123" to the release-please PR body.
+# 
+# WHY IT EXISTS: We don't want GitHub to close issues the moment a feature PR merges 
+# to master, because the code isn't actually released yet. This script ensures issues 
+# are only closed when the final Release PR is merged.
+# 
+# WHERE IT SITS IN WORKFLOW: Release Preparation / Issue Tracking phase.
+# ==============================================================================
 name: "Link Issues to Release PR"
 on:
   pull_request:
