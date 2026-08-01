@@ -195,3 +195,4 @@ This library was reverse-engineered from JavaScript code used in the heater's we
 ## License
 
 Apache License 2.0
+
