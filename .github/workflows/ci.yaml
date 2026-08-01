@@ -1,3 +1,17 @@
+# ==============================================================================
+# Workflow: Continuous Integration (CI)
+# 
+# WHEN IT TRIGGERS: On any push to master or when a Pull Request is opened/updated.
+# 
+# WHAT IT DOES: 
+#   - Validates the project structure against Home Assistant requirements (Hassfest, HACS).
+#   - Runs code linting and formatting checks (Ruff).
+#   - Runs unit tests for both the HA integration and the `kospel-cmi-lib` library.
+# 
+# WHY IT EXISTS: To catch bugs, syntax errors, and HA compliance issues before code is merged.
+# 
+# WHERE IT SITS IN WORKFLOW: Pre-Merge / Code Review phase.
+# ==============================================================================
 name: CI
 
 on:

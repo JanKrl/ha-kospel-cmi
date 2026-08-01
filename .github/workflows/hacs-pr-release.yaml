@@ -1,0 +1,84 @@
+# ==============================================================================
+# Workflow: HACS PR Pre-release
+# 
+# WHEN IT TRIGGERS: Every time code is pushed to a standard feature Pull Request.
+# 
+# WHAT IT DOES: Calculates a dynamic version tag (e.g., v1.4.0-pr123.1) and creates 
+# a GitHub pre-release, then comments on the PR with instructions.
+# 
+# WHY IT EXISTS: It allows the Product Owner to instantly download and test the PR's 
+# code in a live Home Assistant instance via HACS, without dealing with manual zip files.
+# 
+# WHERE IT SITS IN WORKFLOW: QA Testing / PO Review phase.
+# ==============================================================================
+name: HACS PR Pre-release
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  pr-release:
+    name: Create Pre-release for HACS
+    # Do not run for release-please PRs
+    if: ${{ !startsWith(github.event.pull_request.head.ref, 'release-please--branches--') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need all tags to determine the version
+
+      - name: Calculate Version Tag
+        id: version
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          
+          # Find the latest stable release tag (e.g., v1.2.3)
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match "v*" --exclude "*-*" 2>/dev/null || echo "v0.1.0")
+          
+          # Find the highest increment (z) for this PR
+          MAX_Z=$(git tag -l "${LATEST_TAG}-pr${PR_NUMBER}.*" | awk -F'.' '{print $NF}' | sort -n | tail -1)
+          
+          if [ -z "$MAX_Z" ]; then
+            Z=1
+          else
+            Z=$((MAX_Z + 1))
+          fi
+          
+          NEW_TAG="${LATEST_TAG}-pr${PR_NUMBER}.${Z}"
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "Generated new tag: $NEW_TAG"
+
+      - name: Create Pre-release
+        env:
+          # Use GITHUB_TOKEN for release creation
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          
+          gh release create "$TAG" \
+            --prerelease \
+            --title "$TAG (PR #${{ github.event.pull_request.number }})" \
+            --notes "Automated pre-release for HACS testing. Commit: ${{ github.event.pull_request.head.sha }}" \
+            --target ${{ github.event.pull_request.head.sha }}
+
+      - name: Comment on PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          
+          # Only comment if this is the first pre-release for the PR to avoid spam
+          # or we could comment every time. Let's comment every time so the PO knows the exact version to download.
+          
+          gh pr comment ${{ github.event.pull_request.number }} --body "🚀 A test release is ready for HACS! 
+
+          To test these changes:
+          1. Go to **HACS** -> **Integrations** -> **Kospel Electric Heaters**
+          2. Click the three dots (⋮) -> **Update information**
+          3. Click **Redownload** and select version \`$TAG\`
+          4. Restart Home Assistant"
