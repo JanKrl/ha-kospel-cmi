@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "kospel-cmi-lib"
-version = "2.0.0"
+version = "3.0.0"
 description = "Python client for Kospel C.MI electric heater HTTP API"
 readme = "README.md"
 license = "Apache-2.0"
