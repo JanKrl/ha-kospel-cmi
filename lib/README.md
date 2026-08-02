@@ -192,7 +192,14 @@ This library was reverse-engineered from JavaScript code used in the heater's we
 - Temperature and pressure values are scaled for precision
 - Read-Modify-Write pattern is required for setting flag bits
 
+## Support / Wsparcie
+
+☕ **Enjoying this integration? / Podoba Ci się ta integracja?**  
+I maintain this open-source project in my private time. If you'd like to say thanks with a coffee / Rozwijam ten projekt w wolnym czasie — jeśli chcesz podziękować kawą ☕: [buycoffee.to/jankrl](https://buycoffee.to/jankrl)
+
+
 ## License
 
 Apache License 2.0
+
 
