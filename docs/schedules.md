@@ -48,21 +48,29 @@ The start address for a given Program `N` (where `N` is `1` to `8`) is calculate
 
 ### Temperature Preset IDs
 
-The preset IDs used in registers 11-15 map to the following modes:
+The preset IDs map to the following operational modes:
 
 **CH (CO) Presets:**
-- `1`: Antifreeze / Economy (pzam)
-- `2`: Comfort (conf)
-- `3`: Comfort Minus (confm)
-- `4`: Comfort Plus (confp)
+- `0`: Antifreeze (`Ochrona przed zamarzaniem`, `pzam`) ❄️
+- `1`: Economy (`Ekonomiczny`, `eko`) 🍃
+- `2`: Comfort (`Komfort`, `conf`) 🌡️
+- `3`: Comfort Plus (`Komfort+`, `confp`) 🌡️+
+- `4`: Comfort Minus (`Komfort-`, `confm`) 🌡️-
 
 **DHW (CWU) Presets:**
-- `1`: Economy (pzam)
-- `2`: Comfort (conf)
+- `0`: Off (`Wyłączone`) 🔌
+- `1`: Economy (`Ekonomiczny`, `eko`) 🍃
+- `2`: Comfort (`Komfort`, `conf`) 🌡️
 
-## Time Slot Validation (Overlaps)
-The manufacturer's UI performs strict validation on time slots before allowing them to be saved:
-1. **No Overlaps**: Time slots within the same Daily Program cannot overlap. If a slot overlaps with another, the UI marks it as invalid and blocks saving.
-2. **Valid Durations**: The `stop` time must be strictly greater than the `start` time. A slot where `stop <= start` is considered invalid.
+**Circulation Presets:**
+- `0`: Off (`Wyłączone`) 🔌
+- `1`: On (`Włączone`) ⚡
 
-To maintain compatibility and prevent device instability, any client library or integration should enforce these same validation rules when constructing schedule registers.
+## Time Slot Validation (Overlaps & Separation)
+The integration and frontend cards perform strict validation on time slots before allowing them to be saved:
+1. **No Overlaps or Collisions**: Time slots within the same Daily Program must be separated by at least 1 minute (`next_start > current_stop`).
+2. **Valid Durations**: The `stop` time must be strictly greater than the `start` time (`stop > start`).
+3. **Empty Spaces / Non-Contiguous Slots**: Time slots do not need to cover the full 24 hours continuously; unassigned gap periods revert to the background preset (Off / Antifreeze).
+
+## Frontend Lovelace Cards
+For detailed documentation on custom Lovelace cards, theme integration, style guides, and developer conventions, see [docs/frontend.md](frontend.md).

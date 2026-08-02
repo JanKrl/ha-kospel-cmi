@@ -83,26 +83,28 @@ The integration includes two custom Home Assistant dashboard cards that are auto
 
 1. **`kospel-program-card` (Daily Program Editor)**:
    - Visually edit 8 Daily Programs for Central Heating (CH), Domestic Hot Water (DHW), and Circulation.
-   - 24-hour color-coded timeline preview with up to 5 time slots per program.
-   - Interactive time pickers (`HH:MM`) and preset selectors (`Antifreeze`, `Economy`, `Comfort`, `Comfort+`, `Eco`, `On`, etc.).
-   - Action buttons to load and save daily programs via integration services.
+   - Interactive 24-hour color-coded timeline preview with up to 5 time slots per program.
+   - Drag-and-drop boundary handles, time pickers (`HH:MM`), and preset selectors (`Antifreeze`, `Economy`, `Comfort-`, `Comfort`, `Comfort+`, `Eco`, `On`, etc.).
+   - Mandatory 1-minute slot gap separation, empty program support, and native Home Assistant device selector.
 
-2. **`kospel-weekday-card` (Weekday Schedule Assignment)**:
+2. **`kospel-weekday-card` (Weekday Schedule Assignment & Visualization)**:
    - Assign Daily Programs 1–8 to each day of the week (Monday through Sunday).
-   - Action buttons to load and save weekday schedules.
+   - Read-only 24-hour schedule visualization per day with smart boundary edge timestamp labels and automatic anti-collision filtering.
+
+For full frontend documentation, architecture details, theme tokens, and developer conventions, see [docs/frontend.md](docs/frontend.md).
 
 ### Example Dashboard YAML Setup
 
 ```yaml
 type: custom:kospel-program-card
-title: Daily Program Editor
+device_id: climate.heater
 schedule_type: ch
 program_id: 1
 ```
 
 ```yaml
 type: custom:kospel-weekday-card
-title: Weekday Heating Schedule
+device_id: climate.heater
 schedule_type: ch
 ```
 

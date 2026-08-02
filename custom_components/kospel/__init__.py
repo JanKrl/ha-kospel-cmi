@@ -84,9 +84,6 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
     if not frontend_dir.exists():
         return
 
-    if hass.data.get(DOMAIN, {}).get("_frontend_registered"):
-        return
-
     try:
         from homeassistant.components.frontend import add_extra_js_url
         from homeassistant.components.http import StaticPathConfig
@@ -100,9 +97,23 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
                 )
             ]
         )
-        add_extra_js_url(hass, "/kospel_static/kospel-program-card.js")
-        add_extra_js_url(hass, "/kospel_static/kospel-weekday-card.js")
-        hass.data.setdefault(DOMAIN, {})["_frontend_registered"] = True
+
+        if not hass.data.get(DOMAIN, {}).get("_frontend_registered"):
+            add_extra_js_url(hass, "/kospel_static/kospel-program-card.js")
+            add_extra_js_url(hass, "/kospel_static/kospel-weekday-card.js")
+            hass.data.setdefault(DOMAIN, {})["_frontend_registered"] = True
+
+        # Auto-register items in Lovelace resources storage if available
+        lovelace = hass.data.get("lovelace")
+        if lovelace and hasattr(lovelace, "resources") and hasattr(lovelace.resources, "async_get_items"):
+            try:
+                items = lovelace.resources.async_get_items()
+                existing_urls = {i.get("url") for i in items if isinstance(i, dict)}
+                for card_url in ["/kospel_static/kospel-program-card.js", "/kospel_static/kospel-weekday-card.js"]:
+                    if card_url not in existing_urls:
+                        await lovelace.resources.async_create_item({"res_type": "module", "url": card_url})
+            except Exception as res_err:
+                _LOGGER.debug("Could not auto-create lovelace resource item: %s", res_err)
     except Exception as err:
         _LOGGER.warning("Failed to register frontend custom cards: %s", err)
 

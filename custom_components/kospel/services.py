@@ -217,6 +217,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
         slots = []
         for slot in program.slots:
+            if getattr(slot, "is_empty", False):
+                continue
+            if slot.start_minute in (-1, 65535) or slot.stop_minute in (-1, 65535):
+                continue
+            if slot.stop_minute <= slot.start_minute:
+                continue
             slot_data = {
                 "start_minute": slot.start_minute,
                 "stop_minute": slot.stop_minute,

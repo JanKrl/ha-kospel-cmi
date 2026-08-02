@@ -1,9 +1,75 @@
-# Mock heater registers for YAML development mode
+0c1c: '0000'
+0c1d: ff00
+0c1e: '0001'
+0c1f: f901
+0c20: fa01
+0c21: '3803'
+0c22: '3903'
+0c23: '5104'
+0c24: '5204'
+0c25: a005
+0c26: '0000'
+0c27: '0200'
+0c28: '0100'
+0c29: '0400'
+0c2a: '0100'
+0c2b: de00
+0c2c: '3202'
+0c2d: '7602'
+0c2e: '3903'
+0c2f: ffff
+0c30: ffff
+0c31: ffff
+0c32: ffff
+0c33: ffff
+0c34: ffff
+0c35: '0100'
+0c36: '0200'
+0c37: ffff
+0c38: ffff
+0c39: ffff
+0c3a: '9100'
+0c3b: ef01
+0c3c: f001
+0c3d: cf02
+0c3e: '7003'
+0c3f: '1404'
+0c40: '1504'
+0c41: ec04
+0c42: ffff
+0c43: ffff
+0c44: '0100'
+0c45: '0400'
+0c46: '0200'
+0c47: '0300'
+0c48: ffff
+0c76: de00
+0c77: '3202'
+0c78: ffff
+0c79: ffff
+0c7a: ffff
+0c7b: ffff
+0c7c: ffff
+0c7d: ffff
+0c7e: ffff
+0c7f: ffff
+0c80: '0000'
+0c81: ffff
+0c82: ffff
+0c83: ffff
+0c84: ffff
+0c94: '0100'
+0c95: '0200'
+0c96: '0300'
+0c97: '0400'
+0c98: '0500'
+0c99: '0600'
+0c9a: '0700'
 registers:
-  "0b27": "0000"  # CH Mode
-  "0b2f": "0172"  # Target Temp (23.0°C)
-  "0b25": "0016"  # Current Temp (22.0°C)
-  "0b26": "0012"  # Outside Temp (18.0°C)
-  "0b51": "0100"  # CH Program 1 Slot 1 Start (00:00)
-  "0b52": "02d0"  # CH Program 1 Slot 1 Stop (12:00)
-  "0b53": "0001"  # CH Program 1 Slot 1 Preset (Economy)
+  0b25: '0016'
+  0b26: '0012'
+  0b27: '0000'
+  0b2f: '0172'
+  0b51: '0100'
+  0b52: 02d0
+  0b53: '0001'
