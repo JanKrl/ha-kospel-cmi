@@ -73,8 +73,39 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
     async_setup_services(hass)
+    await _async_register_frontend_cards(hass)
 
     return True
+
+
+async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
+    """Register custom Lovelace cards with Home Assistant frontend."""
+    frontend_dir = Path(__file__).resolve().parent / "frontend"
+    if not frontend_dir.exists():
+        return
+
+    if hass.data.get(DOMAIN, {}).get("_frontend_registered"):
+        return
+
+    try:
+        from homeassistant.components.frontend import add_extra_js_url
+        from homeassistant.components.http import StaticPathConfig
+
+        await hass.http.async_register_static_paths(
+            [
+                StaticPathConfig(
+                    url_path="/kospel_static",
+                    path=str(frontend_dir),
+                    cache_headers=True,
+                )
+            ]
+        )
+        add_extra_js_url(hass, "/kospel_static/kospel-program-card.js")
+        add_extra_js_url(hass, "/kospel_static/kospel-weekday-card.js")
+    except Exception as err:
+        _LOGGER.debug("Frontend card registration info: %s", err)
+
+    hass.data.setdefault(DOMAIN, {})["_frontend_registered"] = True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

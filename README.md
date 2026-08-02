@@ -77,11 +77,40 @@ Entity IDs below are representative examples and can vary based on your device n
 - **Max Boiler Power Entity**:
   - Limit device power to: `2 kW`, `4 kW`, `6 kW`, `8 kW`
 
+## Custom Lovelace Cards
+
+The integration includes two custom Home Assistant dashboard cards that are automatically loaded into your Lovelace UI:
+
+1. **`kospel-program-card` (Daily Program Editor)**:
+   - Visually edit 8 Daily Programs for Central Heating (CH), Domestic Hot Water (DHW), and Circulation.
+   - 24-hour color-coded timeline preview with up to 5 time slots per program.
+   - Interactive time pickers (`HH:MM`) and preset selectors (`Antifreeze`, `Economy`, `Comfort`, `Comfort+`, `Eco`, `On`, etc.).
+   - Action buttons to load and save daily programs via integration services.
+
+2. **`kospel-weekday-card` (Weekday Schedule Assignment)**:
+   - Assign Daily Programs 1–8 to each day of the week (Monday through Sunday).
+   - Action buttons to load and save weekday schedules.
+
+### Example Dashboard YAML Setup
+
+```yaml
+type: custom:kospel-program-card
+title: Daily Program Editor
+schedule_type: ch
+program_id: 1
+```
+
+```yaml
+type: custom:kospel-weekday-card
+title: Weekday Heating Schedule
+schedule_type: ch
+```
+
 ## How To Use (Important Notes)
 
 - **Climate target temperature** can be changed only in **Heat** (manual) HVAC mode.
 - **Auto mode presets** are available as climate presets (`winter`, `summer`, `party`, `vacation`).
-- **Auto mode schedules** can be read from the device state, but editing schedules from Home Assistant is not supported yet.
+- **Auto mode schedules** can be viewed and configured visually using the custom Lovelace cards (`kospel-program-card` and `kospel-weekday-card`) or via services (`kospel.set_program`, `kospel.set_weekday_schedule`).
 - **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
 - After changing values, refresh can be slightly delayed by design (configurable integration option).
 

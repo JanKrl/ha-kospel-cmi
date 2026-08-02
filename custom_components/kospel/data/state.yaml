@@ -1,0 +1,9 @@
+# Mock heater registers for YAML development mode
+registers:
+  "0b27": "0000"  # CH Mode
+  "0b2f": "0172"  # Target Temp (23.0°C)
+  "0b25": "0016"  # Current Temp (22.0°C)
+  "0b26": "0012"  # Outside Temp (18.0°C)
+  "0b51": "0100"  # CH Program 1 Slot 1 Start (00:00)
+  "0b52": "02d0"  # CH Program 1 Slot 1 Stop (12:00)
+  "0b53": "0001"  # CH Program 1 Slot 1 Preset (Economy)
