@@ -96,16 +96,15 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
                 StaticPathConfig(
                     url_path="/kospel_static",
                     path=str(frontend_dir),
-                    cache_headers=True,
+                    cache_headers=False,
                 )
             ]
         )
         add_extra_js_url(hass, "/kospel_static/kospel-program-card.js")
         add_extra_js_url(hass, "/kospel_static/kospel-weekday-card.js")
+        hass.data.setdefault(DOMAIN, {})["_frontend_registered"] = True
     except Exception as err:
-        _LOGGER.debug("Frontend card registration info: %s", err)
-
-    hass.data.setdefault(DOMAIN, {})["_frontend_registered"] = True
+        _LOGGER.warning("Failed to register frontend custom cards: %s", err)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

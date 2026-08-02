@@ -324,7 +324,7 @@ class KospelProgramCard extends HTMLElement {
           display: flex;
           height: 36px;
           border-radius: 8px;
-          overflow: hidden;
+          position: relative;
           background: var(--secondary-background-color, #eee);
           touch-action: pan-y;
         }
@@ -341,6 +341,51 @@ class KospelProgramCard extends HTMLElement {
         }
         .timeline-segment:hover {
           filter: brightness(1.1);
+        }
+        .timeline-handle {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 18px;
+          margin-left: -9px;
+          cursor: col-resize;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10;
+          touch-action: none;
+          user-select: none;
+        }
+        .timeline-handle::before {
+          content: "";
+          width: 4px;
+          height: 22px;
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(0, 0, 0, 0.4);
+          border-radius: 2px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+          transition: transform 0.15s, background 0.15s;
+        }
+        .timeline-handle:hover::before, .timeline-handle.dragging::before {
+          background: var(--primary-color, #3b82f6);
+          height: 28px;
+          width: 6px;
+          transform: scale(1.1);
+        }
+        .drag-tooltip {
+          position: absolute;
+          top: -28px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #1e293b;
+          color: #fff;
+          padding: 3px 6px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          pointer-events: none;
+          white-space: nowrap;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         .timeline-labels {
           display: flex;
@@ -458,7 +503,7 @@ class KospelProgramCard extends HTMLElement {
         </div>
 
         <div class="timeline-container">
-          <div class="timeline-bar">
+          <div class="timeline-bar" id="timeline-bar">
             ${this._slots
               .map((slot, idx) => {
                 const duration = slot.stop_minute - slot.start_minute;
@@ -470,6 +515,21 @@ class KospelProgramCard extends HTMLElement {
                        title="${info.label}: ${this._minuteToTime(slot.start_minute)} - ${this._minuteToTime(slot.stop_minute)}"
                        data-idx="${idx}">
                     ${duration >= 120 ? info.label : ""}
+                  </div>
+                `;
+              })
+              .join("")}
+
+            ${this._slots
+              .slice(0, -1)
+              .map((slot, idx) => {
+                const posPct = ((slot.stop_minute / 1440) * 100).toFixed(2);
+                return `
+                  <div class="timeline-handle ${this._draggingHandleIdx === idx ? "dragging" : ""}" 
+                       style="left: ${posPct}%;" 
+                       data-handle-idx="${idx}"
+                       title="Drag to resize (${this._minuteToTime(slot.stop_minute)})">
+                    ${this._draggingHandleIdx === idx ? `<div class="drag-tooltip">${this._minuteToTime(slot.stop_minute)}</div>` : ""}
                   </div>
                 `;
               })
@@ -579,6 +639,60 @@ class KospelProgramCard extends HTMLElement {
     const btnAdd = root.querySelector("#btn-add-slot");
     if (btnAdd) {
       btnAdd.addEventListener("click", () => this._addSlot());
+    }
+
+    // Timeline boundary drag handles
+    const timelineBar = root.querySelector("#timeline-bar");
+    if (timelineBar) {
+      root.querySelectorAll(".timeline-handle").forEach((handle) => {
+        handle.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          const handleIdx = parseInt(handle.dataset.handleIdx, 10);
+          try {
+            handle.setPointerCapture(e.pointerId);
+          } catch (err) {}
+          this._draggingHandleIdx = handleIdx;
+          this._render();
+
+          const onPointerMove = (moveEv) => {
+            const rect = timelineBar.getBoundingClientRect();
+            if (!rect.width) return;
+            const x = moveEv.clientX - rect.left;
+            const pct = Math.max(0, Math.min(1, x / rect.width));
+            const rawMin = Math.round(pct * 1440);
+
+            // Snap to 5 minutes
+            const snappedMin = Math.round(rawMin / 5) * 5;
+
+            // Clamping bounds: minimum 5 min duration per slot
+            const minBound = this._slots[handleIdx].start_minute + 5;
+            const maxBound = this._slots[handleIdx + 1].stop_minute - 5;
+            const clampedMin = Math.max(minBound, Math.min(maxBound, snappedMin));
+
+            if (this._slots[handleIdx].stop_minute !== clampedMin) {
+              this._slots[handleIdx].stop_minute = clampedMin;
+              this._slots[handleIdx + 1].start_minute = clampedMin + 1;
+              this._markUnsaved();
+              this._render();
+            }
+          };
+
+          const onPointerUp = (upEv) => {
+            try {
+              handle.releasePointerCapture(upEv.pointerId);
+            } catch (err) {}
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", onPointerUp);
+            window.removeEventListener("pointercancel", onPointerUp);
+            this._draggingHandleIdx = null;
+            this._render();
+          };
+
+          window.addEventListener("pointermove", onPointerMove);
+          window.addEventListener("pointerup", onPointerUp);
+          window.addEventListener("pointercancel", onPointerUp);
+        });
+      });
     }
 
     // Remove slot buttons
@@ -702,8 +816,10 @@ if (!customElements.get("kospel-program-card-editor")) {
 }
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "kospel-program-card",
-  name: "Kospel Daily Program Card",
-  description: "View and edit Kospel heating daily time slots and presets",
-});
+if (!window.customCards.some((c) => c.type === "kospel-program-card")) {
+  window.customCards.push({
+    type: "kospel-program-card",
+    name: "Kospel Daily Program Card",
+    description: "View and edit Kospel heating daily time slots and presets",
+  });
+}

@@ -463,8 +463,10 @@ if (!customElements.get("kospel-weekday-card-editor")) {
 }
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "kospel-weekday-card",
-  name: "Kospel Weekday Schedule Card",
-  description: "Assign Kospel Daily Programs 1-8 to days of the week",
-});
+if (!window.customCards.some((c) => c.type === "kospel-weekday-card")) {
+  window.customCards.push({
+    type: "kospel-weekday-card",
+    name: "Kospel Weekday Schedule Card",
+    description: "Assign Kospel Daily Programs 1-8 to days of the week",
+  });
+}
