@@ -18,8 +18,25 @@ class KospelProgramCard extends HTMLElement {
     ];
     this._loading = false;
     this._error = null;
-    this._statusMessage = null;
+    this._isSaved = false;
+    this._errorTimer = null;
     this._activeSlotIndex = 0;
+  }
+
+  _setError(msg) {
+    this._error = msg;
+    if (this._errorTimer) clearTimeout(this._errorTimer);
+    if (msg) {
+      this._errorTimer = setTimeout(() => {
+        this._error = null;
+        this._render();
+      }, 4000);
+    }
+  }
+
+  _markUnsaved() {
+    this._isSaved = false;
+    this._error = null;
   }
 
   set hass(hass) {
@@ -126,7 +143,7 @@ class KospelProgramCard extends HTMLElement {
 
     this._loading = true;
     this._error = null;
-    this._statusMessage = null;
+    this._isSaved = false;
     this._render();
 
     try {
@@ -148,10 +165,10 @@ class KospelProgramCard extends HTMLElement {
 
       if (response && response.response && response.response.slots) {
         this._slots = response.response.slots;
-        this._statusMessage = `Program ${this._programId} loaded successfully.`;
+        this._isSaved = false;
       }
     } catch (err) {
-      this._error = `Failed to load program: ${err.message || err}`;
+      this._setError(`Failed to load program: ${err.message || err}`);
     } finally {
       this._loading = false;
       this._render();
@@ -166,7 +183,7 @@ class KospelProgramCard extends HTMLElement {
     for (let i = 0; i < this._slots.length; i++) {
       const slot = this._slots[i];
       if (slot.stop_minute <= slot.start_minute) {
-        this._error = `Slot ${i + 1}: Stop time (${this._minuteToTime(slot.stop_minute)}) must be strictly after start time (${this._minuteToTime(slot.start_minute)}).`;
+        this._setError(`Slot ${i + 1}: Stop time (${this._minuteToTime(slot.stop_minute)}) must be strictly after start time (${this._minuteToTime(slot.start_minute)}).`);
         this._render();
         return;
       }
@@ -178,7 +195,7 @@ class KospelProgramCard extends HTMLElement {
       if (nextStart <= currentStop) {
         const nextMinStr = this._minuteToTime(currentStop + 1);
         const stopStr = this._minuteToTime(currentStop);
-        this._error = `Slot ${i + 2} must start at least 1 minute after Slot ${i + 1} ends! Slot ${i + 1} ends at ${stopStr}, so Slot ${i + 2} must start at ${nextMinStr} or later.`;
+        this._setError(`Slot ${i + 2} must start at least 1 minute after Slot ${i + 1} ends! Slot ${i + 1} ends at ${stopStr}, so Slot ${i + 2} must start at ${nextMinStr} or later.`);
         this._render();
         return;
       }
@@ -186,7 +203,6 @@ class KospelProgramCard extends HTMLElement {
 
     this._loading = true;
     this._error = null;
-    this._statusMessage = null;
     this._render();
 
     try {
@@ -200,9 +216,10 @@ class KospelProgramCard extends HTMLElement {
       }
 
       await this._hass.callService("kospel", "set_program", serviceData);
-      this._statusMessage = `Program ${this._programId} saved successfully!`;
+      this._isSaved = true;
     } catch (err) {
-      this._error = `Failed to save program: ${err.message || err}`;
+      this._isSaved = false;
+      this._setError(`Failed to save program: ${err.message || err}`);
     } finally {
       this._loading = false;
       this._render();
@@ -210,15 +227,16 @@ class KospelProgramCard extends HTMLElement {
   }
 
   _addSlot() {
+    this._markUnsaved();
     if (this._slots.length >= 5) {
-      this._error = "Maximum 5 time slots allowed per program.";
+      this._setError("Maximum 5 time slots allowed per program.");
       this._render();
       return;
     }
     const lastStop = this._slots.length > 0 ? this._slots[this._slots.length - 1].stop_minute : 0;
     const newStart = lastStop > 0 ? Math.min(lastStop + 1, 1439) : 0;
     if (newStart >= 1439) {
-      this._error = "Cannot add slot: full 24h period covered.";
+      this._setError("Cannot add slot: full 24h period covered.");
       this._render();
       return;
     }
@@ -375,6 +393,10 @@ class KospelProgramCard extends HTMLElement {
           background: var(--primary-color, #3b82f6);
           color: #fff;
         }
+        .btn-success {
+          background: #10b981;
+          color: #fff;
+        }
         .btn-secondary {
           background: var(--secondary-background-color, #e5e7eb);
           color: var(--primary-text-color, #212121);
@@ -389,14 +411,6 @@ class KospelProgramCard extends HTMLElement {
           padding: 10px;
           background: #fee2e2;
           color: #991b1b;
-          border-radius: 8px;
-          font-size: 13px;
-          margin-bottom: 12px;
-        }
-        .alert-success {
-          padding: 10px;
-          background: #d1fae5;
-          color: #065f46;
           border-radius: 8px;
           font-size: 13px;
           margin-bottom: 12px;
@@ -422,7 +436,6 @@ class KospelProgramCard extends HTMLElement {
         </div>
 
         ${this._error ? `<div class="alert-error">${this._error}</div>` : ""}
-        ${this._statusMessage ? `<div class="alert-success">${this._statusMessage}</div>` : ""}
 
         <div class="controls-row">
           <div class="control-group">
@@ -499,7 +512,7 @@ class KospelProgramCard extends HTMLElement {
                       .join("")}
                   </select>
 
-                  <button type="button" class="btn-danger btn-remove" data-idx="${idx}">Remove</button>
+                  ${idx > 0 ? `<button type="button" class="btn-danger btn-remove" data-idx="${idx}">Remove</button>` : ""}
                 </div>
               `;
             })
@@ -511,9 +524,15 @@ class KospelProgramCard extends HTMLElement {
             ${this._loading ? '<div class="spinner"></div>' : '<ha-icon icon="mdi:download"></ha-icon>'} Load Program
           </button>
 
-          <button type="button" class="btn-primary" id="btn-save" ${this._loading ? "disabled" : ""}>
-            ${this._loading ? '<div class="spinner"></div>' : '<ha-icon icon="mdi:content-save"></ha-icon>'} Save Program
-          </button>
+          ${
+            this._isSaved
+              ? `<button type="button" class="btn-success" id="btn-save" ${this._loading ? "disabled" : ""}>
+                   <ha-icon icon="mdi:check"></ha-icon> Program saved
+                 </button>`
+              : `<button type="button" class="btn-primary" id="btn-save" ${this._loading ? "disabled" : ""}>
+                   ${this._loading ? '<div class="spinner"></div>' : '<ha-icon icon="mdi:content-save"></ha-icon>'} Save Program
+                 </button>`
+          }
         </div>
       </ha-card>
     `;
@@ -529,6 +548,7 @@ class KospelProgramCard extends HTMLElement {
     const selectType = root.querySelector("#select-type");
     if (selectType) {
       selectType.addEventListener("change", (e) => {
+        this._markUnsaved();
         this._scheduleType = e.target.value;
         this._render();
       });
@@ -538,6 +558,7 @@ class KospelProgramCard extends HTMLElement {
     const selectProgram = root.querySelector("#select-program");
     if (selectProgram) {
       selectProgram.addEventListener("change", (e) => {
+        this._markUnsaved();
         this._programId = parseInt(e.target.value, 10);
         this._render();
       });
@@ -571,6 +592,7 @@ class KospelProgramCard extends HTMLElement {
     // Time input changes
     root.querySelectorAll(".input-start").forEach((input) => {
       input.addEventListener("change", (e) => {
+        this._markUnsaved();
         const idx = parseInt(e.target.dataset.idx, 10);
         this._slots[idx].start_minute = this._timeToMinute(e.target.value);
         this._render();
@@ -579,6 +601,7 @@ class KospelProgramCard extends HTMLElement {
 
     root.querySelectorAll(".input-stop").forEach((input) => {
       input.addEventListener("change", (e) => {
+        this._markUnsaved();
         const idx = parseInt(e.target.dataset.idx, 10);
         this._slots[idx].stop_minute = this._timeToMinute(e.target.value);
         this._render();
@@ -588,6 +611,7 @@ class KospelProgramCard extends HTMLElement {
     // Preset select changes
     root.querySelectorAll(".select-preset").forEach((select) => {
       select.addEventListener("change", (e) => {
+        this._markUnsaved();
         const idx = parseInt(e.target.dataset.idx, 10);
         this._slots[idx].preset_id = parseInt(e.target.value, 10);
         this._render();

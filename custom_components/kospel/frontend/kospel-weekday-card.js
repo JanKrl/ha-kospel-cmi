@@ -21,7 +21,24 @@ class KospelWeekdayCard extends HTMLElement {
     };
     this._loading = false;
     this._error = null;
-    this._statusMessage = null;
+    this._isSaved = false;
+    this._errorTimer = null;
+  }
+
+  _setError(msg) {
+    this._error = msg;
+    if (this._errorTimer) clearTimeout(this._errorTimer);
+    if (msg) {
+      this._errorTimer = setTimeout(() => {
+        this._error = null;
+        this._render();
+      }, 4000);
+    }
+  }
+
+  _markUnsaved() {
+    this._isSaved = false;
+    this._error = null;
   }
 
   set hass(hass) {
@@ -82,7 +99,7 @@ class KospelWeekdayCard extends HTMLElement {
 
     this._loading = true;
     this._error = null;
-    this._statusMessage = null;
+    this._isSaved = false;
     this._render();
 
     try {
@@ -103,10 +120,10 @@ class KospelWeekdayCard extends HTMLElement {
 
       if (response && response.response) {
         this._schedule = { ...response.response };
-        this._statusMessage = "Weekday schedule loaded successfully.";
+        this._isSaved = false;
       }
     } catch (err) {
-      this._error = `Failed to load weekday schedule: ${err.message || err}`;
+      this._setError(`Failed to load weekday schedule: ${err.message || err}`);
     } finally {
       this._loading = false;
       this._render();
@@ -119,7 +136,6 @@ class KospelWeekdayCard extends HTMLElement {
 
     this._loading = true;
     this._error = null;
-    this._statusMessage = null;
     this._render();
 
     try {
@@ -132,9 +148,10 @@ class KospelWeekdayCard extends HTMLElement {
       }
 
       await this._hass.callService("kospel", "set_weekday_schedule", serviceData);
-      this._statusMessage = "Weekday schedule saved successfully!";
+      this._isSaved = true;
     } catch (err) {
-      this._error = `Failed to save weekday schedule: ${err.message || err}`;
+      this._isSaved = false;
+      this._setError(`Failed to save weekday schedule: ${err.message || err}`);
     } finally {
       this._loading = false;
       this._render();
@@ -236,6 +253,10 @@ class KospelWeekdayCard extends HTMLElement {
           background: var(--primary-color, #3b82f6);
           color: #fff;
         }
+        .btn-success {
+          background: #10b981;
+          color: #fff;
+        }
         .btn-secondary {
           background: var(--secondary-background-color, #e5e7eb);
           color: var(--primary-text-color, #212121);
@@ -244,14 +265,6 @@ class KospelWeekdayCard extends HTMLElement {
           padding: 10px;
           background: #fee2e2;
           color: #991b1b;
-          border-radius: 8px;
-          font-size: 13px;
-          margin-bottom: 12px;
-        }
-        .alert-success {
-          padding: 10px;
-          background: #d1fae5;
-          color: #065f46;
           border-radius: 8px;
           font-size: 13px;
           margin-bottom: 12px;
@@ -277,7 +290,6 @@ class KospelWeekdayCard extends HTMLElement {
         </div>
 
         ${this._error ? `<div class="alert-error">${this._error}</div>` : ""}
-        ${this._statusMessage ? `<div class="alert-success">${this._statusMessage}</div>` : ""}
 
         <div class="control-group">
           <label>Schedule Type</label>
@@ -316,9 +328,15 @@ class KospelWeekdayCard extends HTMLElement {
             ${this._loading ? '<div class="spinner"></div>' : '<ha-icon icon="mdi:download"></ha-icon>'} Load Schedule
           </button>
 
-          <button type="button" class="btn-primary" id="btn-save" ${this._loading ? "disabled" : ""}>
-            ${this._loading ? '<div class="spinner"></div>' : '<ha-icon icon="mdi:content-save"></ha-icon>'} Save Schedule
-          </button>
+          ${
+            this._isSaved
+              ? `<button type="button" class="btn-success" id="btn-save" ${this._loading ? "disabled" : ""}>
+                   <ha-icon icon="mdi:check"></ha-icon> Schedule saved
+                 </button>`
+              : `<button type="button" class="btn-primary" id="btn-save" ${this._loading ? "disabled" : ""}>
+                   ${this._loading ? '<div class="spinner"></div>' : '<ha-icon icon="mdi:content-save"></ha-icon>'} Save Schedule
+                 </button>`
+          }
         </div>
       </ha-card>
     `;
@@ -334,6 +352,7 @@ class KospelWeekdayCard extends HTMLElement {
     const selectType = root.querySelector("#select-type");
     if (selectType) {
       selectType.addEventListener("change", (e) => {
+        this._markUnsaved();
         this._scheduleType = e.target.value;
         this._render();
       });
@@ -353,6 +372,7 @@ class KospelWeekdayCard extends HTMLElement {
     // Day program select changes
     root.querySelectorAll(".select-day-program").forEach((select) => {
       select.addEventListener("change", (e) => {
+        this._markUnsaved();
         const day = e.target.dataset.day;
         this._schedule[day] = parseInt(e.target.value, 10);
         this._render();
