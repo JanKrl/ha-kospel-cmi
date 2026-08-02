@@ -11,6 +11,7 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "include-component-in-tag": false,
+      "footer": "\n---\n☕ **Enjoying this integration? / Podoba Ci się ta integracja?**\nI maintain this open-source integration in my private time. If you'd like to say thanks with a coffee / Rozwijam ten projekt w wolnym czasie — jeśli chcesz podziękować kawą ☕: [buycoffee.to/jankrl](https://buycoffee.to/jankrl)",
       "exclude-paths": [
         "lib",
         "uv.lock",

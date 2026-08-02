@@ -6,6 +6,9 @@
 
 Control and monitor compatible Kospel electric heaters from Home Assistant using local network communication.
 
+[![Buy me a coffee](https://img.shields.io/badge/Kup%20mi%20kaw%C4%99-buycoffee.to-ffdd00.svg?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buycoffee.to/jankrl)
+
+
 > [!WARNING]
 > This is an unofficial, community-maintained integration and is not affiliated with or endorsed by Kospel.
 > Use it at your own responsibility.
@@ -133,6 +136,13 @@ For AI coding agents (Claude, Antigravity, etc.), see [AGENTS.md](.agents/AGENTS
 
 - Bug reports and feature requests: [GitHub Issues](https://github.com/JanKrl/ha-kospel-cmi/issues)
 
+## Support / Wsparcie
+
+☕ **Enjoying this integration? / Podoba Ci się ta integracja?**  
+I maintain this open-source integration in my private time. If you'd like to say thanks with a coffee / Rozwijam ten projekt w wolnym czasie — jeśli chcesz podziękować kawą ☕: [buycoffee.to/jankrl](https://buycoffee.to/jankrl)
+
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
