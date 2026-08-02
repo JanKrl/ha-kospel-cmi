@@ -109,14 +109,20 @@ class KospelProgramCard extends HTMLElement {
     return presets.find((p) => p.id === presetId) || presets[0];
   }
 
+  _getDeviceId() {
+    if (this._config && this._config.device_id) return this._config.device_id;
+    if (this._hass && this._hass.states) {
+      const kospelEntity = Object.values(this._hass.states).find(
+        (e) => e.entity_id.startsWith("climate.kospel") || e.entity_id.startsWith("climate.heater")
+      );
+      if (kospelEntity) return kospelEntity.entity_id;
+    }
+    return "";
+  }
+
   async _loadProgram() {
     if (!this._hass) return;
     const deviceId = this._getDeviceId();
-    if (!deviceId) {
-      this._error = "Please select a Kospel device in card options.";
-      this._render();
-      return;
-    }
 
     this._loading = true;
     this._error = null;
@@ -124,15 +130,19 @@ class KospelProgramCard extends HTMLElement {
     this._render();
 
     try {
+      const serviceData = {
+        schedule_type: this._scheduleType,
+        program_id: this._programId,
+      };
+      if (deviceId) {
+        serviceData.device_id = deviceId;
+      }
+
       const response = await this._hass.callWS({
         type: "call_service",
         domain: "kospel",
         service: "get_program",
-        service_data: {
-          device_id: deviceId,
-          schedule_type: this._scheduleType,
-          program_id: this._programId,
-        },
+        service_data: serviceData,
         return_response: true,
       });
 
@@ -151,25 +161,24 @@ class KospelProgramCard extends HTMLElement {
   async _saveProgram() {
     if (!this._hass) return;
     const deviceId = this._getDeviceId();
-    if (!deviceId) {
-      this._error = "Please select a Kospel device in card options.";
-      this._render();
-      return;
-    }
 
     // Client-side validation
     for (let i = 0; i < this._slots.length; i++) {
       const slot = this._slots[i];
       if (slot.stop_minute <= slot.start_minute) {
-        this._error = `Slot ${i + 1}: Stop time (${this._minuteToTime(slot.stop_minute)}) must be after start time (${this._minuteToTime(slot.start_minute)}).`;
+        this._error = `Slot ${i + 1}: Stop time (${this._minuteToTime(slot.stop_minute)}) must be strictly after start time (${this._minuteToTime(slot.start_minute)}).`;
         this._render();
         return;
       }
     }
 
     for (let i = 0; i < this._slots.length - 1; i++) {
-      if (this._slots[i + 1].start_minute < this._slots[i].stop_minute) {
-        this._error = `Slots ${i + 1} and ${i + 2} overlap!`;
+      const currentStop = this._slots[i].stop_minute;
+      const nextStart = this._slots[i + 1].start_minute;
+      if (nextStart <= currentStop) {
+        const nextMinStr = this._minuteToTime(currentStop + 1);
+        const stopStr = this._minuteToTime(currentStop);
+        this._error = `Slot ${i + 2} must start at least 1 minute after Slot ${i + 1} ends! Slot ${i + 1} ends at ${stopStr}, so Slot ${i + 2} must start at ${nextMinStr} or later.`;
         this._render();
         return;
       }
@@ -181,12 +190,16 @@ class KospelProgramCard extends HTMLElement {
     this._render();
 
     try {
-      await this._hass.callService("kospel", "set_program", {
-        device_id: deviceId,
+      const serviceData = {
         schedule_type: this._scheduleType,
         program_id: this._programId,
         slots: this._slots,
-      });
+      };
+      if (deviceId) {
+        serviceData.device_id = deviceId;
+      }
+
+      await this._hass.callService("kospel", "set_program", serviceData);
       this._statusMessage = `Program ${this._programId} saved successfully!`;
     } catch (err) {
       this._error = `Failed to save program: ${err.message || err}`;
@@ -196,18 +209,6 @@ class KospelProgramCard extends HTMLElement {
     }
   }
 
-  _getDeviceId() {
-    if (this._config.device_id) return this._config.device_id;
-    // Fallback: pick first kospel device from registry
-    if (this._hass) {
-      const dev = Object.values(this._hass.devices || {}).find(
-        (d) => d.identifiers && d.identifiers.some(([domain]) => domain === "kospel")
-      );
-      if (dev) return dev.id;
-    }
-    return "";
-  }
-
   _addSlot() {
     if (this._slots.length >= 5) {
       this._error = "Maximum 5 time slots allowed per program.";
@@ -215,14 +216,15 @@ class KospelProgramCard extends HTMLElement {
       return;
     }
     const lastStop = this._slots.length > 0 ? this._slots[this._slots.length - 1].stop_minute : 0;
-    if (lastStop >= 1440) {
+    const newStart = lastStop > 0 ? Math.min(lastStop + 1, 1439) : 0;
+    if (newStart >= 1439) {
       this._error = "Cannot add slot: full 24h period covered.";
       this._render();
       return;
     }
-    const newStop = Math.min(lastStop + 120, 1440);
+    const newStop = Math.min(newStart + 120, 1440);
     this._slots.push({
-      start_minute: lastStop,
+      start_minute: newStart,
       stop_minute: newStop,
       preset_id: 1,
     });
@@ -595,25 +597,67 @@ class KospelProgramCard extends HTMLElement {
 }
 
 class KospelProgramCardEditor extends HTMLElement {
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
   setConfig(config) {
     this._config = config;
+    this._render();
+  }
+
+  _render() {
+    if (!this._config) return;
+    const title = this._config.title || "Kospel Program Editor";
+    const deviceId = this._config.device_id || "";
+
+    const entities = this._hass && this._hass.states
+      ? Object.keys(this._hass.states).filter(
+          (id) => id.startsWith("climate.kospel") || id.startsWith("climate.heater") || id.includes("kospel")
+        )
+      : [];
+
     this.innerHTML = `
       <div style="padding: 12px; display: flex; flex-direction: column; gap: 12px;">
         <label style="font-size: 13px; font-weight: 500;">Title</label>
-        <input type="text" id="editor-title" value="${config.title || "Kospel Program Editor"}" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+        <input type="text" id="editor-title" value="${title}" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
 
-        <label style="font-size: 13px; font-weight: 500;">Kospel Device ID</label>
-        <input type="text" id="editor-device" value="${config.device_id || ""}" placeholder="Enter Kospel Device ID" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+        <label style="font-size: 13px; font-weight: 500;">Target Device / Entity</label>
+        ${
+          entities.length > 0
+            ? `<select id="editor-device" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                <option value="">Auto-Detect (Default)</option>
+                ${entities
+                  .map(
+                    (e) => `<option value="${e}" ${deviceId === e ? "selected" : ""}>${e}</option>`
+                  )
+                  .join("")}
+               </select>`
+            : `<input type="text" id="editor-device" value="${deviceId}" placeholder="Auto-Detect (or enter entity/device ID)" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">`
+        }
       </div>
     `;
-    this.querySelector("#editor-title").addEventListener("input", (e) => {
-      this._config.title = e.target.value;
-      this._fireConfigChanged();
-    });
-    this.querySelector("#editor-device").addEventListener("input", (e) => {
-      this._config.device_id = e.target.value;
-      this._fireConfigChanged();
-    });
+
+    const inputTitle = this.querySelector("#editor-title");
+    if (inputTitle) {
+      inputTitle.addEventListener("input", (e) => {
+        this._config.title = e.target.value;
+        this._fireConfigChanged();
+      });
+    }
+
+    const inputDevice = this.querySelector("#editor-device");
+    if (inputDevice) {
+      inputDevice.addEventListener("change", (e) => {
+        this._config.device_id = e.target.value;
+        this._fireConfigChanged();
+      });
+      inputDevice.addEventListener("input", (e) => {
+        this._config.device_id = e.target.value;
+        this._fireConfigChanged();
+      });
+    }
   }
 
   _fireConfigChanged() {

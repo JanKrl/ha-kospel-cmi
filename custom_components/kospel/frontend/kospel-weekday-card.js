@@ -66,12 +66,12 @@ class KospelWeekdayCard extends HTMLElement {
   }
 
   _getDeviceId() {
-    if (this._config.device_id) return this._config.device_id;
-    if (this._hass) {
-      const dev = Object.values(this._hass.devices || {}).find(
-        (d) => d.identifiers && d.identifiers.some(([domain]) => domain === "kospel")
+    if (this._config && this._config.device_id) return this._config.device_id;
+    if (this._hass && this._hass.states) {
+      const kospelEntity = Object.values(this._hass.states).find(
+        (e) => e.entity_id.startsWith("climate.kospel") || e.entity_id.startsWith("climate.heater")
       );
-      if (dev) return dev.id;
+      if (kospelEntity) return kospelEntity.entity_id;
     }
     return "";
   }
@@ -79,11 +79,6 @@ class KospelWeekdayCard extends HTMLElement {
   async _loadSchedule() {
     if (!this._hass) return;
     const deviceId = this._getDeviceId();
-    if (!deviceId) {
-      this._error = "Please select a Kospel device in card options.";
-      this._render();
-      return;
-    }
 
     this._loading = true;
     this._error = null;
@@ -91,14 +86,18 @@ class KospelWeekdayCard extends HTMLElement {
     this._render();
 
     try {
+      const serviceData = {
+        schedule_type: this._scheduleType,
+      };
+      if (deviceId) {
+        serviceData.device_id = deviceId;
+      }
+
       const response = await this._hass.callWS({
         type: "call_service",
         domain: "kospel",
         service: "get_weekday_schedule",
-        service_data: {
-          device_id: deviceId,
-          schedule_type: this._scheduleType,
-        },
+        service_data: serviceData,
         return_response: true,
       });
 
@@ -117,11 +116,6 @@ class KospelWeekdayCard extends HTMLElement {
   async _saveSchedule() {
     if (!this._hass) return;
     const deviceId = this._getDeviceId();
-    if (!deviceId) {
-      this._error = "Please select a Kospel device in card options.";
-      this._render();
-      return;
-    }
 
     this._loading = true;
     this._error = null;
@@ -129,11 +123,15 @@ class KospelWeekdayCard extends HTMLElement {
     this._render();
 
     try {
-      await this._hass.callService("kospel", "set_weekday_schedule", {
-        device_id: deviceId,
+      const serviceData = {
         schedule_type: this._scheduleType,
         ...this._schedule,
-      });
+      };
+      if (deviceId) {
+        serviceData.device_id = deviceId;
+      }
+
+      await this._hass.callService("kospel", "set_weekday_schedule", serviceData);
       this._statusMessage = "Weekday schedule saved successfully!";
     } catch (err) {
       this._error = `Failed to save weekday schedule: ${err.message || err}`;
@@ -364,25 +362,67 @@ class KospelWeekdayCard extends HTMLElement {
 }
 
 class KospelWeekdayCardEditor extends HTMLElement {
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
   setConfig(config) {
     this._config = config;
+    this._render();
+  }
+
+  _render() {
+    if (!this._config) return;
+    const title = this._config.title || "Kospel Weekday Schedule";
+    const deviceId = this._config.device_id || "";
+
+    const entities = this._hass && this._hass.states
+      ? Object.keys(this._hass.states).filter(
+          (id) => id.startsWith("climate.kospel") || id.startsWith("climate.heater") || id.includes("kospel")
+        )
+      : [];
+
     this.innerHTML = `
       <div style="padding: 12px; display: flex; flex-direction: column; gap: 12px;">
         <label style="font-size: 13px; font-weight: 500;">Title</label>
-        <input type="text" id="editor-title" value="${config.title || "Kospel Weekday Schedule"}" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+        <input type="text" id="editor-title" value="${title}" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
 
-        <label style="font-size: 13px; font-weight: 500;">Kospel Device ID</label>
-        <input type="text" id="editor-device" value="${config.device_id || ""}" placeholder="Enter Kospel Device ID" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+        <label style="font-size: 13px; font-weight: 500;">Target Device / Entity</label>
+        ${
+          entities.length > 0
+            ? `<select id="editor-device" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                <option value="">Auto-Detect (Default)</option>
+                ${entities
+                  .map(
+                    (e) => `<option value="${e}" ${deviceId === e ? "selected" : ""}>${e}</option>`
+                  )
+                  .join("")}
+               </select>`
+            : `<input type="text" id="editor-device" value="${deviceId}" placeholder="Auto-Detect (or enter entity/device ID)" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">`
+        }
       </div>
     `;
-    this.querySelector("#editor-title").addEventListener("input", (e) => {
-      this._config.title = e.target.value;
-      this._fireConfigChanged();
-    });
-    this.querySelector("#editor-device").addEventListener("input", (e) => {
-      this._config.device_id = e.target.value;
-      this._fireConfigChanged();
-    });
+
+    const inputTitle = this.querySelector("#editor-title");
+    if (inputTitle) {
+      inputTitle.addEventListener("input", (e) => {
+        this._config.title = e.target.value;
+        this._fireConfigChanged();
+      });
+    }
+
+    const inputDevice = this.querySelector("#editor-device");
+    if (inputDevice) {
+      inputDevice.addEventListener("change", (e) => {
+        this._config.device_id = e.target.value;
+        this._fireConfigChanged();
+      });
+      inputDevice.addEventListener("input", (e) => {
+        this._config.device_id = e.target.value;
+        this._fireConfigChanged();
+      });
+    }
   }
 
   _fireConfigChanged() {
