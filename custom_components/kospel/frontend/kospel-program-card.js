@@ -626,8 +626,12 @@ class KospelProgramCardEditor extends HTMLElement {
   }
 }
 
-customElements.define("kospel-program-card", KospelProgramCard);
-customElements.define("kospel-program-card-editor", KospelProgramCardEditor);
+if (!customElements.get("kospel-program-card")) {
+  customElements.define("kospel-program-card", KospelProgramCard);
+}
+if (!customElements.get("kospel-program-card-editor")) {
+  customElements.define("kospel-program-card-editor", KospelProgramCardEditor);
+}
 
 window.customCards = window.customCards || [];
 window.customCards.push({

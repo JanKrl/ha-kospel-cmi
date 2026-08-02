@@ -395,8 +395,12 @@ class KospelWeekdayCardEditor extends HTMLElement {
   }
 }
 
-customElements.define("kospel-weekday-card", KospelWeekdayCard);
-customElements.define("kospel-weekday-card-editor", KospelWeekdayCardEditor);
+if (!customElements.get("kospel-weekday-card")) {
+  customElements.define("kospel-weekday-card", KospelWeekdayCard);
+}
+if (!customElements.get("kospel-weekday-card-editor")) {
+  customElements.define("kospel-weekday-card-editor", KospelWeekdayCardEditor);
+}
 
 window.customCards = window.customCards || [];
 window.customCards.push({
