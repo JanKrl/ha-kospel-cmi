@@ -1,4 +1,4 @@
-# Frontend Development & Custom Cards Guide
+# Kospel Frontend Cards & Development Guide
 
 This document describes the custom Lovelace cards integrated into `ha-kospel-cmi`, their architecture, design system, and frontend development conventions.
 
@@ -13,7 +13,7 @@ The integration includes two custom Lovelace dashboard cards that are automatica
 * **Features**:
   * **24-Hour Timeline Bar**: Color-coded visualization showing time slots and mode icons (`mdi:thermometer`, `mdi:snowflake`, `mdi:leaf`, etc.).
   * **Interactive Drag-and-Drop Handles**: Move slot boundaries directly on the timeline bar with touch and mouse pointer support.
-  * **Strict 1-Minute Separation**: Ensures slot stop times do not overlap or collide with subsequent slot start times.
+  * **Strict 1-Minute Separation**: Ensures slot stop times do not overlap or collide with subsequent slot start times (`next_start > current_stop`).
   * **Smart Slot Addition**: Clicking `+ Dodaj przedział` automatically locates the largest available empty gap in the 24-hour day and inserts the new slot there.
   * **Unsaved Changes Prompt**: Warns users with a confirm modal if they attempt to switch programs or schedule types before saving.
   * **Native Device Selector**: Integrated `KospelProgramCardEditor` form with native Home Assistant device picker (`selector: { device: { filter: { integration: "kospel" } } }`).

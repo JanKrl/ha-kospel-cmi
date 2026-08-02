@@ -91,7 +91,7 @@ The integration includes two custom Home Assistant dashboard cards that are auto
    - Assign Daily Programs 1–8 to each day of the week (Monday through Sunday).
    - Read-only 24-hour schedule visualization per day with smart boundary edge timestamp labels and automatic anti-collision filtering.
 
-For full frontend documentation, architecture details, theme tokens, and developer conventions, see [docs/frontend.md](docs/frontend.md).
+For full frontend documentation, architecture details, theme tokens, and developer conventions, see [custom_components/kospel/frontend/README.md](custom_components/kospel/frontend/README.md).
 
 ### Example Dashboard YAML Setup
 

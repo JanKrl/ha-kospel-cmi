@@ -73,4 +73,4 @@ The integration and frontend cards perform strict validation on time slots befor
 3. **Empty Spaces / Non-Contiguous Slots**: Time slots do not need to cover the full 24 hours continuously; unassigned gap periods revert to the background preset (Off / Antifreeze).
 
 ## Frontend Lovelace Cards
-For detailed documentation on custom Lovelace cards, theme integration, style guides, and developer conventions, see [docs/frontend.md](frontend.md).
+For detailed documentation on custom Lovelace cards, theme integration, style guides, and developer conventions, see [custom_components/kospel/frontend/README.md](../custom_components/kospel/frontend/README.md).
