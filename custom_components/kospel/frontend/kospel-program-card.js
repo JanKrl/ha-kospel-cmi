@@ -48,8 +48,10 @@ const TRANSLATIONS = {
     failed_load_schedule: "Failed to load weekday schedule: {error}",
     failed_save_schedule: "Failed to save weekday schedule: {error}",
     empty_program_title: "Program {n} is empty",
-    empty_program_info: "Click '+ Add Slot' to start configuring this program.",
-    empty_program_timeline: "No active time slots",
+    empty_program_info: "Click '+ Add Slot' or empty space on timeline to start.",
+    empty_program_timeline: "No active time slots — Click to add",
+    add_slot_here: "Add slot",
+    click_to_add_slot: "Click empty space to add a time slot here",
   },
   pl: {
     card_title_program: "Edytor programów Kospel",
@@ -100,8 +102,10 @@ const TRANSLATIONS = {
     failed_load_schedule: "Nie udało się pobrać harmonogramu tygodniowego: {error}",
     failed_save_schedule: "Nie udało się zapisać harmonogramu tygodniowego: {error}",
     empty_program_title: "Program {n} jest pusty",
-    empty_program_info: "Kliknij „+ Dodaj przedział”, aby rozpocząć.",
-    empty_program_timeline: "Brak aktywnych przedziałów",
+    empty_program_info: "Kliknij „+ Dodaj przedział” lub wolne miejsce na osią czasu, aby rozpocząć.",
+    empty_program_timeline: "Brak aktywnych przedziałów — Kliknij, aby dodać",
+    add_slot_here: "Dodaj przedział",
+    click_to_add_slot: "Kliknij w wolne miejsce, aby dodać przedział",
   },
 };
 
@@ -434,42 +438,43 @@ class KospelProgramCard extends HTMLElement {
       return;
     }
 
-    // Ensure slots are sorted
     this._slots.sort((a, b) => a.start_minute - b.start_minute);
+  }
 
-    // Find largest available gap in 0..1440
-    let bestGapStart = 0;
-    let maxGapLength = 0;
-
-    let prevStop = -1;
-    for (let i = 0; i < this._slots.length; i++) {
-      const gStart = prevStop < 0 ? 0 : prevStop + 1;
-      const gStop = this._slots[i].start_minute - 1;
-      const gapLength = gStop - gStart + 1;
-      if (gapLength > maxGapLength) {
-        maxGapLength = gapLength;
-        bestGapStart = gStart;
-      }
-      prevStop = this._slots[i].stop_minute;
-    }
-
-    const endGapStart = prevStop < 1440 ? prevStop + 1 : 1440;
-    const endGapLength = 1440 - endGapStart;
-    if (endGapLength > maxGapLength) {
-      maxGapLength = endGapLength;
-      bestGapStart = endGapStart;
-    }
-
-    if (maxGapLength < 15) {
-      this._setError("Nie można dodać przedziału: brak wystarczającego wolnego miejsca.");
+  _addSlotInGap(gapStart, gapStop, clickedMin) {
+    if (this._slots.length >= 5) {
+      this._setError(this._t("max_slots_error"));
       this._render();
       return;
     }
 
-    const duration = Math.min(120, maxGapLength);
-    const newStart = bestGapStart;
-    const newStop = Math.min(1440, bestGapStart + duration);
+    // Available gap duration in minutes (inclusive bounds [gapStart, gapStop])
+    const maxDuration = gapStop - gapStart;
+    if (maxDuration < 1) {
+      return;
+    }
 
+    // Default duration is up to 120 minutes (or maxDuration if gap is smaller)
+    const duration = Math.min(120, maxDuration);
+    let newStart = gapStart;
+    if (clickedMin !== undefined) {
+      const halfDur = Math.floor(duration / 2);
+      newStart = clickedMin - halfDur;
+    }
+
+    const maxStart = gapStop - duration;
+    newStart = Math.max(gapStart, Math.min(maxStart, newStart));
+    let newStop = newStart + duration;
+
+    // Strict boundary safety
+    if (newStop > gapStop) {
+      newStop = gapStop;
+    }
+    if (newStart < gapStart) {
+      newStart = gapStart;
+    }
+
+    this._markUnsaved();
     this._slots.push({
       start_minute: newStart,
       stop_minute: newStop,
@@ -481,6 +486,49 @@ class KospelProgramCard extends HTMLElement {
     this._render();
   }
 
+  _addSlot() {
+    if (this._slots.length >= 5) {
+      this._setError(this._t("max_slots_error"));
+      this._render();
+      return;
+    }
+
+    this._slots.sort((a, b) => a.start_minute - b.start_minute);
+
+    let bestGapStart = 0;
+    let bestGapStop = 1439;
+    let maxGapLength = 0;
+
+    let prevStop = -1;
+    for (let i = 0; i < this._slots.length; i++) {
+      const gStart = prevStop < 0 ? 0 : prevStop + 1;
+      const gStop = this._slots[i].start_minute - 1;
+      const gapLength = gStop - gStart + 1;
+      if (gapLength > maxGapLength) {
+        maxGapLength = gapLength;
+        bestGapStart = gStart;
+        bestGapStop = gStop;
+      }
+      prevStop = this._slots[i].stop_minute;
+    }
+
+    const endGapStart = prevStop < 1440 ? prevStop + 1 : 1440;
+    const endGapStop = 1439;
+    const endGapLength = endGapStop - endGapStart + 1;
+    if (endGapLength > maxGapLength) {
+      maxGapLength = endGapLength;
+      bestGapStart = endGapStart;
+      bestGapStop = endGapStop;
+    }
+
+    if (maxGapLength < 1) {
+      this._setError(this._t("max_slots_error"));
+      this._render();
+      return;
+    }
+
+    this._addSlotInGap(bestGapStart, bestGapStop, bestGapStart);
+  }
   _removeSlot(index) {
     if (index < 0 || index >= this._slots.length) return;
     this._markUnsaved();
@@ -493,6 +541,23 @@ class KospelProgramCard extends HTMLElement {
     if (!this.shadowRoot) return;
     const presets = this._getPresets();
 
+    const gapElements = [];
+    let prevStop = -1;
+    for (let i = 0; i < this._slots.length; i++) {
+      const slot = this._slots[i];
+      const gStart = prevStop < 0 ? 0 : prevStop + 1;
+      const gStop = slot.start_minute - 1;
+      if (gStop >= gStart) {
+        gapElements.push({ start_minute: gStart, stop_minute: gStop });
+      }
+      prevStop = slot.stop_minute;
+    }
+    const endGStart = prevStop < 0 ? 0 : prevStop + 1;
+    const endGStop = 1439;
+    if (endGStop >= endGStart) {
+      gapElements.push({ start_minute: endGStart, stop_minute: endGStop });
+    }
+
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -504,22 +569,36 @@ class KospelProgramCard extends HTMLElement {
           color: var(--primary-text-color, #212121);
           border-radius: var(--ha-card-border-radius, 12px);
           box-shadow: var(--ha-card-box-shadow, none);
+          box-sizing: border-box;
+          overflow: hidden;
+          position: relative;
+          isolation: isolate;
+          contain: content;
+          container-type: inline-size;
         }
         .controls-row {
           display: flex;
+          flex-wrap: wrap;
           gap: 12px;
           margin-bottom: 16px;
+          width: 100%;
+          box-sizing: border-box;
         }
         .control-group {
-          flex: 1;
+          flex: 1 1 130px;
+          min-width: 0;
           display: flex;
           flex-direction: column;
           gap: 4px;
+          box-sizing: border-box;
         }
         .control-group label {
           font-size: 12px;
           color: var(--secondary-text-color, #727272);
           font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         select {
           padding: 8px 12px;
@@ -528,6 +607,10 @@ class KospelProgramCard extends HTMLElement {
           background: var(--secondary-background-color, #f9f9f9);
           color: var(--primary-text-color, #212121);
           font-size: 14px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          text-overflow: ellipsis;
         }
         .input-time {
           padding: 6px 8px;
@@ -557,6 +640,44 @@ class KospelProgramCard extends HTMLElement {
           border-radius: 8px;
           overflow: visible;
           display: flex;
+        }
+        .timeline-gap {
+          position: absolute;
+          height: 100%;
+          top: 0;
+          cursor: pointer;
+          box-sizing: border-box;
+          transition: background-color 0.2s, outline 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: transparent;
+          z-index: 1;
+        }
+        .timeline-gap:hover {
+          background: rgba(59, 130, 246, 0.18);
+          outline: 2px dashed var(--primary-color, #3b82f6);
+          outline-offset: -2px;
+          border-radius: 6px;
+          z-index: 5;
+        }
+        .gap-hover-hint {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--primary-color, #3b82f6);
+          opacity: 0;
+          transition: opacity 0.15s, transform 0.15s;
+          pointer-events: none;
+        }
+        .timeline-gap:hover .gap-hover-hint {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+        .gap-hover-hint ha-icon {
+          --mdc-icon-size: 20px;
+          filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.8));
         }
         .timeline-segment {
           height: 100%;
@@ -591,16 +712,16 @@ class KospelProgramCard extends HTMLElement {
         }
         .timeline-handle {
           position: absolute;
-          top: 0;
-          bottom: 0;
+          top: 2px;
+          bottom: 2px;
           width: 8px;
           margin-left: -4px;
           background: #ffffff;
-          border: 1px solid rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(0, 0, 0, 0.4);
           border-radius: 4px;
           cursor: ew-resize;
-          z-index: 10;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+          z-index: 2;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
           touch-action: none;
           transition: background-color 0.15s, border-color 0.15s, transform 0.15s;
         }
@@ -608,7 +729,7 @@ class KospelProgramCard extends HTMLElement {
           background: var(--primary-color, #3b82f6);
           border-color: #2563eb;
           transform: scale(1.15);
-          z-index: 20;
+          z-index: 3;
         }
         .drag-tooltip {
           position: absolute;
@@ -636,17 +757,47 @@ class KospelProgramCard extends HTMLElement {
           margin-top: 6px;
           font-size: 11px;
           color: var(--secondary-text-color, #727272);
+          font-weight: 500;
+        }
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+        .section-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--primary-text-color, #1e293b);
+        }
+        .btn-add-slot {
+          font-size: 12px;
+          padding: 4px 10px;
+          background: var(--secondary-background-color, #f1f5f9);
+          color: var(--primary-text-color, #334155);
+          border: 1px solid var(--divider-color, #cbd5e1);
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .btn-add-slot:hover {
+          background: var(--primary-color, #3b82f6);
+          color: #fff;
+          border-color: var(--primary-color, #3b82f6);
         }
         .slots-list {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
           margin-bottom: 16px;
         }
         .slot-item {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           padding: 10px 12px;
           border-radius: 8px;
           background: var(--secondary-background-color, #f9f9f9);
@@ -703,7 +854,7 @@ class KospelProgramCard extends HTMLElement {
           --mdc-icon-size: 22px;
           color: #ef4444;
         }
-        @media (max-width: 480px) {
+        @container (max-width: 360px), @media (max-width: 480px) {
           .controls-row {
             flex-direction: column;
             gap: 8px;
@@ -900,10 +1051,34 @@ class KospelProgramCard extends HTMLElement {
         <div class="timeline-container">
           <div class="timeline-bar" id="timeline-bar">
             ${this._slots.length === 0
-                ? `<div class="timeline-segment" style="width: 100%; background: var(--secondary-background-color, #e0e0e0); color: var(--secondary-text-color, #727272); font-weight: 500;">
-                     ${this._t("empty_program_timeline")}
+                ? `<div class="timeline-gap empty-timeline-gap" 
+                        style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"
+                        title="${this._t("click_to_add_slot")}">
+                     <div class="gap-hover-hint" style="opacity: 1;">
+                       <ha-icon icon="mdi:plus-circle-outline"></ha-icon>
+                       <span>${this._t("empty_program_timeline")}</span>
+                     </div>
                    </div>`
                 : `
+                  ${gapElements
+                    .map((gap) => {
+                      const leftPct = ((gap.start_minute / 1440) * 100).toFixed(2);
+                      const gapDur = gap.stop_minute - gap.start_minute + 1;
+                      const widthPct = ((gapDur / 1440) * 100).toFixed(2);
+                      return `
+                        <div class="timeline-gap"
+                             style="position: absolute; left: ${leftPct}%; width: ${widthPct}%;"
+                             data-gap-start="${gap.start_minute}"
+                             data-gap-stop="${gap.stop_minute}"
+                             title="${this._t("click_to_add_slot")}">
+                          <div class="gap-hover-hint">
+                            <ha-icon icon="mdi:plus"></ha-icon>
+                          </div>
+                        </div>
+                      `;
+                    })
+                    .join("")}
+
                   ${this._slots
                     .map((slot, idx) => {
                       const duration = slot.stop_minute - slot.start_minute;
@@ -1173,6 +1348,7 @@ class KospelProgramCard extends HTMLElement {
           e.preventDefault();
           const handleType = handle.dataset.handleType;
           const handleIdx = parseInt(handle.dataset.handleIdx, 10);
+          this._isDragging = true;
           handle.classList.add("dragging");
           const tooltip = handle.querySelector(".drag-tooltip");
 
@@ -1250,6 +1426,9 @@ class KospelProgramCard extends HTMLElement {
             window.removeEventListener("pointermove", onPointerMove);
             window.removeEventListener("pointerup", onPointerUp);
             window.removeEventListener("pointercancel", onPointerUp);
+            setTimeout(() => {
+              this._isDragging = false;
+            }, 50);
             this._render();
           };
 
@@ -1259,6 +1438,35 @@ class KospelProgramCard extends HTMLElement {
         });
       });
     }
+
+    // Click empty gap on timeline bar to add a new slot right at clicked position
+    root.querySelectorAll(".timeline-gap").forEach((gapEl) => {
+      gapEl.addEventListener("click", (e) => {
+        if (this._isDragging) return;
+
+        const gapStartAttr = gapEl.dataset.gapStart;
+        const gapStopAttr = gapEl.dataset.gapStop;
+        if (gapStartAttr === undefined || gapStopAttr === undefined) {
+          // Empty program timeline
+          this._addSlotInGap(0, 1439, 0);
+          return;
+        }
+
+        const gapStart = parseInt(gapStartAttr, 10);
+        const gapStop = parseInt(gapStopAttr, 10);
+
+        const rect = gapEl.getBoundingClientRect();
+        let clickedMin = gapStart;
+        if (rect.width > 0) {
+          const clickX = e.clientX - rect.left;
+          const gapDuration = gapStop - gapStart;
+          const offsetMin = Math.round((clickX / rect.width) * gapDuration);
+          clickedMin = gapStart + offsetMin;
+        }
+
+        this._addSlotInGap(gapStart, gapStop, clickedMin);
+      });
+    });
 
     // Remove slot buttons
     root.querySelectorAll(".btn-remove").forEach((btn) => {

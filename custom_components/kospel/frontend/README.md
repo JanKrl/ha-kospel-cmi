@@ -12,9 +12,11 @@ The integration includes two custom Lovelace dashboard cards that are automatica
 * **Purpose**: Allows users to configure and edit up to 8 Daily Programs for Central Heating (CH), Domestic Hot Water (DHW), and Circulation schedules.
 * **Features**:
   * **24-Hour Timeline Bar**: Color-coded visualization showing time slots and mode icons (`mdi:thermometer`, `mdi:snowflake`, `mdi:leaf`, etc.).
-  * **Interactive Drag-and-Drop Handles**: Move slot boundaries directly on the timeline bar with touch and mouse pointer support.
-  * **Strict 1-Minute Separation**: Ensures slot stop times do not overlap or collide with subsequent slot start times (`next_start > current_stop`).
-  * **Smart Slot Addition**: Clicking `+ Dodaj przedział` automatically locates the largest available empty gap in the 24-hour day and inserts the new slot there.
+  * **Interactive Timeline Gap Clicking**: Click anywhere on an unassigned empty space on the 24-hour timeline bar to insert a new slot at the exact clicked time position. Hover hints highlight empty gaps with a dashed primary accent border and a clean `+` icon (`mdi:plus`).
+  * **Interactive Drag-and-Drop Handles**: Move slot boundaries directly on the timeline bar with touch and mouse pointer support. Drag handles are strictly inset (`top: 2px; bottom: 2px;`) within the 36px timeline bar.
+  * **Strict 1-Minute Separation & Duration Math**: Ensures slot stop times do not overlap or collide with subsequent slot start times (`next_start > current_stop`), with exact 1-minute safe gap duration clamping (`maxDuration = gapStop - gapStart`).
+  * **Isolated Stacking Context (`isolation: isolate`)**: Encapsulates Shadow DOM z-indexes (`z-index: 2` / `3`) inside `ha-card`, preventing handles from bleeding over Home Assistant's top panel navigation bar when scrolling down.
+  * **Container Query Responsive Design**: Uses `@container (max-width: 360px)` to stack control group dropdowns vertically on narrow card columns without overflowing card bounds.
   * **Unsaved Changes Prompt**: Warns users with a confirm modal if they attempt to switch programs or schedule types before saving.
   * **Native Device Selector**: Integrated `KospelProgramCardEditor` form with native Home Assistant device picker (`selector: { device: { filter: { integration: "kospel" } } }`).
 

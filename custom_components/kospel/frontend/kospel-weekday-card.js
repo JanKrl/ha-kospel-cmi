@@ -440,12 +440,20 @@ class KospelWeekdayCard extends HTMLElement {
           color: var(--primary-text-color, #212121);
           border-radius: var(--ha-card-border-radius, 12px);
           box-shadow: var(--ha-card-box-shadow, none);
+          box-sizing: border-box;
+          overflow: hidden;
+          position: relative;
+          isolation: isolate;
+          contain: content;
+          container-type: inline-size;
         }
         .control-group {
           display: flex;
           flex-direction: column;
           gap: 4px;
           margin-bottom: 16px;
+          width: 100%;
+          box-sizing: border-box;
         }
         .control-group label {
           font-size: 12px;
@@ -459,6 +467,10 @@ class KospelWeekdayCard extends HTMLElement {
           background: var(--secondary-background-color, #f9f9f9);
           color: var(--primary-text-color, #212121);
           font-size: 14px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          text-overflow: ellipsis;
         }
         .days-grid {
           display: flex;
@@ -471,17 +483,21 @@ class KospelWeekdayCard extends HTMLElement {
           border: 1px solid var(--divider-color, #e2e8f0);
           border-radius: 10px;
           padding: 12px 14px;
+          box-sizing: border-box;
+          overflow: hidden;
         }
         .day-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin-bottom: 8px;
+          gap: 8px;
         }
         .day-name {
           font-size: 14px;
           font-weight: 700;
           color: var(--primary-text-color, #1e293b);
+          white-space: nowrap;
         }
         .select-day-program {
           padding: 6px 10px;
@@ -491,6 +507,10 @@ class KospelWeekdayCard extends HTMLElement {
           color: var(--primary-text-color, #1e293b);
           font-size: 13px;
           font-weight: 500;
+          max-width: 60%;
+          min-width: 0;
+          box-sizing: border-box;
+          text-overflow: ellipsis;
         }
         .day-timeline-container {
           position: relative;
