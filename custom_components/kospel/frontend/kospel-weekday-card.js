@@ -960,36 +960,39 @@ if (!window.customCards.some((c) => c.type === "kospel-weekday-card")) {
   });
 }
 
-// Automatically trigger Lovelace dashboard rebuild and self-heal any temporary error cards
 function forceLovelaceRebuild() {
   window.dispatchEvent(new CustomEvent("ll-rebuild"));
   window.dispatchEvent(new Event("location-changed"));
 
   try {
-    const root = document.querySelector("home-assistant")?.shadowRoot
-      ?.querySelector("home-assistant-main")?.shadowRoot
-      ?.querySelector("ha-drawer")
-      ?.querySelector("partial-panel-resolver")
-      ?.querySelector("ha-panel-lovelace")?.shadowRoot
-      ?.querySelector("hui-root")?.shadowRoot;
+    const ha = document.querySelector("home-assistant");
+    if (!ha || !ha.shadowRoot) return;
+    const main = ha.shadowRoot.querySelector("home-assistant-main");
+    if (!main || !main.shadowRoot) return;
+    const drawer = main.shadowRoot.querySelector("ha-drawer");
+    if (!drawer) return;
+    const resolver = drawer.querySelector("partial-panel-resolver");
+    if (!resolver) return;
+    const panel = resolver.querySelector("ha-panel-lovelace");
+    if (!panel || !panel.shadowRoot) return;
+    const root = panel.shadowRoot.querySelector("hui-root");
+    if (!root || !root.shadowRoot) return;
 
-    if (root) {
-      const errorCards = root.querySelectorAll("hui-error-card, hui-card-element-editor");
-      errorCards.forEach((card) => {
-        if (card.textContent && card.textContent.includes("kospel-weekday-card")) {
-          const parent = card.parentElement;
-          const config = card._config;
-          if (parent && config) {
-            const newCard = document.createElement("kospel-weekday-card");
-            if (typeof newCard.setConfig === "function") {
-              newCard.setConfig(config);
-              if (card.hass) newCard.hass = card.hass;
-              parent.replaceChild(newCard, card);
-            }
+    const errorCards = root.shadowRoot.querySelectorAll("hui-error-card, hui-card-element-editor");
+    errorCards.forEach((card) => {
+      if (card.textContent && card.textContent.includes("kospel-weekday-card")) {
+        const parent = card.parentElement;
+        const config = card._config;
+        if (parent && config) {
+          const newCard = document.createElement("kospel-weekday-card");
+          if (typeof newCard.setConfig === "function") {
+            newCard.setConfig(config);
+            if (card.hass) newCard.hass = card.hass;
+            parent.replaceChild(newCard, card);
           }
         }
-      });
-    }
+      }
+    });
   } catch (err) {}
 }
 

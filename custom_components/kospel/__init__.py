@@ -1,5 +1,6 @@
 """The Kospel Heater integration."""
 
+import json
 import logging
 from pathlib import Path
 
@@ -78,6 +79,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+
+def _get_manifest_version() -> str:
+    manifest_path = Path(__file__).resolve().parent / "manifest.json"
+    try:
+        with open(manifest_path, encoding="utf-8") as f:
+            return json.load(f).get("version", "1.4.0")
+    except Exception:
+        return "1.4.0"
+
+
 async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
     """Register custom Lovelace cards with Home Assistant frontend."""
     frontend_dir = Path(__file__).resolve().parent / "frontend"
@@ -98,9 +109,13 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
             ]
         )
 
+        ver = _get_manifest_version()
+        card_program_url = f"/kospel_static/kospel-program-card.js?v={ver}"
+        card_weekday_url = f"/kospel_static/kospel-weekday-card.js?v={ver}"
+
         if not hass.data.get(DOMAIN, {}).get("_frontend_registered"):
-            add_extra_js_url(hass, "/kospel_static/kospel-program-card.js")
-            add_extra_js_url(hass, "/kospel_static/kospel-weekday-card.js")
+            add_extra_js_url(hass, card_program_url)
+            add_extra_js_url(hass, card_weekday_url)
             hass.data.setdefault(DOMAIN, {})["_frontend_registered"] = True
 
         # Auto-register items in Lovelace resources storage if available
@@ -109,8 +124,11 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
             try:
                 items = lovelace.resources.async_get_items()
                 existing_urls = {i.get("url") for i in items if isinstance(i, dict)}
-                for card_url in ["/kospel_static/kospel-program-card.js", "/kospel_static/kospel-weekday-card.js"]:
-                    if card_url not in existing_urls:
+                for card_name, card_url in [
+                    ("kospel-program-card.js", card_program_url),
+                    ("kospel-weekday-card.js", card_weekday_url),
+                ]:
+                    if not any(card_name in url for url in existing_urls):
                         await lovelace.resources.async_create_item({"res_type": "module", "url": card_url})
             except Exception as res_err:
                 _LOGGER.debug("Could not auto-create lovelace resource item: %s", res_err)

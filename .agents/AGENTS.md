@@ -293,6 +293,9 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
 7. **Power values**: The library reports kW but HA expects W. Always multiply by 1000 when creating power sensors.
 8. **Config flow VERSION is 2** — any structural changes to config entry data require a new migration step.
 9. **Entity unique_ids**: Changing a setting name in the controller or integration is a breaking change for existing Home Assistant installations because entities will get recreated with new `unique_id`s. When refactoring or renaming settings, you MUST use or add an optional `unique_id_suffix` override (or similar mechanism) in the entity setup to ensure that the entity's `unique_id` remains the same as it was historically. This preserves the existing HA entity registry entries.
+10. **Frontend Custom Card Cache-Busting & WebView Compatibility**:
+    - **Always append version query strings to `add_extra_js_url`**: Mobile Companion Apps (Android System WebView & iOS WKWebView) aggressively cache static JS modules on disk. When registering frontend resources in `custom_components/kospel/__init__.py`, ALWAYS append `?v={version}` (e.g., `add_extra_js_url(hass, f"/kospel_static/{card}.js?v={version}")`) and set `cache_headers=False` on `StaticPathConfig`.
+    - **Avoid un-transpiled top-level `?.` optional chaining**: Mobile WebViews on older Android devices or un-updated System WebViews will throw a top-level `SyntaxError` on `?.`, causing the entire card script to fail to parse and display `"Custom element doesn't exist"`. Use standard `&&` property checks in frontend JS files.
 
 ## AI Agent Behavioral Guidelines
 
