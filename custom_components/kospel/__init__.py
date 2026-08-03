@@ -1,6 +1,5 @@
 """The Kospel Heater integration."""
 
-import json
 import logging
 from pathlib import Path
 
@@ -80,15 +79,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 
-def _get_manifest_version() -> str:
-    manifest_path = Path(__file__).resolve().parent / "manifest.json"
-    try:
-        with open(manifest_path, encoding="utf-8") as f:
-            return json.load(f).get("version", "1.4.0")
-    except Exception:
-        return "1.4.0"
-
-
 async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
     """Register custom Lovelace cards with Home Assistant frontend."""
     frontend_dir = Path(__file__).resolve().parent / "frontend"
@@ -98,6 +88,7 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
     try:
         from homeassistant.components.frontend import add_extra_js_url
         from homeassistant.components.http import StaticPathConfig
+        from homeassistant.loader import async_get_integration
 
         await hass.http.async_register_static_paths(
             [
@@ -109,7 +100,12 @@ async def _async_register_frontend_cards(hass: HomeAssistant) -> None:
             ]
         )
 
-        ver = _get_manifest_version()
+        try:
+            integration = await async_get_integration(hass, DOMAIN)
+            ver = integration.version or "1.4.0"
+        except Exception:
+            ver = "1.4.0"
+
         card_program_url = f"/kospel_static/kospel-program-card.js?v={ver}"
         card_weekday_url = f"/kospel_static/kospel-weekday-card.js?v={ver}"
 
