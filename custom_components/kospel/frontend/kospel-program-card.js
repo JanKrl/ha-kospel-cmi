@@ -259,7 +259,6 @@ class KospelProgramCard extends HTMLElement {
   _getPresets() {
     if (this._scheduleType === "dhw") {
       return [
-        { id: 0, name: this._t("preset_off"), color: "#6b7280", icon: "mdi:power" },
         { id: 1, name: this._t("preset_economy"), color: "#10b981", icon: "mdi:leaf" },
         { id: 2, name: this._t("preset_comfort"), color: "#f97316", icon: "mdi:thermometer" },
       ];
@@ -270,13 +269,12 @@ class KospelProgramCard extends HTMLElement {
         { id: 1, name: this._t("preset_on"), color: "#3b82f6", icon: "mdi:sync" },
       ];
     }
-    // Default CH presets matching Kospel UI motifs
+    // CH presets aligned 1:1 with ChPreset enum values from kospel-cmi-lib
     return [
-      { id: 0, name: this._t("preset_antifreeze"), color: "#3b82f6", icon: "mdi:snowflake" },
-      { id: 1, name: this._t("preset_economy"), color: "#10b981", icon: "mdi:leaf" },
+      { id: 1, name: this._t("preset_antifreeze"), color: "#3b82f6", icon: "mdi:snowflake" },
       { id: 2, name: this._t("preset_comfort"), color: "#f97316", icon: "mdi:thermometer" },
-      { id: 3, name: this._t("preset_comfort_plus"), color: "#ef4444", icon: "mdi:thermometer-plus" },
-      { id: 4, name: this._t("preset_comfort_minus"), color: "#facc15", icon: "mdi:thermometer-minus" },
+      { id: 3, name: this._t("preset_comfort_minus"), color: "#facc15", icon: "mdi:thermometer-minus" },
+      { id: 4, name: this._t("preset_comfort_plus"), color: "#ef4444", icon: "mdi:thermometer-plus" },
     ];
   }
 
