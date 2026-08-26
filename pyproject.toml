@@ -1,6 +1,6 @@
 [project]
 name = "ha-kospel-cmi"
-version = "1.4.0"
+version = "1.4.1"
 description = "Home Assistant integration to manage Kospel Electric Heaters"
 readme = "README.md"
 license = "Apache-2.0"
