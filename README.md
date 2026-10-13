@@ -77,11 +77,42 @@ Entity IDs below are representative examples and can vary based on your device n
 - **Max Boiler Power Entity**:
   - Limit device power to: `2 kW`, `4 kW`, `6 kW`, `8 kW`
 
+## Custom Lovelace Cards
+
+The integration includes two custom Home Assistant dashboard cards that are automatically loaded into your Lovelace UI:
+
+1. **`kospel-program-card` (Daily Program Editor)**:
+   - Visually edit 8 Daily Programs for Central Heating (CH), Domestic Hot Water (DHW), and Circulation.
+   - Interactive 24-hour color-coded timeline preview with up to 5 time slots per program.
+   - Drag-and-drop boundary handles, time pickers (`HH:MM`), and preset selectors (`Antifreeze`, `Economy`, `Comfort-`, `Comfort`, `Comfort+`, `Eco`, `On`, etc.).
+   - Mandatory 1-minute slot gap separation, empty program support, and native Home Assistant device selector.
+
+2. **`kospel-weekday-card` (Weekday Schedule Assignment & Visualization)**:
+   - Assign Daily Programs 1–8 to each day of the week (Monday through Sunday).
+   - Read-only 24-hour schedule visualization per day with smart boundary edge timestamp labels and automatic anti-collision filtering.
+
+For full frontend documentation, architecture details, theme tokens, and developer conventions, see [custom_components/kospel/frontend/README.md](custom_components/kospel/frontend/README.md).
+
+### Example Dashboard YAML Setup
+
+```yaml
+type: custom:kospel-program-card
+device_id: climate.heater
+schedule_type: ch
+program_id: 1
+```
+
+```yaml
+type: custom:kospel-weekday-card
+device_id: climate.heater
+schedule_type: ch
+```
+
 ## How To Use (Important Notes)
 
 - **Climate target temperature** can be changed only in **Heat** (manual) HVAC mode.
 - **Auto mode presets** are available as climate presets (`winter`, `summer`, `party`, `vacation`).
-- **Auto mode schedules** can be read from the device state, but editing schedules from Home Assistant is not supported yet.
+- **Auto mode schedules** can be viewed and configured visually using the custom Lovelace cards (`kospel-program-card` and `kospel-weekday-card`) or via services (`kospel.set_program`, `kospel.set_weekday_schedule`).
 - **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
 - After changing values, refresh can be slightly delayed by design (configurable integration option).
 

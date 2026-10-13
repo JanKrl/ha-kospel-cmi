@@ -5,6 +5,7 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.exceptions import HomeAssistantError
 
 from kospel_cmi.controller.schedules import (
@@ -37,7 +38,7 @@ SLOT_SCHEMA = vol.Schema(
 
 SET_PROGRAM_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Optional("device_id", default=""): cv.string,
         vol.Required("schedule_type"): vol.In(["ch", "dhw", "circulation"]),
         vol.Required("program_id"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
         vol.Required("slots"): vol.All(cv.ensure_list, [SLOT_SCHEMA]),
@@ -46,7 +47,7 @@ SET_PROGRAM_SCHEMA = vol.Schema(
 
 SET_WEEKDAY_SCHEDULE_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Optional("device_id", default=""): cv.string,
         vol.Required("schedule_type"): vol.In(["ch", "dhw", "circulation"]),
         vol.Required("monday"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
         vol.Required("tuesday"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
@@ -60,7 +61,7 @@ SET_WEEKDAY_SCHEDULE_SCHEMA = vol.Schema(
 
 GET_PROGRAM_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Optional("device_id", default=""): cv.string,
         vol.Required("schedule_type"): vol.In(["ch", "dhw", "circulation"]),
         vol.Required("program_id"): vol.All(vol.Coerce(int), vol.Range(min=1, max=8)),
     }
@@ -68,7 +69,7 @@ GET_PROGRAM_SCHEMA = vol.Schema(
 
 GET_WEEKDAY_SCHEDULE_SCHEMA = vol.Schema(
     {
-        vol.Required("device_id"): cv.string,
+        vol.Optional("device_id", default=""): cv.string,
         vol.Required("schedule_type"): vol.In(["ch", "dhw", "circulation"]),
     }
 )
@@ -78,15 +79,48 @@ def async_setup_services(hass: HomeAssistant) -> None:
     """Set up the Kospel services."""
 
     def _get_coordinator_from_device_id(device_id: str):
-        device_registry = dr.async_get(hass)
-        device = device_registry.async_get(device_id)
-        if device is None:
-            raise HomeAssistantError(f"Device {device_id} not found")
+        coordinators = hass.data.get(DOMAIN, {})
+        active_coordinators = {
+            k: v for k, v in coordinators.items() if not str(k).startswith("_")
+        }
 
-        for config_entry_id in device.config_entries:
-            if coordinator := hass.data.get(DOMAIN, {}).get(config_entry_id):
+        if not active_coordinators:
+            raise HomeAssistantError("No active Kospel integration instances found")
+
+        if device_id:
+            # 1. Device Registry ID
+            device_registry = dr.async_get(hass)
+            if device := device_registry.async_get(device_id):
+                for config_entry_id in device.config_entries:
+                    if coordinator := active_coordinators.get(config_entry_id):
+                        return coordinator
+
+            # 2. Entity ID (e.g. climate.heater)
+            entity_registry = er.async_get(hass)
+            if entity := entity_registry.async_get(device_id):
+                if entity.config_entry_id and (
+                    coordinator := active_coordinators.get(entity.config_entry_id)
+                ):
+                    return coordinator
+
+            # 3. Config Entry ID directly
+            if coordinator := active_coordinators.get(device_id):
                 return coordinator
-        raise HomeAssistantError(f"Kospel integration not found for device {device_id}")
+
+            # 4. Search by numeric device_id / IP or identifier
+            for coordinator in active_coordinators.values():
+                entry_data = coordinator.entry.data
+                if (
+                    str(entry_data.get("device_id")) == str(device_id)
+                    or entry_data.get("heater_ip") == str(device_id)
+                ):
+                    return coordinator
+
+        # Fallback: if only 1 active coordinator exists, auto-select it!
+        if len(active_coordinators) == 1:
+            return next(iter(active_coordinators.values()))
+
+        raise HomeAssistantError(f"Kospel integration instance not found for device: {device_id}")
 
     async def async_handle_set_program(call: ServiceCall) -> None:
         """Handle set_program service call."""
@@ -183,6 +217,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
         slots = []
         for slot in program.slots:
+            if getattr(slot, "is_empty", False):
+                continue
+            if slot.start_minute in (-1, 65535) or slot.stop_minute in (-1, 65535):
+                continue
+            if slot.stop_minute <= slot.start_minute:
+                continue
             slot_data = {
                 "start_minute": slot.start_minute,
                 "stop_minute": slot.stop_minute,
