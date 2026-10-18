@@ -50,8 +50,10 @@ jobs:
         with:
           fetch-depth: 2
       - id: check
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"chore: release"* ]] || [[ "${{ github.event.head_commit.message }}" == *"chore(master): release"* ]]; then
+          if [[ "$COMMIT_MSG" == *"chore: release"* ]] || [[ "$COMMIT_MSG" == *"chore(master): release"* ]]; then
             if git diff --name-only HEAD^ HEAD | grep -q "^lib/pyproject\.toml$"; then
               echo "lib_bumped=true" >> "$GITHUB_OUTPUT"
             else
