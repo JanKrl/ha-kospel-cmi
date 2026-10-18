@@ -8,7 +8,12 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfPower, UnitOfPressure, UnitOfTemperature
+from homeassistant.const import (
+    UnitOfPower,
+    UnitOfPressure,
+    UnitOfTemperature,
+    UnitOfVolumeFlowRate,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -37,6 +42,9 @@ async def async_setup_entry(
         ("room_temperature", "room_temperature"),
         ("outside_temperature", "outside_temperature"),
         ("water_temperature", "water_current_temperature"),
+        ("return_temperature", "inlet_temperature"),
+        ("supply_temperature", "outlet_temperature"),
+        ("heating_medium_setpoint", "heating_medium_setpoint"),
     ]
 
     for unique_id_suffix, attr_name in temperature_sensors:
@@ -51,6 +59,9 @@ async def async_setup_entry(
 
     # Pressure sensor
     entities.append(KospelPressureSensor(coordinator, entry))
+
+    # Flow rate sensor
+    entities.append(KospelFlowSensor(coordinator, entry))
 
     # Power sensor
     entities.append(KospelPowerSensor(coordinator, entry))
@@ -146,6 +157,32 @@ class KospelPressureSensor(KospelSensorEntity):
         """Return the pressure value."""
         controller: EkcoM3 = self.coordinator.data
         return controller.pressure
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.async_write_ha_state()
+
+
+class KospelFlowSensor(KospelSensorEntity):
+    """Representation of a Kospel flow rate sensor."""
+
+    _attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
+    _attr_native_unit_of_measurement = UnitOfVolumeFlowRate.LITERS_PER_MINUTE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self,
+        coordinator: KospelDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the flow rate sensor."""
+        super().__init__(coordinator, entry, "flow", "flow")
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the flow rate in L/min."""
+        controller: EkcoM3 = self.coordinator.data
+        return controller.flow
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""

@@ -201,8 +201,20 @@
       "water_temperature": {
         "name": "Temperatura CWU"
       },
+      "return_temperature": {
+        "name": "Temperatura powrotu"
+      },
+      "supply_temperature": {
+        "name": "Temperatura zasilania"
+      },
+      "heating_medium_setpoint": {
+        "name": "Nastawa czynnika"
+      },
       "pressure": {
         "name": "Ciśnienie"
+      },
+      "flow": {
+        "name": "Przepływ"
       },
       "power": {
         "name": "Moc chwilowa"
