@@ -278,7 +278,7 @@ uv run ruff check .
 Releases are driven by [release-please](https://github.com/googleapis/release-please) via `.github/workflows/release-please.yaml`.
 
 - **Library** (`lib-v*` tags): Fully automated. Merge the release-please Release PR using a **merge commit** → git tag created → PyPI publish triggered automatically via OIDC.
-- **HA integration** (`v*` tags): Semi-automated. Merge the release-please Release PR using a **merge commit** → Draft GitHub Release created → you enrich release notes and click Publish → HACS notifies users.
+- **HA integration** (`v*` tags): Fully automated. Merge the release-please Release PR using a **merge commit** → published directly as GitHub Release → workflow automatically appends the sponsorship footer → HACS notifies users.
 
 For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -293,6 +293,13 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
 7. **Power values**: The library reports kW but HA expects W. Always multiply by 1000 when creating power sensors.
 8. **Config flow VERSION is 2** — any structural changes to config entry data require a new migration step.
 9. **Entity unique_ids**: Changing a setting name in the controller or integration is a breaking change for existing Home Assistant installations because entities will get recreated with new `unique_id`s. When refactoring or renaming settings, you MUST use or add an optional `unique_id_suffix` override (or similar mechanism) in the entity setup to ensure that the entity's `unique_id` remains the same as it was historically. This preserves the existing HA entity registry entries.
+10. **Never set `"draft": true` in `release-please-config.json`**: Release Please ignores draft releases when determining the latest released baseline. This causes it to believe the current version was never released, trigger `bootstrap-sha` fallback, and immediately open a phantom release PR bumping to major versions with historical commits.
+11. **Subpackage paths in `release-please-config.json` are relative**: For `lib`, options like `"changelog-path"` must be `"CHANGELOG.md"` (relative to `lib/`), NOT `"lib/CHANGELOG.md"` (which causes Release Please to create `lib/lib/CHANGELOG.md`).
+12. **Monorepo Two-Phase Release Protocol**: When adding a feature touching both `lib/` and the HA integration, changes MUST be released in two phases:
+    - Phase 1: Merge library PR → Merge Release PR → Wait for PyPI publish.
+    - Phase 2: Open PR updating `custom_components/kospel/manifest.json` requirements to the published PyPI version → Merge integration PR.
+    *Never* point `manifest.json` on `master` to an unreleased PyPI package, as `Validate Manifest Requirements` (`hassfest`) checks against live PyPI.
+
 
 ## AI Agent Behavioral Guidelines
 

@@ -187,14 +187,14 @@ chore/<short-description>       # e.g. chore/update-ci-uv-version
 
 ### How It Works
 
-Releases are managed automatically by [release-please](https://github.com/googleapis/release-please):
+Releases are managed automatically by [release-please](https://github.com/googleapis/release-please) via `.github/workflows/release-please.yaml`:
 
 1. You merge PRs to `master` with conventional commit titles.
 2. release-please opens/updates a **Release PR** per package, accumulating unreleased changes.
 3. You merge the Release PR using a **merge commit** when you're ready to ship.
-4. A git tag and GitHub Release are created automatically.
-   - **Library** (`lib-v1.1.0` tag): PyPI publish runs automatically (OIDC, no token needed).
-   - **HA integration** (`v0.2.0` tag): A **Draft** GitHub Release is created. You enrich the release notes and click Publish — HACS then notifies users.
+4. Tags and releases are published automatically:
+   - **Library** (`lib-v*` tag): Published automatically to PyPI via OIDC.
+   - **HA integration** (`v*` tag): Published directly as a GitHub Release (with the Buy Me a Coffee footer automatically appended), triggering HACS notifications for users.
 
 ### Batching Multiple PRs into One Release
 
@@ -204,19 +204,15 @@ You don't have to merge the Release PR after every single PR. Let it accumulate:
 - When you're happy with the batch, merge the Release PR
 - Everything ships in one version
 
-### Library Release (Automatic)
+### Monorepo Two-Step Release Protocol (When Library Changes)
 
-No manual steps needed — release-please and PyPI publishing handle everything once you merge the Release PR.
+Because `ha-kospel-cmi` depends on `kospel-cmi-lib` from PyPI, changes spanning both packages **must be released in two consecutive steps**:
 
-### HA Integration Release (Semi-Manual)
+1. **Step 1 — Library PR**: Merge `feat(lib): ...` or `fix(lib): ...` to `master`. Merge the resulting `release-please` PR to publish the new library version to PyPI.
+2. **Step 2 — Integration PR**: Open a separate PR updating `custom_components/kospel/manifest.json` requirements to the newly published PyPI version.
 
-After merging the HA Release PR:
-1. Go to the **Draft GitHub Release** that was created automatically.
-2. Edit the release notes to be user-friendly: describe what changed per entity, highlight breaking changes, list any migration steps.
-3. Click **Publish release** — HACS immediately detects the new version.
-
-> [!NOTE]
-> HACS only sees **published** releases. The draft is invisible to users until you publish it, giving you full control over timing.
+> [!WARNING]
+> CI runs `Validate Manifest Requirements` (`hassfest`), which strictly validates that the version specified in `manifest.json` exists on PyPI. Updating `manifest.json` before the library package is published on PyPI will break master CI.
 
 ---
 
@@ -243,7 +239,11 @@ All device communication logic lives in the **library** (`lib/`), not the HA int
 
 Use the [GitHub issue templates](https://github.com/JanKrl/ha-kospel-cmi/issues/new/choose) for bug reports and feature requests.
 
+> [!NOTE]
+> GitHub issues can be created in either **Polish** or **English**.
+
 When reporting bugs, include:
 - Home Assistant logs from `custom_components.kospel`
 - Whether the bug is in the HA integration layer or the communication library
 - Device model and firmware version if relevant
+
