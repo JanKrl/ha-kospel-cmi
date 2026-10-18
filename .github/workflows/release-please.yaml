@@ -40,6 +40,18 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      - name: Append buycoffee footer to GitHub Release
+        if: ${{ steps.release.outputs['.--release_created'] == 'true' || steps.release.outputs.releases_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          TAG: ${{ steps.release.outputs['.--tag_name'] || steps.release.outputs.tag_name }}
+        run: |
+          if [ -n "$TAG" ]; then
+            BODY=$(gh release view "$TAG" --json body --jq '.body')
+            FOOTER=$'\n\n---\n☕ **Enjoying this integration? / Podoba Ci się ta integracja?**\nI maintain this open-source integration in my private time. If you\'d like to say thanks with a coffee / Rozwijam ten projekt w wolnym czasie — jeśli chcesz podziękować kawą ☕: [buycoffee.to/jankrl](https://buycoffee.to/jankrl)'
+            gh release edit "$TAG" --notes "${BODY}${FOOTER}"
+          fi
+
   check-lib-release:
     name: Check if kospel-cmi-lib was released
     runs-on: ubuntu-latest
@@ -99,5 +111,7 @@ jobs:
           VERSION=$(grep -oP '(?<=^version = ")[^"]+' lib/pyproject.toml)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag "lib-v$VERSION"
-          git push origin "lib-v$VERSION"
+          if ! git rev-parse "lib-v$VERSION" >/dev/null 2>&1; then
+            git tag "lib-v$VERSION"
+            git push origin "lib-v$VERSION"
+          fi
