@@ -47,13 +47,24 @@ async def async_setup_entry(
         ("heating_medium_setpoint", "heating_medium_setpoint"),
     ]
 
+    def _get_sensor_value(controller: EkcoM3, attr_name: str) -> float | None:
+        val = getattr(controller, attr_name, None)
+        if val is not None:
+            return val
+        if attr_name == "heating_medium_setpoint":
+            raw = getattr(controller, "_registers", {}).get("0b44")
+            if raw:
+                from kospel_cmi.registers.decoders import decode_scaled_x10
+                return decode_scaled_x10(raw)
+        return None
+
     for unique_id_suffix, attr_name in temperature_sensors:
         entities.append(
             KospelTemperatureSensor(
                 coordinator,
                 entry,
                 unique_id_suffix,
-                lambda c, name=attr_name: getattr(c, name, None),
+                lambda c, name=attr_name: _get_sensor_value(c, name),
             )
         )
 
