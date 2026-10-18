@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "python",
   "bootstrap-sha": "24c1432e82a6efb5dd47007ebc929c83636ef4bc",
-  "pull-request-footer": "\n---\n☕ **Enjoying this integration? / Podoba Ci się ta integracja?**\nI maintain this open-source integration in my private time. If you'd like to say thanks with a coffee / Rozwijam ten projekt w wolnym czasie — jeśli chcesz podziękować kawą ☕: [buycoffee.to/jankrl](https://buycoffee.to/jankrl)",
   "packages": {
     ".": {
       "release-type": "python",
