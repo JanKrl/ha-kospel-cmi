@@ -48,7 +48,7 @@ jobs:
         run: |
           if [ -n "$TAG" ]; then
             BODY=$(gh release view "$TAG" --json body --jq '.body')
-            FOOTER=$'\n\n---\n☕ **Enjoying this integration?**\nI maintain this open-source integration in my private time. If you\'d like to say thanks with a coffee ☕: [buycoffee.to/jankrl](https://buycoffee.to/jankrl)\n\n*GitHub issues can be created in either Polish or English.*'
+            FOOTER=$'\n\n---\n☕ **Enjoying this integration?**\nI maintain this open-source integration in my private time. If you\'d like to say thanks with a coffee:\n\n[![Buy me a coffee](https://img.shields.io/badge/Kup%20mi%20kaw%C4%99-buycoffee.to-ffdd00.svg?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buycoffee.to/jankrl)\n\n*GitHub issues can be created in either Polish or English.*'
             gh release edit "$TAG" --notes "${BODY}${FOOTER}"
           fi
 
