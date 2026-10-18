@@ -32,7 +32,7 @@ await controller.set_water_comfort_temperature(38.0)
 
 ## Properties (read-only)
 
-- `heater_mode`, `manual_temperature`, `room_temperature`, `room_setpoint`
+- `heater_mode`, `manual_temperature`, `room_temperature`, `room_setpoint`, `heating_medium_setpoint`, `inlet_temperature`, `outlet_temperature`
 - `cwu_mode`, `cwu_temperature_economy`, `cwu_temperature_comfort`
 - `is_water_heater_enabled`, `is_ch_heating_active`, `is_dhw_heating_active`
 - `ch_heating_status`, `dhw_heating_status` (computed)

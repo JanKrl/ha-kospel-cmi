@@ -77,7 +77,7 @@ Register values may vary per device type / version. Currently the project includ
 - `0b74`: Outside temperature off threshold
 - `0b48`: Inlet temperature
 - `0b49`: Outlet temperature
-- `0b44`: Factor
+- `0b44`: Heating medium setpoint (Nastawa czynnika)
 - `0b8d`: Manual temperature
 - `0b68`: Room temperature economy
 - `0b69`: Room temperature comfort minus

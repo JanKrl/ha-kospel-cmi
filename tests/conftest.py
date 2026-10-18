@@ -83,6 +83,14 @@ def sample_registers() -> Dict[str, str]:
         "0b32": "4000",
         # Register 0b4e - Pressure (500 = 5.00 bar, scaled_x100)
         "0b4e": "f401",
+        # Register 0b44 - Heating medium setpoint (230 = 23.0°C)
+        "0b44": "e600",
+        # Register 0b48 - Inlet / return temperature (220 = 22.0°C)
+        "0b48": "dc00",
+        # Register 0b49 - Outlet / supply temperature (200 = 20.0°C)
+        "0b49": "c800",
+        # Register 0b4f - Flow rate (20 = 2.0 L/min, scaled_x10)
+        "0b4f": "1400",
         # Additional registers with edge cases
         "0b00": "0000",  # Zero value
         "0b01": "ff7f",  # 32767 (max positive)

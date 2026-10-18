@@ -23,6 +23,8 @@ const_mock.UnitOfTemperature.CELSIUS = "°C"
 const_mock.UnitOfPressure = MagicMock()
 const_mock.UnitOfPower = MagicMock()
 const_mock.UnitOfPower.WATT = "W"
+const_mock.UnitOfVolumeFlowRate = MagicMock()
+const_mock.UnitOfVolumeFlowRate.LITERS_PER_MINUTE = "L/min"
 sys.modules["homeassistant.const"] = const_mock
 sys.modules["homeassistant.core"] = MagicMock()
 sys.modules["homeassistant.exceptions"] = MagicMock()
@@ -65,6 +67,7 @@ sensor_mock.SensorEntity = _SensorEntityBase
 sensor_mock.SensorDeviceClass = MagicMock()
 sensor_mock.SensorDeviceClass.TEMPERATURE = "temperature"
 sensor_mock.SensorDeviceClass.POWER = "power"
+sensor_mock.SensorDeviceClass.VOLUME_FLOW_RATE = "volume_flow_rate"
 sensor_mock.SensorStateClass = MagicMock()
 sensor_mock.SensorStateClass.MEASUREMENT = "measurement"
 sys.modules["homeassistant.components.sensor"] = sensor_mock
@@ -74,6 +77,7 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
 )
 
 from custom_components.kospel.sensor import (
+    KospelFlowSensor,
     KospelHeatingModeSensor,
     KospelMaxPowerLimitSensor,
     KospelTemperatureSensor,
@@ -183,6 +187,83 @@ class TestKospelTemperatureSensorNativeValue:
             lambda c, name="water_current_temperature": getattr(c, name, None),
         )
 
+        assert entity.native_value is None
+
+    def test_native_value_return_temperature_reads_inlet_temperature(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """Return temperature reads inlet_temperature from controller."""
+        mock_controller = MagicMock()
+        mock_controller.inlet_temperature = 22.0
+        mock_coordinator.data = mock_controller
+
+        entity = KospelTemperatureSensor(
+            mock_coordinator,
+            mock_entry,
+            "return_temperature",
+            lambda c, name="inlet_temperature": getattr(c, name, None),
+        )
+
+        assert entity.native_value == 22.0
+
+    def test_native_value_supply_temperature_reads_outlet_temperature(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """Supply temperature reads outlet_temperature from controller."""
+        mock_controller = MagicMock()
+        mock_controller.outlet_temperature = 20.0
+        mock_coordinator.data = mock_controller
+
+        entity = KospelTemperatureSensor(
+            mock_coordinator,
+            mock_entry,
+            "supply_temperature",
+            lambda c, name="outlet_temperature": getattr(c, name, None),
+        )
+
+        assert entity.native_value == 20.0
+
+    def test_native_value_heating_medium_setpoint(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """Heating medium setpoint reads heating_medium_setpoint from controller."""
+        mock_controller = MagicMock()
+        mock_controller.heating_medium_setpoint = 23.0
+        mock_coordinator.data = mock_controller
+
+        entity = KospelTemperatureSensor(
+            mock_coordinator,
+            mock_entry,
+            "heating_medium_setpoint",
+            lambda c, name="heating_medium_setpoint": getattr(c, name, None),
+        )
+
+        assert entity.native_value == 23.0
+
+
+class TestKospelFlowSensorNativeValue:
+    """Tests for flow rate sensor."""
+
+    def test_native_value_returns_flow_from_controller(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value returns flow from controller in L/min."""
+        mock_controller = MagicMock()
+        mock_controller.flow = 2.5
+        mock_coordinator.data = mock_controller
+
+        entity = KospelFlowSensor(mock_coordinator, mock_entry)
+        assert entity.native_value == 2.5
+
+    def test_native_value_none_when_flow_missing(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        """native_value returns None when flow is None."""
+        mock_controller = MagicMock()
+        mock_controller.flow = None
+        mock_coordinator.data = mock_controller
+
+        entity = KospelFlowSensor(mock_coordinator, mock_entry)
         assert entity.native_value is None
 
 

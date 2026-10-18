@@ -222,6 +222,14 @@ class TestEkcoM3:
         assert controller.outside_temperature_off == 20.0
 
     @pytest.mark.asyncio
+    async def test_heating_medium_setpoint_property_decodes_0b44(self) -> None:
+        """heating_medium_setpoint reads 0b44 as °C."""
+        backend = MockRegisterBackend({"0b44": "e600"})
+        controller = EkcoM3(backend=backend)
+        controller.from_registers(await backend.read_registers("0b00", 256))
+        assert controller.heating_medium_setpoint == 23.0
+
+    @pytest.mark.asyncio
     async def test_set_outside_temperature_off_writes_0b74_only(self) -> None:
         """set_outside_temperature_off writes only 0b74."""
         backend = MockRegisterBackend({"0b74": "0000", "0b32": "0100"})
