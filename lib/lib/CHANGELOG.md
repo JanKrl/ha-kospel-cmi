@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/JanKrl/ha-kospel-cmi/compare/lib-v2.0.0...lib-v2.1.0) (2026-10-18)
+
+
+### Features
+
+* **ha:** add return temp, supply temp, heating medium setpoint, and flow sensors ([#146](https://github.com/JanKrl/ha-kospel-cmi/issues/146)) ([2701de0](https://github.com/JanKrl/ha-kospel-cmi/commit/2701de08321b5c12738996c21425a4c7f3921367))
+
+
+### Documentation
+
+* add buycoffee.to sponsorship and release notes footer ([#137](https://github.com/JanKrl/ha-kospel-cmi/issues/137)) ([484aa6e](https://github.com/JanKrl/ha-kospel-cmi/commit/484aa6e83948bd34bbd6eedced5af92e0647d4a7))
+
 ## [2.0.0](https://github.com/JanKrl/ha-kospel-cmi/compare/lib-v1.1.6...lib-v2.0.0) (2026-08-01)
 
 
