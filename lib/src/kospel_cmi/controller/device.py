@@ -70,6 +70,7 @@ _EKCOM3_READ_REGISTERS: frozenset[str] = frozenset(
         "0b32",
         "0b34",
         "0b35",
+        "0b44",
         "0b46",
         "0b48",
         "0b49",
@@ -283,6 +284,11 @@ class EkcoM3:
     def outside_temperature_off(self) -> Optional[float]:
         """Outside temperature off threshold (0b74), °C."""
         return decode_scaled_x10(self._get_register("0b74"))
+
+    @property
+    def heating_medium_setpoint(self) -> Optional[float]:
+        """Heating medium setpoint (0b44), °C."""
+        return decode_scaled_x10(self._get_register("0b44"))
 
     @property
     def supply_setpoint(self) -> Optional[float]:
