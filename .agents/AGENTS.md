@@ -299,7 +299,6 @@ For the full release workflow and commit conventions, see [CONTRIBUTING.md](CONT
     - Phase 1: Merge library PR → Merge Release PR → Wait for PyPI publish.
     - Phase 2: Open PR updating `custom_components/kospel/manifest.json` requirements to the published PyPI version → Merge integration PR.
     *Never* point `manifest.json` on `master` to an unreleased PyPI package, as `Validate Manifest Requirements` (`hassfest`) checks against live PyPI.
-13. **Remote Register Discovery**: When a physical heater is behind a VPN or remote network without direct LAN access, do NOT try to SSH into Home Assistant. Download the Home Assistant diagnostics JSON file (`config_entry-kospel-*.json`), which contains the raw register cache dump (`0b44`, `0b48`, `0b49`, `0b4f`), allowing immediate verification of register addresses and values.
 
 
 ## AI Agent Behavioral Guidelines
