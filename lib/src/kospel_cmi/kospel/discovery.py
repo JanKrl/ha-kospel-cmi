@@ -1,8 +1,10 @@
 """
-Device discovery for Kospel C.MI modules.
+Device discovery for Kospel C.MI and ModBus-over-HTTP modules.
 
-Probes devices via GET /api/dev (no device_id required) and
-fetches per-device info via GET /api/dev/{id}/info.
+- C.MI modules: Probed via GET /api/dev and GET /api/dev/{id}/info.
+- ModBus modules (e.g. PPE.4): Probed via GET /api/1276/1 (serial suffix) and
+  GET / (root HTML page to confirm specific model such as PPE.4; defaults to
+  'Kospel SN{serial_number}' when model is not confirmed).
 """
 
 import asyncio
@@ -14,14 +16,20 @@ from urllib.parse import urlparse
 import aiohttp
 from pydantic import BaseModel
 
+from .modbus_api import parse_modbus_read_response
+
 logger = logging.getLogger(__name__)
 
-# Model ID to name mapping (from Kospel web UI)
+MODEL_ID_PPE4 = 400
+REG_MODBUS_SERIAL_SUFFIX = 1276
+
+# Model ID to name mapping
 MODEL_NAMES: dict[int, str] = {
     18: "EKD.M3",   # Kocioł dwufunkcyjny elektryczny
     19: "EKCO.M3",  # Kocioł elektryczny (do fotowoltaiki)
     65: "C.MG3",    # Moduł rozszerzający (obiegi grzewcze)
     81: "C.MW3",    # Moduł (pompa ciepła)
+    MODEL_ID_PPE4: "PPE.4",  # Przepływowy podgrzewacz wody PPE.4
 }
 
 
@@ -31,7 +39,7 @@ def _model_name(model_id: int) -> str:
 
 
 class DeviceDetail(BaseModel):
-    """Per-device info from /api/dev/{id}/info."""
+    """Per-device info from discovery."""
 
     device_id: int
     model_id: int
@@ -40,13 +48,14 @@ class DeviceDetail(BaseModel):
 
 
 class KospelDeviceInfo(BaseModel):
-    """Result of probing a Kospel C.MI module at given host."""
+    """Result of probing a Kospel module at a given host."""
 
     host: str
     device_ids: list[int]
     serial_number: str
     api_base_url: str
     devices: list[DeviceDetail] = []
+    backend_family: str = "cmi"
 
     @property
     def device_id(self) -> int:
@@ -69,25 +78,12 @@ def _extract_host(host: str) -> str:
     return parsed.netloc or parsed.path or host.strip()
 
 
-async def probe_device(
+async def probe_cmi_device(
     session: aiohttp.ClientSession,
     host: str,
     timeout: float = 5.0,
 ) -> Optional[KospelDeviceInfo]:
-    """
-    Probe a host to check if it is a Kospel C.MI device.
-
-    Uses GET /api/dev (no device_id required) and fetches per-device info
-    via GET /api/dev/{id}/info.
-
-    Args:
-        session: aiohttp ClientSession
-        host: IP address or hostname (e.g. "192.168.101.49")
-        timeout: Request timeout in seconds
-
-    Returns:
-        KospelDeviceInfo if host is a C.MI device, None otherwise
-    """
+    """Probe a host for a Kospel C.MI module via GET /api/dev."""
     base_url = _normalize_host(host).rstrip("/")
     dev_url = f"{base_url}/api/dev"
 
@@ -165,7 +161,87 @@ async def probe_device(
         serial_number=str(sn),
         api_base_url=api_base_url,
         devices=devices,
+        backend_family="cmi",
     )
+
+
+async def probe_modbus_device(
+    session: aiohttp.ClientSession,
+    host: str,
+    timeout: float = 5.0,
+) -> Optional[KospelDeviceInfo]:
+    """Probe a host for a Kospel MODBUS-over-HTTP module via GET /api/1276/1.
+
+    Checks the root page (GET /) to confirm if the device is a PPE.4.
+    If not confirmed, defaults model_name to 'Kospel SN{serial_number}'.
+    """
+    base_url = _normalize_host(host).rstrip("/")
+    reg_url = f"{base_url}/api/{REG_MODBUS_SERIAL_SUFFIX}/1"
+
+    try:
+        async with session.get(
+            reg_url, timeout=aiohttp.ClientTimeout(total=timeout)
+        ) as resp:
+            resp.raise_for_status()
+            text = await resp.text()
+        regs = parse_modbus_read_response(text)
+    except Exception as e:
+        logger.debug("ModBus probe %s failed: %s", reg_url, e)
+        return None
+
+    suffix = regs.get(REG_MODBUS_SERIAL_SUFFIX)
+    if suffix is None:
+        return None
+
+    raw_serial = f"{suffix:08d}"
+    is_ppe4 = False
+    try:
+        async with session.get(
+            f"{base_url}/", timeout=aiohttp.ClientTimeout(total=timeout)
+        ) as root_resp:
+            if root_resp.status == 200:
+                html = (await root_resp.text()).upper()
+                if "PPE4" in html or "PPE.4" in html:
+                    is_ppe4 = True
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        pass
+
+    if is_ppe4:
+        serial_number = f"ppe4_{raw_serial}"
+        model_id = MODEL_ID_PPE4
+        model_name = "PPE.4"
+    else:
+        serial_number = raw_serial
+        model_id = 0
+        model_name = f"Kospel SN{raw_serial}"
+
+    return KospelDeviceInfo(
+        host=_extract_host(host),
+        device_ids=[0],
+        serial_number=serial_number,
+        api_base_url=f"{base_url}/api",
+        devices=[
+            DeviceDetail(
+                device_id=0,
+                model_id=model_id,
+                model_name=model_name,
+                module_id="0",
+            )
+        ],
+        backend_family="modbus",
+    )
+
+
+async def probe_device(
+    session: aiohttp.ClientSession,
+    host: str,
+    timeout: float = 5.0,
+) -> Optional[KospelDeviceInfo]:
+    """Probe a host for a Kospel C.MI or ModBus-over-HTTP device."""
+    cmi_info = await probe_cmi_device(session, host, timeout=timeout)
+    if cmi_info is not None:
+        return cmi_info
+    return await probe_modbus_device(session, host, timeout=timeout)
 
 
 async def discover_devices(
@@ -174,18 +250,7 @@ async def discover_devices(
     timeout: float = 3.0,
     concurrency_limit: int = 20,
 ) -> list[KospelDeviceInfo]:
-    """
-    Scan a subnet for Kospel C.MI devices.
-
-    Args:
-        session: aiohttp ClientSession
-        subnet: CIDR notation (e.g. "192.168.101.0/24")
-        timeout: Per-host probe timeout in seconds
-        concurrency_limit: Max concurrent probes
-
-    Returns:
-        List of found KospelDeviceInfo
-    """
+    """Scan a subnet for Kospel devices (both C.MI and ModBus)."""
     try:
         network = ipaddress.IPv4Network(subnet, strict=False)
     except ValueError as e:
