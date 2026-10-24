@@ -7,7 +7,14 @@ import pytest
 
 from kospel_cmi.exceptions import RegisterMissingError
 from kospel_cmi.kospel.backend import (
+    CmiBackend,
+    HttpCmiBackend,
+    HttpModbusBackend,
     HttpRegisterBackend,
+    ModbusBackend,
+    RegisterBackend,
+    YamlCmiBackend,
+    YamlModbusBackend,
     YamlRegisterBackend,
     write_flag_bit,
 )
@@ -140,3 +147,37 @@ class TestWriteFlagBit:
         backend = RecordingBackend()
         await write_flag_bit(backend, "0b55", 9, True)
         assert backend.write_register_called == []
+
+
+class TestCmiAndModbusBackends:
+    """Tests for CmiBackend aliases and ModbusBackend implementations."""
+
+    def test_cmi_backend_aliases(self) -> None:
+        """RegisterBackend aliases point to CmiBackend classes."""
+        assert RegisterBackend is CmiBackend
+        assert HttpRegisterBackend is HttpCmiBackend
+        assert YamlRegisterBackend is YamlCmiBackend
+
+    @pytest.mark.asyncio
+    async def test_yaml_modbus_backend_roundtrip(self, tmp_path: Path) -> None:
+        """YamlModbusBackend persists and reads integer registers."""
+        state_file = str(tmp_path / "state_ppe4.yaml")
+        backend = YamlModbusBackend(state_file=state_file)
+        assert isinstance(backend, ModbusBackend)
+
+        await backend.write_registers({1390: 1, 1391: 450})
+        await backend.write_register(1392, 380)
+        regs = await backend.read_registers(1390, 4)
+        assert regs == {1390: 1, 1391: 450, 1392: 380, 1393: 0}
+        await backend.aclose()
+
+    @pytest.mark.asyncio
+    async def test_http_modbus_backend_aclose_idempotent(self) -> None:
+        """HttpModbusBackend satisfies ModbusBackend and closes session idempotently."""
+        async with aiohttp.ClientSession() as session:
+            backend = HttpModbusBackend(session, "http://localhost/api")
+            assert isinstance(backend, ModbusBackend)
+            assert not session.closed
+            await backend.aclose()
+            assert session.closed
+            await backend.aclose()

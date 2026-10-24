@@ -1,18 +1,18 @@
 # kospel-cmi-lib
 
 
-Python client for the Kospel C.MI electric heater HTTP API.
+Python client for Kospel electric heaters via local HTTP API (both C.MI gateway modules and built-in Wi-Fi ModBus-over-HTTP devices).
 
-This library provides a Python client for controlling Kospel C.MI electric heaters via their HTTP API. It is designed for integration with Home Assistant and other automation systems, and supports device discovery, register-based control, and offline development with a YAML simulator.
+This library provides a Python client for controlling Kospel electric heaters (`EKCO.M3` via C.MI module and `PPE.4` instantaneous water heater via built-in Wi-Fi) over their local HTTP API. It is designed for integration with Home Assistant and other automation systems, and supports device discovery, register-based control, and offline development with a YAML simulator.
 
 ## Features
 
 - **Async-first**: Built on `asyncio` and `aiohttp` for non-blocking I/O
-- **Type-safe**: Strict type hinting throughout
-- **Device-specific API**: Explicit properties and async setters on `EkcoM3`
-- **Simulator-capable**: Full simulator for offline development and testing (no hardware required)
-- **Protocol-based**: Decoder/encoder interfaces via Python `Protocol` types
-- **Device discovery**: `probe_device()` and `discover_devices()` to find Kospel devices on the network (no device_id required)
+- **Type-safe**: Strict type hinting and `KospelController` / `WaterHeaterController` protocols
+- **Multi-device support**: Explicit controllers for `EkcoM3` (`CmiBackend`) and `Ppe4` (`ModbusBackend`)
+- **Simulator-capable**: Full YAML simulator for both C.MI and ModBus devices (no hardware required)
+- **Protocol-based**: Decoder/encoder and backend interfaces via Python `Protocol` types
+- **Device discovery**: `probe_device()` and `discover_devices()` to find both C.MI and ModBus Kospel devices on the network
 
 ## Implemented Features
 
@@ -139,6 +139,28 @@ async def main():
             await controller.set_water_mode(CwuMode.COMFORT)
             await controller.set_water_comfort_temperature(38.0)
             await controller.set_water_economy_temperature(35.0)
+
+asyncio.run(main())
+```
+
+### Kospel PPE.4 (ModBus-over-HTTP)
+
+```python
+import asyncio
+import aiohttp
+from kospel_cmi import Ppe4, HttpModbusBackend
+
+async def main() -> None:
+    async with aiohttp.ClientSession() as session:
+        backend = HttpModbusBackend(session, "http://192.168.1.36/api")
+        async with Ppe4(backend=backend) as controller:
+            await controller.refresh()
+            print(controller.outlet_temperature, controller.target_temperature)
+            # Switch to manual mode and set target temperature to 45.0 °C
+            await controller.set_manual_heating(45.0)
+            # Or select a saved profile (1..3) and update its preset
+            await controller.set_profile_temperature(1, 38.0)
+            await controller.set_active_profile(1)
 
 asyncio.run(main())
 ```
