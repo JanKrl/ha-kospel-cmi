@@ -77,11 +77,17 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
 )
 
 from custom_components.kospel.sensor import (
-    KospelFlowSensor,
-    KospelHeatingModeSensor,
-    KospelMaxPowerLimitSensor,
-    KospelTemperatureSensor,
+    FlowSensor,
+    HeatingModeSensor,
+    MaxPowerLimitSensor,
+    TemperatureSensor,
+    TotalIncreasingSensor,
 )
+
+KospelFlowSensor = FlowSensor
+KospelHeatingModeSensor = HeatingModeSensor
+KospelMaxPowerLimitSensor = MaxPowerLimitSensor
+KospelTemperatureSensor = TemperatureSensor
 
 
 @pytest.fixture
@@ -393,3 +399,37 @@ class TestKospelHeatingModeSensorNativeValue:
 
         entity = KospelHeatingModeSensor(mock_coordinator, mock_entry)
         assert entity.native_value is None
+
+
+class TestTotalIncreasingSensor:
+    """Tests for TotalIncreasingSensor (daily energy kWh and water L counters)."""
+
+    def test_energy_and_water_sensors_read_controller_values(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        mock_controller = MagicMock()
+        mock_controller.energy_today_kwh = 3.45
+        mock_controller.water_today_liters = 85.7
+        mock_coordinator.data = mock_controller
+
+        energy_sensor = TotalIncreasingSensor(
+            mock_coordinator,
+            mock_entry,
+            "energy_today",
+            "energy_today_kwh",
+            device_class="energy",
+            unit="kWh",
+            precision=2,
+        )
+        water_sensor = TotalIncreasingSensor(
+            mock_coordinator,
+            mock_entry,
+            "water_today",
+            "water_today_liters",
+            device_class="water",
+            unit="L",
+            precision=1,
+        )
+
+        assert energy_sensor.native_value == 3.45
+        assert water_sensor.native_value == 85.7

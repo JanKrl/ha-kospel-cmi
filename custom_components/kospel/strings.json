@@ -132,6 +132,44 @@
           "device": "Found devices"
         }
       },
+      "manual": {
+        "title": "Choose device connection type",
+        "description": "Select whether your heater connects via an external C.MI module or built-in Wi-Fi (ModBus).",
+        "data": {
+          "backend_family": "Connection type"
+        }
+      },
+      "http_cmi": {
+        "title": "C.MI module connection",
+        "description": "Enter the C.MI module IP address, device ID, and device model.",
+        "data": {
+          "heater_ip": "Heater IP address",
+          "device_id": "Device ID",
+          "device_type": "Device model"
+        }
+      },
+      "http_modbus": {
+        "title": "Built-in Wi-Fi (ModBus) connection",
+        "description": "Enter the heater IP address and select the device model.",
+        "data": {
+          "heater_ip": "Heater IP address",
+          "device_type": "Device model"
+        }
+      },
+      "confirm_device_mismatch": {
+        "title": "Unconfirmed device model",
+        "description": "The device at this address reported **{detected_model}** (serial: `{serial_number}`), which could not be confirmed as **{selected_model}**. Choose whether to return to setup or force confirmation.",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "yaml": {
+        "title": "YAML development mode",
+        "description": "Select the simulated Kospel device model.",
+        "data": {
+          "device_type": "Simulated device model"
+        }
+      },
       "http": {
         "title": "Heater connection",
         "description": "Enter the heater IP address and device ID. URL will be http://[IP]/api/dev/[ID].",
@@ -195,6 +233,9 @@
       "supply_temperature": {
         "name": "Supply temperature"
       },
+      "internal_temperature": {
+        "name": "Internal temperature"
+      },
       "heating_medium_setpoint": {
         "name": "Heating medium setpoint"
       },
@@ -241,6 +282,15 @@
       },
       "max_power_limit": {
         "name": "Boiler max power limit"
+      },
+      "installed_power": {
+        "name": "Installed power"
+      },
+      "energy_today": {
+        "name": "Energy today"
+      },
+      "water_today": {
+        "name": "Water today"
       }
     },
     "number": {
@@ -264,11 +314,30 @@
       },
       "outside_temperature_off": {
         "name": "Outside temperature switch off threshold"
+      },
+      "profile_1_temperature": {
+        "name": "Profile 1 temperature"
+      },
+      "profile_2_temperature": {
+        "name": "Profile 2 temperature"
+      },
+      "profile_3_temperature": {
+        "name": "Profile 3 temperature"
       }
     },
     "water_heater": {
       "dhw": {
-        "name": "Domestic Hot Water"
+        "name": "Domestic Hot Water",
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "manual": "Manual",
+              "profile_1": "Profile 1",
+              "profile_2": "Profile 2",
+              "profile_3": "Profile 3"
+            }
+          }
+        }
       }
     },
     "climate": {

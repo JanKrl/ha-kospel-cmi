@@ -96,7 +96,9 @@ climate_mock.HVACAction = MagicMock()
 sys.modules["homeassistant.components.climate"] = climate_mock
 
 # Import after mocks
-from custom_components.kospel.climate import KospelClimateEntity
+from custom_components.kospel.climate import ClimateEntity
+
+KospelClimateEntity = ClimateEntity
 
 ClimateEntityFeature = _ClimateEntityFeature
 HVACAction = climate_mock.HVACAction

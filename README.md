@@ -4,7 +4,7 @@
   <img src="custom_components/kospel/brand/icon.png" alt="Kospel K-CMI" width="160" height="160">
 </p>
 
-Control and monitor compatible Kospel electric heaters from Home Assistant using local network communication.
+Control and monitor compatible Kospel electric heaters and instantaneous water heaters from Home Assistant using local network communication.
 
 [![Buy me a coffee](https://img.shields.io/badge/Kup%20mi%20kaw%C4%99-buycoffee.to-ffdd00.svg?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buycoffee.to/jankrl)
 
@@ -15,15 +15,16 @@ Control and monitor compatible Kospel electric heaters from Home Assistant using
 
 ## Supported Devices
 
-- **EKCO.M3**.
-- Want to add support for more models? Please contribute in [kospel-cmi-lib](https://github.com/JanKrl/kospel-cmi-lib).
+- **EKCO.M3** (Central heating & DHW boiler via Kospel **C.MI** module)
+- **PPE.4** (Instantaneous water heater with built-in Wi-Fi / ModBus-over-HTTP)
+- Want to add support for more models? Please contribute in [kospel-cmi-lib](https://github.com/JanKrl/ha-kospel-cmi).
 
 ## Entities
 
-The integration creates the following entities in Home Assistant.
+The integration creates entities tailored to the connected Kospel device.
 Entity IDs below are representative examples and can vary based on your device naming:
 
-### Climate
+### Climate (`EKCO.M3`)
 
 - **Climate Entity**: `climate.heater`
   - **HVAC Modes**: `off`, `heat`, `auto`
@@ -32,57 +33,60 @@ Entity IDs below are representative examples and can vary based on your device n
     - Current temperature (CH temperature)
     - Target temperature (in manual heat mode)
 
-### Water Heater
+### Water Heater (`EKCO.M3` & `PPE.4`)
 
 - **Water Heater Entity**: `water_heater.domestic_hot_water`
-  - **Modes**: Controlled by climate preset modes
-  - **Attributes**:
-    - Current water temperature
-    - Target DHW temperature
+  - **`EKCO.M3`**: Read-only status reflecting device DHW temperature, supply setpoint, and operation mode (`eco`, `performance`, `off`) driven by the climate entity.
+  - **`PPE.4`**: Full read/write control of target water temperature (`20°C` up to device temperature lock limit) and active operation mode (`manual`, `profile_1`, `profile_2`, `profile_3`).
 
 ### Sensors
 
 - **Temperature and Setpoint Sensors**:
-  - Central heating (CH) current temperature
-  - Domestic water heating (DWH) current temperature
-  - CH target temperature
-  - DWH target temperature
-  - Outside temperature
-- **System Sensors**:
-  - System pressure
-  - Current power consumption
-  - Valve position CO / DWH
-  - Heating mode CO / DWH
+  - Central heating (CH) current & target temperatures (`EKCO.M3`)
+  - Domestic hot water (DHW) current & target temperatures (`EKCO.M3`)
+  - Outside temperature (`EKCO.M3`)
+  - Return (inlet) & supply (outlet) temperatures (`EKCO.M3`, `PPE.4`)
+  - Internal electronics temperature (`PPE.4`, diagnostic)
+- **System & Consumption Sensors**:
+  - System pressure (`EKCO.M3`)
+  - Water flow rate (`EKCO.M3`, `PPE.4`)
+  - Instantaneous power consumption (`EKCO.M3`, `PPE.4`)
+  - Max power limit (`EKCO.M3`, `PPE.4`) and installed power (`PPE.4`)
+  - Daily energy consumption in kWh (`PPE.4`, Energy Dashboard compatible)
+  - Daily water consumption in L (`PPE.4`, Energy Dashboard compatible)
+  - Valve position CH / DHW (`EKCO.M3`)
+  - Heating mode CH / DHW (`EKCO.M3`)
 
 ### Binary Sensors
 
 - **Connectivity Sensor**:
-  - Connectivity
+  - Connectivity (`EKCO.M3`, `PPE.4`)
 
 ### Number (Configuration)
 
-- **Room Preset Temperature Entities**:
-  - Economy
-  - Comfort
-  - Comfort+
-  - Comfort-
-- **DHW Preset Temperature Entities**:
-  - Eco
-  - Comfort
-- **Limit Entities**:
+- **Room Preset Temperature Entities (`EKCO.M3`)**:
+  - Economy, Comfort, Comfort+, Comfort−
+- **DHW Preset Temperature Entities (`EKCO.M3`)**:
+  - Eco, Comfort
+- **Limit Entities (`EKCO.M3`)**:
   - Outside temperature switch threshold
+- **Profile Temperature Entities (`PPE.4`)**:
+  - Profile 1, Profile 2, Profile 3 target temperatures
 
 ### Select (Configuration)
 
-- **Max Boiler Power Entity**:
+- **Max Boiler Power Entity (`EKCO.M3`)**:
   - Limit device power to: `2 kW`, `4 kW`, `6 kW`, `8 kW`
 
 ## How To Use (Important Notes)
 
-- **Climate target temperature** can be changed only in **Heat** (manual) HVAC mode.
-- **Auto mode presets** are available as climate presets (`winter`, `summer`, `party`, `vacation`).
-- **Auto mode schedules** can be read from the device state, but editing schedules from Home Assistant is not supported yet.
-- **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
+- **`EKCO.M3`**:
+  - **Climate target temperature** can be changed only in **Heat** (manual) HVAC mode.
+  - **Auto mode presets** are available as climate presets (`winter`, `summer`, `party`, `vacation`).
+  - **DHW water heater entity** is intentionally read-only for writes; it reflects device state.
+- **`PPE.4`**:
+  - Setting a target temperature on the **Water Heater** entity automatically switches the heater to `manual` mode at the chosen temperature.
+  - Selecting `profile_1`, `profile_2`, or `profile_3` operation mode activates the corresponding preset profile.
 - After changing values, refresh can be slightly delayed by design (configurable integration option).
 
 ## Installation (HACS)
@@ -102,8 +106,8 @@ Manual HACS steps:
 
 When adding the integration in Home Assistant:
 
-- Choose **Discover** to scan your network for compatible devices, or
-- choose **Manual** and enter heater IP + device ID.
+- Choose **Discover** to scan your network for compatible devices (both C.MI and built-in Wi-Fi / ModBus heaters), or
+- choose **Manual**, select your connection type (**C.MI Module** or **Built-in Wi-Fi (ModBus)**), and enter the heater IP, device model, and (for C.MI) device ID.
 
 ## Requirements
 
@@ -116,7 +120,7 @@ When adding the integration in Home Assistant:
 
 - If setup fails, verify heater IP/device ID and confirm Home Assistant can reach the heater on your LAN.
 - If entities are unavailable, check Home Assistant logs for `custom_components.kospel` messages.
-- For discovery issues, use manual IP + device ID setup path.
+- For discovery issues, use the manual setup path.
 - If behavior looks wrong, open an issue with logs and your setup details.
 
 ## For Advanced Users
@@ -145,4 +149,3 @@ I maintain this open-source integration in my private time. If you'd like to say
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
-
