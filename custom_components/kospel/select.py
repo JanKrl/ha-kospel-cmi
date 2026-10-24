@@ -14,10 +14,16 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from kospel_cmi import KospelError
 from kospel_cmi.controller.device import EkcoM3
 
-from .const import DOMAIN, get_device_info, get_device_identifier, get_refresh_delay_after_set
+from .const import (
+    DOMAIN,
+    get_device_identifier,
+    get_device_info,
+    get_refresh_delay_after_set,
+)
 from .coordinator import KospelDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -26,10 +32,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up Kospel select entities."""
     coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([KospelBoilerMaxPowerSelectEntity(coordinator, entry)])
+    if hasattr(coordinator.data, "available_boiler_max_power_settings"):
+        async_add_entities([BoilerMaxPowerSelectEntity(coordinator, entry)])
 
 
-class KospelBoilerMaxPowerSelectEntity(
+class BoilerMaxPowerSelectEntity(
     CoordinatorEntity[KospelDataUpdateCoordinator], SelectEntity
 ):
     """Boiler maximum power step (register 0b62); firmware updates kW display separately."""
@@ -43,12 +50,7 @@ class KospelBoilerMaxPowerSelectEntity(
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
     ) -> None:
-        """Initialize the boiler max power select.
-
-        Args:
-            coordinator: Data update coordinator.
-            entry: Config entry (device info and refresh delay options).
-        """
+        """Initialize the boiler max power select."""
         super().__init__(coordinator)
         device_id = get_device_identifier(entry)
         self._attr_unique_id = f"{device_id}_boiler_max_power"
@@ -80,8 +82,10 @@ class KospelBoilerMaxPowerSelectEntity(
     async def async_select_option(self, option: str) -> None:
         """Write the selected power step to the heater and refresh coordinator data."""
         controller: EkcoM3 = self.coordinator.data
-        available_strs = [str(int(kw)) for kw in controller.available_boiler_max_power_settings]
-        
+        available_strs = [
+            str(int(kw)) for kw in controller.available_boiler_max_power_settings
+        ]
+
         try:
             chosen = available_strs.index(option)
         except ValueError:

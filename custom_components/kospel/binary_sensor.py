@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, get_device_info, get_device_identifier
+from .const import DOMAIN, get_device_identifier, get_device_info
 from .coordinator import KospelDataUpdateCoordinator
 
 
@@ -20,10 +20,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up Kospel binary sensor entities."""
     coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([KospelConnectivityBinarySensor(coordinator, entry)])
+    async_add_entities([ConnectivitySensor(coordinator, entry)])
 
 
-class KospelConnectivityBinarySensor(
+class ConnectivitySensor(
     CoordinatorEntity[KospelDataUpdateCoordinator], BinarySensorEntity
 ):
     """Hub connectivity: on when communication is OK (debounced failed polls)."""

@@ -63,8 +63,10 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
 )
 
 from custom_components.kospel.select import (  # noqa: E402
-    KospelBoilerMaxPowerSelectEntity,
+    BoilerMaxPowerSelectEntity,
 )
+
+KospelBoilerMaxPowerSelectEntity = BoilerMaxPowerSelectEntity
 
 
 @pytest.fixture

@@ -7,10 +7,10 @@ import logging
 from kospel_cmi import (
     IncompleteRegisterRefreshError,
     KospelConnectionError,
+    KospelController,
     KospelError,
     RegisterReadError,
 )
-from kospel_cmi.controller.device import EkcoM3
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -21,22 +21,16 @@ from .const import COMMUNICATION_FAILURE_THRESHOLD, DOMAIN, SCAN_INTERVAL
 _LOGGER = logging.getLogger(__name__)
 
 
-class KospelDataUpdateCoordinator(DataUpdateCoordinator[EkcoM3]):
+class KospelDataUpdateCoordinator(DataUpdateCoordinator[KospelController]):
     """Class to manage fetching data from the Kospel heater."""
 
     def __init__(
         self,
         hass: HomeAssistant,
         entry: ConfigEntry,
-        heater_controller: EkcoM3,
+        heater_controller: KospelController,
     ) -> None:
-        """Initialize the coordinator.
-
-        Args:
-            hass: Home Assistant instance.
-            entry: Config entry for this integration.
-            heater_controller: EkcoM3 device (backed by HTTP or YAML backend).
-        """
+        """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,
@@ -62,18 +56,8 @@ class KospelDataUpdateCoordinator(DataUpdateCoordinator[EkcoM3]):
         else:
             self._failure_streak += 1
 
-    async def _async_update_data(self) -> EkcoM3:
-        """Fetch data from the heater controller.
-
-        Uses the library strict refresh (see ``EkcoM3(..., strict_refresh=True)``):
-        incomplete batches raise ``IncompleteRegisterRefreshError`` without mutating cache.
-
-        Returns:
-            EkcoM3 instance (entities access settings via coordinator.data).
-
-        Raises:
-            UpdateFailed: On transport/read errors or incomplete strict refresh.
-        """
+    async def _async_update_data(self) -> KospelController:
+        """Fetch data from the heater controller."""
         try:
             await self.heater_controller.refresh()
         except IncompleteRegisterRefreshError as err:

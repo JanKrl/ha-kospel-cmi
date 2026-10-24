@@ -83,13 +83,16 @@ sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
 )
 
 from custom_components.kospel.number import (  # noqa: E402
-    KospelPresetNumberEntity,
     DHW_PRESET_TEMP_MAX,
     DHW_PRESET_TEMP_MIN,
     PRESET_TEMP_STEP,
     ROOM_PRESET_TEMP_MAX,
     ROOM_PRESET_TEMP_MIN,
+    PresetNumberEntity,
+    ProfileNumberEntity,
 )
+
+KospelPresetNumberEntity = PresetNumberEntity
 
 
 @pytest.fixture
@@ -279,3 +282,33 @@ class TestKospelPresetNumberEntity:
 
         called = getattr(mock_controller, setter_name)
         called.assert_awaited_once_with(22.0)
+
+
+class TestProfileNumberEntity:
+    """Tests for ProfileNumberEntity (PPE.4 profile 1..3 presets)."""
+
+    @pytest.mark.asyncio
+    async def test_profile_number_reads_and_writes_generic_profile_methods(
+        self, mock_coordinator, mock_entry
+    ) -> None:
+        mock_controller = MagicMock()
+        mock_controller.get_profile_temperature.return_value = 42.0
+        mock_controller.set_profile_temperature = AsyncMock()
+        mock_controller.water_min_temperature = 20.0
+        mock_controller.water_max_temperature = 55.0
+        mock_coordinator.data = mock_controller
+        mock_coordinator.async_request_refresh = AsyncMock()
+
+        entity = ProfileNumberEntity(mock_coordinator, mock_entry, 2)
+        assert entity.native_value == 42.0
+        assert entity.native_min_value == 20.0
+        assert entity.native_max_value == 55.0
+        mock_controller.get_profile_temperature.assert_called_once_with(2)
+
+        with patch(
+            "custom_components.kospel.number.asyncio.sleep", new_callable=AsyncMock
+        ):
+            await entity.async_set_native_value(45.0)
+
+        mock_controller.set_profile_temperature.assert_awaited_once_with(2, 45.0)
+        mock_coordinator.async_request_refresh.assert_awaited_once()
