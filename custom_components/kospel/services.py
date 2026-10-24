@@ -85,6 +85,10 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
         for config_entry_id in device.config_entries:
             if coordinator := hass.data.get(DOMAIN, {}).get(config_entry_id):
+                if not hasattr(coordinator.heater_controller, "set_program"):
+                    raise HomeAssistantError(
+                        "Schedules are not supported by this device"
+                    )
                 return coordinator
         raise HomeAssistantError(f"Kospel integration not found for device {device_id}")
 

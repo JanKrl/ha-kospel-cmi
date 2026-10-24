@@ -141,6 +141,44 @@
           "device": "Znalezione urządzenia"
         }
       },
+      "manual": {
+        "title": "Wybierz typ połączenia urządzenia",
+        "description": "Wybierz, czy urządzenie łączy się przez zewnętrzny moduł C.MI czy wbudowane Wi-Fi (ModBus).",
+        "data": {
+          "backend_family": "Typ połączenia"
+        }
+      },
+      "http_cmi": {
+        "title": "Połączenie z modułem C.MI",
+        "description": "Podaj adres IP modułu C.MI, identyfikator urządzenia i model.",
+        "data": {
+          "heater_ip": "Adres IP urządzenia",
+          "device_id": "Identyfikator urządzenia",
+          "device_type": "Model urządzenia"
+        }
+      },
+      "http_modbus": {
+        "title": "Połączenie przez wbudowane Wi-Fi (ModBus)",
+        "description": "Podaj adres IP urządzenia i wybierz model.",
+        "data": {
+          "heater_ip": "Adres IP urządzenia",
+          "device_type": "Model urządzenia"
+        }
+      },
+      "confirm_device_mismatch": {
+        "title": "Niepotwierdzony model urządzenia",
+        "description": "Urządzenie pod tym adresem zgłosiło **{detected_model}** (nr seryjny: `{serial_number}`), co nie mogło zostać potwierdzone jako **{selected_model}**. Wybierz, czy chcesz wrócić do konfiguracji, czy wymusić dodanie.",
+        "data": {
+          "action": "Akcja"
+        }
+      },
+      "yaml": {
+        "title": "Tryb deweloperski YAML",
+        "description": "Wybierz symulowany model urządzenia Kospel.",
+        "data": {
+          "device_type": "Symulowany model urządzenia"
+        }
+      },
       "http": {
         "title": "Połączenie z grzejnikiem",
         "description": "Podaj adres IP grzejnika i identyfikator urządzenia. Adres URL: http://[IP]/api/dev/[ID].",
@@ -207,6 +245,9 @@
       "supply_temperature": {
         "name": "Temperatura zasilania"
       },
+      "internal_temperature": {
+        "name": "Temperatura wewnętrzna"
+      },
       "heating_medium_setpoint": {
         "name": "Nastawa czynnika"
       },
@@ -245,6 +286,15 @@
       "max_power_limit": {
         "name": "Limit mocy kotła"
       },
+      "installed_power": {
+        "name": "Moc zainstalowana"
+      },
+      "energy_today": {
+        "name": "Zużycie energii dzisiaj"
+      },
+      "water_today": {
+        "name": "Zużycie wody dzisiaj"
+      },
       "heating_mode": {
         "name": "Tryb ogrzewania",
         "state": {
@@ -276,11 +326,30 @@
       },
       "outside_temperature_off": {
         "name": "Limit temperatury zewnętrznej do wyłączenia"
+      },
+      "profile_1_temperature": {
+        "name": "Temperatura profilu 1"
+      },
+      "profile_2_temperature": {
+        "name": "Temperatura profilu 2"
+      },
+      "profile_3_temperature": {
+        "name": "Temperatura profilu 3"
       }
     },
     "water_heater": {
       "dhw": {
-        "name": "Ciepła woda użytkowa"
+        "name": "Ciepła woda użytkowa",
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "manual": "Ręczny",
+              "profile_1": "Profil 1",
+              "profile_2": "Profil 2",
+              "profile_3": "Profil 3"
+            }
+          }
+        }
       }
     },
     "climate": {
