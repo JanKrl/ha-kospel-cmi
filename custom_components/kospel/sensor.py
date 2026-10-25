@@ -1,6 +1,7 @@
 """Sensor entities for Kospel integration."""
 
 from collections.abc import Callable
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -9,9 +10,11 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfVolume,
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
@@ -19,11 +22,10 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, get_device_info, get_device_identifier
-from .coordinator import KospelDataUpdateCoordinator
-
-from kospel_cmi.controller.device import EkcoM3
 from kospel_cmi.registers.enums import HeaterMode, HeatingStatus, ValvePosition
+
+from .const import DOMAIN, get_device_identifier, get_device_info
+from .coordinator import KospelDataUpdateCoordinator
 
 
 async def async_setup_entry(
@@ -33,8 +35,67 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Kospel sensor platform."""
     coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    controller = coordinator.data
 
     entities: list[SensorEntity] = []
+
+    if hasattr(controller, "energy_today_kwh"):
+        # Instantaneous water heater (PPE.4)
+        entities.extend(
+            [
+                TemperatureSensor(
+                    coordinator,
+                    entry,
+                    "return_temperature",
+                    lambda c: getattr(c, "inlet_temperature", None),
+                ),
+                TemperatureSensor(
+                    coordinator,
+                    entry,
+                    "supply_temperature",
+                    lambda c: getattr(c, "outlet_temperature", None),
+                ),
+                TemperatureSensor(
+                    coordinator,
+                    entry,
+                    "internal_temperature",
+                    lambda c: getattr(c, "internal_temperature", None),
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                ),
+                FlowSensor(coordinator, entry),
+                PowerSensor(coordinator, entry),
+                MaxPowerLimitSensor(coordinator, entry),
+                MaxPowerLimitSensor(
+                    coordinator,
+                    entry,
+                    unique_id_suffix="installed_power",
+                    attr_name="installed_power_kw",
+                ),
+                HeatingStatusSensor(
+                    coordinator, entry, "dhw_heating", "dhw_heating_status"
+                ),
+                TotalIncreasingSensor(
+                    coordinator,
+                    entry,
+                    "energy_today",
+                    "energy_today_kwh",
+                    device_class=SensorDeviceClass.ENERGY,
+                    unit=UnitOfEnergy.KILO_WATT_HOUR,
+                    precision=2,
+                ),
+                TotalIncreasingSensor(
+                    coordinator,
+                    entry,
+                    "water_today",
+                    "water_today_liters",
+                    device_class=SensorDeviceClass.WATER,
+                    unit=UnitOfVolume.LITERS,
+                    precision=1,
+                ),
+            ]
+        )
+        async_add_entities(entities)
+        return
 
     temperature_sensors = [
         ("room_setpoint", "room_setpoint"),
@@ -47,20 +108,21 @@ async def async_setup_entry(
         ("heating_medium_setpoint", "heating_medium_setpoint"),
     ]
 
-    def _get_sensor_value(controller: EkcoM3, attr_name: str) -> float | None:
-        val = getattr(controller, attr_name, None)
+    def _get_sensor_value(c: Any, attr_name: str) -> float | None:
+        val = getattr(c, attr_name, None)
         if val is not None:
             return val
         if attr_name == "heating_medium_setpoint":
-            raw = getattr(controller, "_registers", {}).get("0b44")
+            raw = getattr(c, "_registers", {}).get("0b44")
             if raw:
                 from kospel_cmi.registers.decoders import decode_scaled_x10
+
                 return decode_scaled_x10(raw)
         return None
 
     for unique_id_suffix, attr_name in temperature_sensors:
         entities.append(
-            KospelTemperatureSensor(
+            TemperatureSensor(
                 coordinator,
                 entry,
                 unique_id_suffix,
@@ -68,33 +130,22 @@ async def async_setup_entry(
             )
         )
 
-    # Pressure sensor
-    entities.append(KospelPressureSensor(coordinator, entry))
-
-    # Flow rate sensor
-    entities.append(KospelFlowSensor(coordinator, entry))
-
-    # Power sensor
-    entities.append(KospelPowerSensor(coordinator, entry))
-
-    # Configured max boiler power limit (kW from device, exposed as W)
-    entities.append(KospelMaxPowerLimitSensor(coordinator, entry))
-
-    # Heating status sensors: (unique_id_suffix, setting_name)
+    entities.append(PressureSensor(coordinator, entry))
+    entities.append(FlowSensor(coordinator, entry))
+    entities.append(PowerSensor(coordinator, entry))
+    entities.append(MaxPowerLimitSensor(coordinator, entry))
     entities.append(
-        KospelHeatingStatusSensor(coordinator, entry, "ch_heating", "ch_heating_status")
+        HeatingStatusSensor(coordinator, entry, "ch_heating", "ch_heating_status")
     )
     entities.append(
-        KospelHeatingStatusSensor(coordinator, entry, "dhw_heating", "dhw_heating_status")
+        HeatingStatusSensor(coordinator, entry, "dhw_heating", "dhw_heating_status")
     )
-    entities.append(KospelValvePositionSensor(coordinator, entry))
-    
-    # Combined heating mode sensor
-    entities.append(KospelHeatingModeSensor(coordinator, entry))
+    entities.append(ValvePositionSensor(coordinator, entry))
+    entities.append(HeatingModeSensor(coordinator, entry))
     async_add_entities(entities)
 
 
-class KospelSensorEntity(CoordinatorEntity[KospelDataUpdateCoordinator], SensorEntity):
+class SensorBaseEntity(CoordinatorEntity[KospelDataUpdateCoordinator], SensorEntity):
     """Base class for Kospel sensor entities."""
 
     _attr_has_entity_name = True
@@ -119,7 +170,7 @@ class KospelSensorEntity(CoordinatorEntity[KospelDataUpdateCoordinator], SensorE
         return self.coordinator.communication_ok
 
 
-class KospelTemperatureSensor(KospelSensorEntity):
+class TemperatureSensor(SensorBaseEntity):
     """Representation of a Kospel temperature sensor."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -131,24 +182,27 @@ class KospelTemperatureSensor(KospelSensorEntity):
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
         unique_id_suffix: str,
-        value_getter: Callable[[EkcoM3], float | None],
+        value_getter: Callable[[Any], float | None],
+        *,
+        entity_category: EntityCategory | None = None,
     ) -> None:
         """Initialize the temperature sensor."""
         super().__init__(coordinator, entry, unique_id_suffix, unique_id_suffix)
         self._value_getter = value_getter
+        if entity_category is not None:
+            self._attr_entity_category = entity_category
 
     @property
     def native_value(self) -> float | None:
         """Return the temperature value."""
-        controller: EkcoM3 = self.coordinator.data
-        return self._value_getter(controller)
+        return self._value_getter(self.coordinator.data)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self.async_write_ha_state()
 
 
-class KospelPressureSensor(KospelSensorEntity):
+class PressureSensor(SensorBaseEntity):
     """Representation of a Kospel pressure sensor."""
 
     _attr_device_class = SensorDeviceClass.PRESSURE
@@ -166,15 +220,14 @@ class KospelPressureSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the pressure value."""
-        controller: EkcoM3 = self.coordinator.data
-        return controller.pressure
+        return getattr(self.coordinator.data, "pressure", None)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self.async_write_ha_state()
 
 
-class KospelFlowSensor(KospelSensorEntity):
+class FlowSensor(SensorBaseEntity):
     """Representation of a Kospel flow rate sensor."""
 
     _attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
@@ -192,15 +245,14 @@ class KospelFlowSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the flow rate in L/min."""
-        controller: EkcoM3 = self.coordinator.data
-        return controller.flow
+        return getattr(self.coordinator.data, "flow", None)
 
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self.async_write_ha_state()
 
 
-class KospelPowerSensor(KospelSensorEntity):
+class PowerSensor(SensorBaseEntity):
     """Representation of instantaneous power in watts.
 
     The library reports power in kW; this sensor exposes native W for the
@@ -222,8 +274,7 @@ class KospelPowerSensor(KospelSensorEntity):
     @property
     def native_value(self) -> float | None:
         """Return the power value in W (device reports kW)."""
-        controller: EkcoM3 = self.coordinator.data
-        power_kw = controller.power
+        power_kw = getattr(self.coordinator.data, "power", None)
         if power_kw is None:
             return None
         return power_kw * 1000.0
@@ -233,13 +284,8 @@ class KospelPowerSensor(KospelSensorEntity):
         self.async_write_ha_state()
 
 
-class KospelMaxPowerLimitSensor(KospelSensorEntity):
-    """Configured maximum boiler power in watts.
-
-    Reads kW from register 0b34 and exposes W (same idea as ``KospelPowerSensor``).
-    Uses ``EntityCategory.DIAGNOSTIC`` because Home Assistant rejects CONFIG on
-    sensor entities; the max-power *select* remains CONFIG.
-    """
+class MaxPowerLimitSensor(SensorBaseEntity):
+    """Configured or installed maximum boiler power in watts."""
 
     _attr_device_class = SensorDeviceClass.POWER
     _attr_native_unit_of_measurement = UnitOfPower.WATT
@@ -250,15 +296,17 @@ class KospelMaxPowerLimitSensor(KospelSensorEntity):
         self,
         coordinator: KospelDataUpdateCoordinator,
         entry: ConfigEntry,
+        unique_id_suffix: str = "max_power_limit",
+        attr_name: str = "boiler_max_power_kw",
     ) -> None:
         """Initialize the max power limit sensor."""
-        super().__init__(coordinator, entry, "max_power_limit", "max_power_limit")
+        super().__init__(coordinator, entry, unique_id_suffix, unique_id_suffix)
+        self._attr_name_prop = attr_name
 
     @property
     def native_value(self) -> float | None:
-        """Return the configured max power in W (register 0b34, kW × 1000)."""
-        controller: EkcoM3 = self.coordinator.data
-        limit_kw = controller.boiler_max_power_kw
+        """Return the power limit in W (kW × 1000)."""
+        limit_kw = getattr(self.coordinator.data, self._attr_name_prop, None)
         if limit_kw is None:
             return None
         return float(limit_kw) * 1000.0
@@ -268,12 +316,44 @@ class KospelMaxPowerLimitSensor(KospelSensorEntity):
         self.async_write_ha_state()
 
 
-class KospelHeatingStatusSensor(KospelSensorEntity):
-    """Representation of a Kospel heating status sensor (CH or CWU circuit).
-    
+class TotalIncreasingSensor(SensorBaseEntity):
+    """Representation of a cumulative counter sensor (e.g. daily energy or water)."""
+
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(
+        self,
+        coordinator: KospelDataUpdateCoordinator,
+        entry: ConfigEntry,
+        unique_id_suffix: str,
+        attr_name: str,
+        *,
+        device_class: Any,
+        unit: Any,
+        precision: int,
+    ) -> None:
+        """Initialize the cumulative counter sensor."""
+        super().__init__(coordinator, entry, unique_id_suffix, unique_id_suffix)
+        self._attr_name_prop = attr_name
+        self._attr_device_class = device_class
+        self._attr_native_unit_of_measurement = unit
+        self._attr_suggested_display_precision = precision
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the counter value from the controller."""
+        return getattr(self.coordinator.data, self._attr_name_prop, None)
+
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.async_write_ha_state()
+
+
+class HeatingStatusSensor(SensorBaseEntity):
+    """Representation of a Kospel heating status sensor (CH or DHW circuit).
+
     .. deprecated:: 0.2.0
-        Use :class:`KospelHeatingModeSensor` instead (sensor.heating_mode).
-        This sensor will be removed in v1.0.0 (breaking change).
+        Use :class:`HeatingModeSensor` instead (sensor.heating_mode) on EKCO.M3.
     """
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
@@ -294,8 +374,7 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the heating status (RUNNING, IDLE, DISABLED)."""
-        controller: EkcoM3 = self.coordinator.data
-        status = getattr(controller, self._setting_name, None)
+        status = getattr(self.coordinator.data, self._setting_name, None)
         if status is None:
             return None
         if hasattr(status, "value"):
@@ -307,7 +386,7 @@ class KospelHeatingStatusSensor(KospelSensorEntity):
         self.async_write_ha_state()
 
 
-class KospelValvePositionSensor(KospelSensorEntity):
+class ValvePositionSensor(SensorBaseEntity):
     """Representation of a Kospel valve position sensor."""
 
     _attr_device_class = SensorDeviceClass.ENUM
@@ -324,8 +403,7 @@ class KospelValvePositionSensor(KospelSensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the valve position."""
-        controller: EkcoM3 = self.coordinator.data
-        position = controller.valve_position
+        position = getattr(self.coordinator.data, "valve_position", None)
         if position is None:
             return None
         if hasattr(position, "value"):
@@ -337,12 +415,8 @@ class KospelValvePositionSensor(KospelSensorEntity):
         self.async_write_ha_state()
 
 
-class KospelHeatingModeSensor(KospelSensorEntity):
-    """Combined heating mode sensor (CH, DHW, Idle, or Off).
-    
-    Since CH and DHW heating can never run simultaneously by design,
-    this sensor provides a single state indicating the current mode.
-    """
+class HeatingModeSensor(SensorBaseEntity):
+    """Combined heating mode sensor (CH, DHW, Idle, or Off)."""
 
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = [
@@ -362,40 +436,29 @@ class KospelHeatingModeSensor(KospelSensorEntity):
 
     @property
     def native_value(self) -> str | None:
-        """Return the heating mode (off, idle, ch, or dhw).
-        
-        Logic:
-        - Both DISABLED → "off"
-        - At least one IDLE (none RUNNING) → "idle"
-        - CH RUNNING → "ch"
-        - DHW RUNNING → "dhw"
-        """
-        controller: EkcoM3 = self.coordinator.data
-        
+        """Return the heating mode (off, idle, ch, or dhw)."""
+        controller = self.coordinator.data
+
         ch_status = getattr(controller, "ch_heating_status", None)
         dwh_status = getattr(controller, "dhw_heating_status", None)
-        
+
         if ch_status is None or dwh_status is None:
             return None
-        
-        # Normalize status values to lowercase string
+
         ch_str = ch_status.value if hasattr(ch_status, "value") else str(ch_status)
         dwh_str = dwh_status.value if hasattr(dwh_status, "value") else str(dwh_status)
-        
+
         ch_str = ch_str.lower()
         dwh_str = dwh_str.lower()
-        
-        # Check for RUNNING states (only one can be running at a time by design)
+
         if ch_str == "running":
             return "ch"
         if dwh_str == "running":
             return "dhw"
-        
-        # If neither is running, check for idle
+
         if ch_str == "idle" or dwh_str == "idle":
             return "idle"
-        
-        # Both must be disabled
+
         return "off"
 
     def _handle_coordinator_update(self) -> None:
