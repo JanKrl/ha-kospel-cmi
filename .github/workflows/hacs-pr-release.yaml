@@ -1,7 +1,8 @@
 # ==============================================================================
 # Workflow: HACS PR Pre-release
 # 
-# WHEN IT TRIGGERS: Every time code is pushed to a standard feature Pull Request.
+# WHEN IT TRIGGERS: Every time Home Assistant integration code (custom_components/kospel/**)
+# is pushed to a standard feature Pull Request.
 # 
 # WHAT IT DOES: Calculates a dynamic version tag (e.g., v1.4.0-pr123.1) and creates 
 # a GitHub pre-release, then comments on the PR with instructions.
@@ -16,6 +17,8 @@ name: HACS PR Pre-release
 on:
   pull_request:
     types: [opened, synchronize]
+    paths:
+      - "custom_components/kospel/**"
 
 jobs:
   pr-release:
