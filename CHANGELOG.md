@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.5.0...v1.5.1) (2026-10-25)
+
+
+### Documentation
+
+* document release-please monorepo pitfalls and release protocol ([#150](https://github.com/JanKrl/ha-kospel-cmi/issues/150)) ([d2ca5c9](https://github.com/JanKrl/ha-kospel-cmi/commit/d2ca5c9fb52ed2f7664886dc69d28175a9275a00))
+
 ## [1.5.0](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.4.0...v1.5.0) (2026-10-18)
 
 
