@@ -5,7 +5,7 @@ import logging
 from typing import Final, TypedDict, Unpack
 
 from homeassistant.components.climate import (
-    ClimateEntity,
+    ClimateEntity as HaClimateEntity,
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
@@ -18,17 +18,17 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from kospel_cmi import KospelError
+from kospel_cmi.controller.device import EkcoM3
+from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
+
 from .const import (
     DOMAIN,
-    get_device_info,
     get_device_identifier,
+    get_device_info,
     get_refresh_delay_after_set,
 )
 from .coordinator import KospelDataUpdateCoordinator
-
-from kospel_cmi import KospelError
-from kospel_cmi.registers.enums import HeaterMode, HeatingStatus
-from kospel_cmi.controller.device import EkcoM3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,11 +55,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Kospel climate platform."""
     coordinator: KospelDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([KospelClimateEntity(coordinator)])
+    if hasattr(coordinator.data, "heater_mode"):
+        async_add_entities([ClimateEntity(coordinator)])
 
 
-class KospelClimateEntity(
-    CoordinatorEntity[KospelDataUpdateCoordinator], ClimateEntity
+class ClimateEntity(
+    CoordinatorEntity[KospelDataUpdateCoordinator], HaClimateEntity
 ):
     """Representation of a Kospel heater climate entity (main device entity)."""
 
@@ -193,7 +194,9 @@ class KospelClimateEntity(
         await asyncio.sleep(get_refresh_delay_after_set(self.coordinator.entry))
         await self.coordinator.async_request_refresh()
 
-    async def async_set_temperature(self, **kwargs: Unpack[_ClimateSetTemperatureKwargs]) -> None:
+    async def async_set_temperature(
+        self, **kwargs: Unpack[_ClimateSetTemperatureKwargs]
+    ) -> None:
         """Set the manual heating target temperature.
 
         Raises:

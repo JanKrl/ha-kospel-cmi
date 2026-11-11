@@ -76,13 +76,17 @@ sys.modules["homeassistant.helpers.entity"].DeviceInfo = _device_info
 
 from custom_components.kospel.const import (
     CONF_DEVICE_ID,
+    CONF_DEVICE_TYPE,
     CONF_REFRESH_DELAY_AFTER_SET,
     CONF_SERIAL_NUMBER,
+    DEVICE_TYPE_EKCO_M3,
+    DEVICE_TYPE_PPE4,
     REFRESH_DELAY_MAX,
     REFRESH_DELAY_MIN,
-    make_unique_id,
     get_device_identifier,
     get_device_info,
+    get_yaml_state_file_path,
+    make_unique_id,
 )
 from custom_components.kospel.config_flow import (
     CannotConnect,
@@ -154,6 +158,20 @@ class TestGetDeviceInfo:
         entry.entry_id = "legacy-uuid"
         info = get_device_info(entry)
         assert ("kospel", "legacy-uuid") in info["identifiers"]
+
+    def test_model_reflects_device_type(self, tmp_path) -> None:
+        """get_device_info and get_yaml_state_file_path reflect device_type."""
+        entry_ekco = MagicMock()
+        entry_ekco.data = {CONF_DEVICE_TYPE: DEVICE_TYPE_EKCO_M3}
+        entry_ekco.entry_id = "e1"
+        assert get_device_info(entry_ekco)["model"] == "EKCO.M3"
+        assert get_yaml_state_file_path(tmp_path, DEVICE_TYPE_EKCO_M3).name == "state_ekcom3.yaml"
+
+        entry_ppe4 = MagicMock()
+        entry_ppe4.data = {CONF_DEVICE_TYPE: DEVICE_TYPE_PPE4}
+        entry_ppe4.entry_id = "e2"
+        assert get_device_info(entry_ppe4)["model"] == "PPE.4"
+        assert get_yaml_state_file_path(tmp_path, DEVICE_TYPE_PPE4).name == "state_ppe4.yaml"
 
 
 class TestValidateHttpInput:
@@ -587,3 +605,119 @@ class TestKospelOptionsFlowHandler:
             schema({CONF_REFRESH_DELAY_AFTER_SET: 0.1})
         with pytest.raises(vol.Invalid):
             schema({CONF_REFRESH_DELAY_AFTER_SET: 10.0})
+
+
+class TestManualAndYamlMultiDeviceFlow:
+    """Tests for unified Manual (C.MI / ModBus), mismatch confirmation, and YAML device type selection."""
+
+    def _setup_handler(self) -> KospelConfigFlowHandler:
+        handler = KospelConfigFlowHandler()
+        handler.hass = MagicMock()
+        handler.async_show_form = lambda step_id, data_schema, errors=None, description_placeholders=None: {
+            "type": "show_form",
+            "step_id": step_id,
+            "data_schema": data_schema,
+            "errors": errors,
+            "description_placeholders": description_placeholders,
+        }
+        handler.async_create_entry = lambda title, data: {
+            "type": "create_entry",
+            "title": title,
+            "data": data,
+        }
+        handler.async_set_unique_id = AsyncMock()
+        handler._abort_if_unique_id_configured = MagicMock()
+        return handler
+
+    @pytest.mark.asyncio
+    async def test_yaml_mode_prompts_for_device_type_and_creates_entry(self) -> None:
+        """Selecting yaml in user step prompts for device_type and creates entry."""
+        handler = self._setup_handler()
+        step1 = await handler.async_step_user({"connection_mode": "yaml"})
+        assert step1["type"] == "show_form"
+        assert step1["step_id"] == "yaml"
+
+        step2 = await handler.async_step_yaml({CONF_DEVICE_TYPE: DEVICE_TYPE_PPE4})
+        assert step2["type"] == "create_entry"
+        assert step2["data"][CONF_DEVICE_TYPE] == DEVICE_TYPE_PPE4
+
+    @pytest.mark.asyncio
+    async def test_manual_mode_selects_cmi_or_modbus(self) -> None:
+        """Selecting manual in user step shows family choice (cmi vs modbus)."""
+        handler = self._setup_handler()
+        step1 = await handler.async_step_user({"connection_mode": "manual"})
+        assert step1["type"] == "show_form"
+        assert step1["step_id"] == "manual"
+
+        cmi_form = await handler.async_step_manual({"connection_family": "cmi"})
+        assert cmi_form["step_id"] == "http_cmi"
+
+        modbus_form = await handler.async_step_manual({"connection_family": "modbus"})
+        assert modbus_form["step_id"] == "http_modbus"
+
+    @pytest.mark.asyncio
+    async def test_http_modbus_matching_model_creates_entry_immediately(self) -> None:
+        """When probed ModBus device model matches PPE.4, entry is created directly."""
+        handler = self._setup_handler()
+        dev_detail = MagicMock()
+        dev_detail.device_id = 0
+        dev_detail.model_name = "PPE.4"
+        info = MagicMock()
+        info.device_ids = [0]
+        info.serial_number = "ppe4_00012345"
+        info.devices = [dev_detail]
+        info.backend_family = "modbus"
+
+        with patch(
+            "custom_components.kospel.config_flow.probe_modbus_device",
+            new_callable=AsyncMock,
+            return_value=info,
+        ):
+            result = await handler.async_step_http_modbus(
+                {"heater_ip": "192.168.1.36", CONF_DEVICE_TYPE: DEVICE_TYPE_PPE4}
+            )
+
+        assert result["type"] == "create_entry"
+        assert result["data"][CONF_DEVICE_TYPE] == DEVICE_TYPE_PPE4
+        assert result["data"][CONF_SERIAL_NUMBER] == "ppe4_00012345"
+
+    @pytest.mark.asyncio
+    async def test_http_modbus_mismatch_shows_confirm_with_type_and_serial(self) -> None:
+        """When probed model does not match, confirm_device_mismatch shows detected type & serial."""
+        handler = self._setup_handler()
+        dev_detail = MagicMock()
+        dev_detail.device_id = 0
+        dev_detail.model_name = "Kospel SN00012345"
+        info = MagicMock()
+        info.device_ids = [0]
+        info.serial_number = "00012345"
+        info.devices = [dev_detail]
+        info.backend_family = "modbus"
+
+        with patch(
+            "custom_components.kospel.config_flow.probe_modbus_device",
+            new_callable=AsyncMock,
+            return_value=info,
+        ):
+            result = await handler.async_step_http_modbus(
+                {"heater_ip": "192.168.1.36", CONF_DEVICE_TYPE: DEVICE_TYPE_PPE4}
+            )
+
+        assert result["type"] == "show_form"
+        assert result["step_id"] == "confirm_device_mismatch"
+        placeholders = result["description_placeholders"]
+        assert placeholders["detected_model"] == "Kospel SN00012345"
+        assert placeholders["serial_number"] == "00012345"
+        assert placeholders["selected_model"] == "PPE.4"
+
+        # Choosing 'back' returns to http_modbus form
+        back_res = await handler.async_step_confirm_device_mismatch({"action": "back"})
+        assert back_res["type"] == "show_form"
+        assert back_res["step_id"] == "http_modbus"
+
+        # Choosing 'confirm' creates the entry with selected device_type
+        confirm_res = await handler.async_step_confirm_device_mismatch(
+            {"action": "confirm"}
+        )
+        assert confirm_res["type"] == "create_entry"
+        assert confirm_res["data"][CONF_DEVICE_TYPE] == DEVICE_TYPE_PPE4
