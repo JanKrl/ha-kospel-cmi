@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.5.0...v1.6.0) (2026-11-11)
+
+
+### Features
+
+* **ha:** add Kospel PPE.4 device support and multi-device architecture ([#156](https://github.com/JanKrl/ha-kospel-cmi/issues/156)) ([0005048](https://github.com/JanKrl/ha-kospel-cmi/commit/000504835f9a4989ead68775357f83788055c842))
+
+
+### Documentation
+
+* document release-please monorepo pitfalls and release protocol ([#150](https://github.com/JanKrl/ha-kospel-cmi/issues/150)) ([d2ca5c9](https://github.com/JanKrl/ha-kospel-cmi/commit/d2ca5c9fb52ed2f7664886dc69d28175a9275a00))
+
 ## [1.5.0](https://github.com/JanKrl/ha-kospel-cmi/compare/v1.4.0...v1.5.0) (2026-10-18)
 
 
