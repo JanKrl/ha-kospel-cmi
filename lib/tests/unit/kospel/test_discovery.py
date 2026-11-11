@@ -9,6 +9,7 @@ from kospel_cmi.kospel.discovery import (
     KospelDeviceInfo,
     discover_devices,
     probe_device,
+    probe_modbus_device,
 )
 
 
@@ -47,12 +48,56 @@ class TestProbeDevice:
 
     @pytest.mark.asyncio
     async def test_probe_device_returns_none_on_http_error(self) -> None:
-        """probe_device returns None when request fails."""
+        """probe_device returns None when both C.MI and ModBus requests fail."""
         async with aiohttp.ClientSession() as session:
             with aioresponses() as m:
                 m.get("http://192.168.101.49/api/dev", status=404)
+                m.get("http://192.168.101.49/api/1276/1", status=404)
                 result = await probe_device(session, "192.168.101.49")
         assert result is None
+
+    @pytest.mark.asyncio
+    async def test_probe_device_falls_back_to_modbus_ppe4_confirmed(self) -> None:
+        """probe_device falls back to probe_modbus_device and confirms PPE.4 from root HTML."""
+        async with aiohttp.ClientSession() as session:
+            with aioresponses() as m:
+                m.get("http://192.168.1.36/api/dev", status=404)
+                m.get(
+                    "http://192.168.1.36/api/1276/1",
+                    body='{"ver":"1.0","status":"OK","status_value":"0","res":{"1276":12345}}',
+                )
+                m.get(
+                    "http://192.168.1.36/",
+                    body="<html><title>KOSPEL PPE4 Wi-Fi configuration</title></html>",
+                )
+                result = await probe_device(session, "192.168.1.36")
+        assert result is not None
+        assert result.backend_family == "modbus"
+        assert result.serial_number == "ppe4_00012345"
+        assert result.device_ids == [0]
+        assert result.devices[0].model_name == "PPE.4"
+
+    @pytest.mark.asyncio
+    async def test_probe_modbus_device_defaults_to_kospel_sn_when_unconfirmed(
+        self,
+    ) -> None:
+        """probe_modbus_device defaults model_name to 'Kospel SN{serial}' when root page does not match PPE4."""
+        async with aiohttp.ClientSession() as session:
+            with aioresponses() as m:
+                m.get(
+                    "http://192.168.1.36/api/1276/1",
+                    body='{"ver":"1.0","status":"OK","status_value":"0","res":{"1276":12345}}',
+                )
+                m.get(
+                    "http://192.168.1.36/",
+                    body="<html><title>Wi-Fi Module</title></html>",
+                )
+                result = await probe_modbus_device(session, "192.168.1.36")
+        assert result is not None
+        assert result.backend_family == "modbus"
+        assert result.serial_number == "00012345"
+        assert result.devices[0].model_id == 0
+        assert result.devices[0].model_name == "Kospel SN00012345"
 
     @pytest.mark.asyncio
     async def test_probe_device_returns_none_when_missing_devs(self) -> None:

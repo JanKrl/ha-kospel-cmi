@@ -124,6 +124,21 @@ class EkcoM3:
         self._strict_refresh = strict_refresh
         self._registers: dict[str, str] = {}
 
+    @property
+    def water_heater_writable(self) -> bool:
+        """EkcoM3 DHW entity is read-only; DHW is controlled via device/climate."""
+        return False
+
+    @property
+    def water_min_temperature(self) -> float:
+        """Minimum DHW display temperature (°C)."""
+        return 30.0
+
+    @property
+    def water_max_temperature(self) -> float:
+        """Maximum DHW display temperature (°C)."""
+        return 65.0
+
     def _get_register(self, register: str) -> str:
         """Get register value from cache.
 

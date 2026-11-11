@@ -1,16 +1,11 @@
 """
-Register backend abstraction: Protocol and implementations (HTTP, YAML).
+Backend abstractions for Kospel C.MI (hex string registers) and ModBus (integer registers).
 
-The controller depends only on RegisterBackend. Transport is chosen at construction:
-HttpRegisterBackend(session, api_base_url) or YamlRegisterBackend(state_file).
-Both delegate to function modules (api.py and simulator.py). write_flag_bit is
-a standalone function that takes a backend as first argument (not a method on
-the backend) so there is a single implementation for all backends.
-
-Protocol is used so that any object with read_register/read_registers/write_register
-can be passed; alternatives (e.g. NamedTuple of callables) would require the caller
-to build closures for session/state_file. Protocol keeps "connection" state
-inside the backend object and the interface explicit.
+- CmiBackend (HttpCmiBackend, YamlCmiBackend): 4-char hex register addresses and values.
+  Aliases RegisterBackend, HttpRegisterBackend, YamlRegisterBackend are preserved for
+  backward compatibility.
+- ModbusBackend (HttpModbusBackend, YamlModbusBackend): decimal integer register
+  addresses and 16-bit integer values, supporting atomic multi-register writes.
 """
 
 import asyncio
@@ -21,14 +16,15 @@ import aiohttp
 
 from ..registers.utils import int_to_reg, reg_to_int, set_bit
 from . import api as kospel_api
+from . import modbus_api, modbus_simulator
 from . import simulator as simulator_io
 
 logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
-class RegisterBackend(Protocol):
-    """Protocol for register read/write. No session, URL, or mode in method args."""
+class CmiBackend(Protocol):
+    """Protocol for C.MI hex-string register read/write."""
 
     async def read_register(self, register: str) -> str:
         """Read a single register. Returns hex string; raises on HTTP/invalid data."""
@@ -45,8 +41,8 @@ class RegisterBackend(Protocol):
         ...
 
 
-class HttpRegisterBackend:
-    """Backend that uses HTTP API to read/write registers."""
+class HttpCmiBackend:
+    """Backend that uses the C.MI HTTP API to read/write hex registers."""
 
     _session: Optional[aiohttp.ClientSession]
 
@@ -55,13 +51,6 @@ class HttpRegisterBackend:
         session: aiohttp.ClientSession,
         api_base_url: str,
     ):
-        """
-        Initialize HTTP backend.
-
-        Args:
-            session: aiohttp ClientSession for API calls
-            api_base_url: Base URL for the heater API (e.g. "http://192.168.1.1/api/dev/65")
-        """
         self._session = session
         self._api_base_url = api_base_url
 
@@ -86,26 +75,16 @@ class HttpRegisterBackend:
         )
 
     async def aclose(self) -> None:
-        """Close the HTTP session and release resources.
-
-        Safe to call multiple times (idempotent). After closing, the backend
-        must not be used for further read/write operations.
-        """
+        """Close the HTTP session and release resources (idempotent)."""
         if self._session is not None:
             await self._session.close()
             self._session = None
 
 
-class YamlRegisterBackend:
-    """Backend that uses YAML file for register state. Delegates to simulator module."""
+class YamlCmiBackend:
+    """Backend that uses a YAML file for C.MI hex register state."""
 
     def __init__(self, state_file: str):
-        """
-        Initialize YAML backend.
-
-        Args:
-            state_file: Path to the YAML state file (required; no env var).
-        """
         self._state_file = state_file
 
     async def read_register(self, register: str) -> str:
@@ -125,31 +104,115 @@ class YamlRegisterBackend:
         await simulator_io.write_register(self._state_file, register, hex_value)
 
     async def aclose(self) -> None:
-        """No-op: YAML backend uses open/close per operation, no persistent resources."""
+        """No-op: YAML backend uses open/close per operation."""
+        pass
+
+
+# Backward-compatible aliases
+RegisterBackend = CmiBackend
+HttpRegisterBackend = HttpCmiBackend
+YamlRegisterBackend = YamlCmiBackend
+
+
+@runtime_checkable
+class ModbusBackend(Protocol):
+    """Protocol for integer-addressed MODBUS-over-HTTP register read/write."""
+
+    async def read_registers(
+        self, start_register: int, count: int
+    ) -> dict[int, int]:
+        """Read `count` consecutive registers starting at `start_register`."""
+        ...
+
+    async def write_register(self, register: int, value: int) -> None:
+        """Write a single 16-bit integer register."""
+        ...
+
+    async def write_registers(self, values: dict[int, int]) -> None:
+        """Write one or more 16-bit integer registers atomically."""
+        ...
+
+    async def aclose(self) -> None:
+        """Release any underlying transport resources."""
+        ...
+
+
+class HttpModbusBackend:
+    """Backend that uses the Kospel MODBUS-over-HTTP API."""
+
+    _session: Optional[aiohttp.ClientSession]
+
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        api_base_url: str,
+    ) -> None:
+        self._session = session
+        self._api_base_url = api_base_url
+
+    async def read_registers(
+        self, start_register: int, count: int
+    ) -> dict[int, int]:
+        """Read multiple integer registers via HTTP."""
+        return await modbus_api.read_registers(
+            self._session, self._api_base_url, start_register, count
+        )
+
+    async def write_register(self, register: int, value: int) -> None:
+        """Write a single integer register via HTTP."""
+        await modbus_api.write_register(
+            self._session, self._api_base_url, register, value
+        )
+
+    async def write_registers(self, values: dict[int, int]) -> None:
+        """Write multiple integer registers via HTTP."""
+        await modbus_api.write_registers(
+            self._session, self._api_base_url, values
+        )
+
+    async def aclose(self) -> None:
+        """Close the HTTP session and release resources (idempotent)."""
+        if self._session is not None:
+            await self._session.close()
+            self._session = None
+
+
+class YamlModbusBackend:
+    """Backend that uses a YAML file for integer MODBUS register state."""
+
+    def __init__(self, state_file: str) -> None:
+        self._state_file = state_file
+
+    async def read_registers(
+        self, start_register: int, count: int
+    ) -> dict[int, int]:
+        """Read multiple integer registers from the YAML state file."""
+        return await modbus_simulator.read_registers(
+            self._state_file, start_register, count
+        )
+
+    async def write_register(self, register: int, value: int) -> None:
+        """Write a single integer register to the YAML state file."""
+        await modbus_simulator.write_register(
+            self._state_file, register, value
+        )
+
+    async def write_registers(self, values: dict[int, int]) -> None:
+        """Write multiple integer registers to the YAML state file."""
+        await modbus_simulator.write_registers(self._state_file, values)
+
+    async def aclose(self) -> None:
+        """No-op for file-based YAML backend."""
         pass
 
 
 async def write_flag_bit(
-    backend: RegisterBackend,
+    backend: CmiBackend,
     register: str,
     bit_index: int,
     state: bool,
 ) -> None:
-    """
-    Write a single flag bit using read-modify-write.
-
-    Takes backend as first argument (not a method on backend); single implementation
-    for HTTP and YAML backends.
-
-    Args:
-        backend: Any RegisterBackend (HTTP or YAML).
-        register: Register address (e.g. "0b55").
-        bit_index: Bit index to modify (0-15).
-        state: True to set bit, False to clear bit.
-
-    Raises:
-        Same as backend.read_register / backend.write_register on failure.
-    """
+    """Write a single flag bit using read-modify-write on a CmiBackend."""
     hex_val = await backend.read_register(register)
 
     current_int = reg_to_int(hex_val)
@@ -173,21 +236,11 @@ async def write_flag_bit(
 
 
 async def write_registers_sequential(
-    backend: RegisterBackend,
+    backend: CmiBackend,
     registers: Dict[str, str],
     delay: float = 0.1,
 ) -> None:
-    """
-    Write multiple registers sequentially with a delay between writes.
-
-    Prevents overwhelming the device's internal HTTP server buffer when
-    saving large chunks of data (like schedules).
-
-    Args:
-        backend: Any RegisterBackend (HTTP or YAML).
-        registers: Dictionary mapping register addresses to hex values.
-        delay: Delay in seconds between writes.
-    """
+    """Write multiple registers sequentially with a delay between writes."""
     for addr, hex_val in registers.items():
         await backend.write_register(addr, hex_val)
         if delay > 0:
