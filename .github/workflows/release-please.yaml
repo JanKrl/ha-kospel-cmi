@@ -20,6 +20,13 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      publish_lib:
+        description: "Publish kospel-cmi-lib to PyPI and push tag"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -78,8 +85,8 @@ jobs:
 
   publish-lib:
     name: Publish kospel-cmi-lib to PyPI
-    needs: [release-please, check-lib-release]
-    if: ${{ needs.check-lib-release.outputs.lib_bumped == 'true' }}
+    needs: [check-lib-release]
+    if: ${{ github.event.inputs.publish_lib == 'true' || needs.check-lib-release.outputs.lib_bumped == 'true' }}
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -112,6 +119,7 @@ jobs:
           VERSION=$(grep -oP '(?<=^version = ")[^"]+' lib/pyproject.toml)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --tags origin
           if ! git rev-parse "lib-v$VERSION" >/dev/null 2>&1; then
             git tag "lib-v$VERSION"
             git push origin "lib-v$VERSION"
