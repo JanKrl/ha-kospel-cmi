@@ -44,12 +44,13 @@ jobs:
         if: ${{ steps.release.outputs['.--release_created'] == 'true' || steps.release.outputs.releases_created == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ steps.release.outputs['.--tag_name'] || steps.release.outputs.tag_name }}
         run: |
           if [ -n "$TAG" ]; then
-            BODY=$(gh release view "$TAG" --json body --jq '.body')
+            BODY=$(gh release view "$TAG" --repo "$GH_REPO" --json body --jq '.body')
             FOOTER=$'\n\n---\n☕ **Enjoying this integration?**\nI maintain this open-source integration in my private time. If you\'d like to say thanks with a coffee:\n\n[![Buy me a coffee](https://img.shields.io/badge/Kup%20mi%20kaw%C4%99-buycoffee.to-ffdd00.svg?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buycoffee.to/jankrl)\n\n*GitHub issues can be created in either Polish or English.*'
-            gh release edit "$TAG" --notes "${BODY}${FOOTER}"
+            gh release edit "$TAG" --repo "$GH_REPO" --notes "${BODY}${FOOTER}"
           fi
 
   check-lib-release:
