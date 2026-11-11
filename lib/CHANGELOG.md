@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/JanKrl/ha-kospel-cmi/compare/lib-v2.1.0...lib-v2.2.0) (2026-11-11)
+
+
+### Features
+
+* **lib:** add Kospel PPE.4 device support ([#155](https://github.com/JanKrl/ha-kospel-cmi/issues/155)) ([1a2693f](https://github.com/JanKrl/ha-kospel-cmi/commit/1a2693fc1c326c1fab7a5f3a78c5478e8732e73e))
+
 ## [2.1.0](https://github.com/JanKrl/ha-kospel-cmi/compare/lib-v2.0.0...lib-v2.1.0) (2026-10-18)
 
 
